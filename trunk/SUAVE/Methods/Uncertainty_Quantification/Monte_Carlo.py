@@ -31,10 +31,10 @@ def mean_and_variance_plot(f):
     fig, ax = plt.subplots()
     
     # Plot the true expected value for reference
-    true_mean, = ax.plot(all_ns, [0.09] * max_n, color='black', linewidth=3.0)
+    true_mean, = ax.plot(all_ns, [0.059] * max_n, color='black', linewidth=3.0) # .09
     for k in range(num_mc):
         S_n_vals, V_n_vals = get_mc_estimate(f, max_n = max_n)
-        ax.plot(all_ns, S_n_vals, color = sns.color_palette()[3], lw=1)
+        ax.plot(all_ns, S_n_vals, color = sns.color_palette()[6], lw=1)  # 3
         
         # Give an initial error bar just for the first MC run
         if k == 0:
@@ -43,15 +43,15 @@ def mean_and_variance_plot(f):
             
             # The upper bound
             u = S_n_vals + 2. / np.sqrt(all_ns) * np.sqrt(V_n_vals)
-            var_rng = ax.fill_between(all_ns, l, u, color = sns.color_palette()[3], alpha = 0.25)
+            var_rng = ax.fill_between(all_ns, l, u, color = sns.color_palette()[6], alpha = 0.25)
     
     ax.set_xlabel('$n$')
-    ax.set_ylabel('Sample Mean, $\\overline{C_T}$')# usetex = True);
+    ax.set_ylabel('Sample Mean, $\\overline{C_P}$')# usetex = True);
     ax.set_title('Uncertainty in Inflow Angle')
     err_bar_lab = 'Confidence Region'
     ax.legend([true_mean, var_rng],['Experimental Result',err_bar_lab], loc='best')
-    
-    plt.savefig('UQ_PSI_CT.png',bbox_inches='tight', dpi=300)
+    plt.tight_layout()
+    plt.savefig('UQ_PSI_CP.png',bbox_inches='tight', dpi=300)
     
     plt.show()
     return
