@@ -71,14 +71,14 @@ def save_vehicle_vtks(vehicle, conditions, Results, time_step,VLM_settings=None,
     #---------------------------
     for network in vehicle.networks:
         try:
-            print("Attempting to save propeller.")
+            print("\tAttempting to save propeller.")
             propellers = network.propellers
             try:
                 n_props = int(network.number_of_propeller_engines)
             except:
                 n_props   = int(network.number_of_engines)
         except:
-            print("No propellers.")
+            print("\t\tNo propellers.")
             n_props = 0
 
 
@@ -97,14 +97,14 @@ def save_vehicle_vtks(vehicle, conditions, Results, time_step,VLM_settings=None,
                 save_prop_vtk(propi, file, Results, time_step)
 
         try:
-            print("Attempting to save rotor.")
+            print("\tAttempting to save rotor.")
             lift_rotors = network.lift_rotors
             if network.number_of_lift_rotor_engines is not None:
                 n_rots = int(network.number_of_lift_rotor_engines)
             else:
                 n_rots = 0
         except:
-            print("No lift rotors.")
+            print("\t\tNo lift rotors.")
             n_rots = 0
 
 
@@ -125,10 +125,10 @@ def save_vehicle_vtks(vehicle, conditions, Results, time_step,VLM_settings=None,
     # Save propeller wake to vtk
     #---------------------------
     try:
-        n_wakes = len(VD.Wake.XA1[:,0,0,0])
+        n_wakes = len(VD.Wake.XA1[0,0,:,0,0,0])
 
     except:
-        print("Wake simulation has not yet been run. No propeller wakes generated.")
+        print("\tWake simulation has not yet been run. No propeller wakes generated.")
         n_wakes = 0
 
     if n_wakes >0:

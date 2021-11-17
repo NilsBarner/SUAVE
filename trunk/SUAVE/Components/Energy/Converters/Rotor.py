@@ -97,6 +97,7 @@ class Rotor(Energy_Component):
         self.number_steps_per_rotation  = 100
         self.wake_settings              = Data()
         self.system_vortex_distribution = None
+        self.wake_settings.converge_HFW = False
 
         self.wake_settings.initial_timestep_offset   = 0    # initial timestep
         self.wake_settings.wake_development_time     = 0.05 # total simulation time required for wake development
@@ -425,7 +426,7 @@ class Rotor(Energy_Component):
             bemt_outs = copy.deepcopy(self.outputs)
             
             
-            converge = True
+            converge = self.wake_settings.converge_HFW
             if converge:
                 for i in range(2):
                     # converge on va for a semi-prescribed wake method
