@@ -22,7 +22,7 @@ from SUAVE.Methods.Geometry.Three_Dimensional \
 from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.compute_HFW_inflow_velocities \
      import compute_HFW_inflow_velocities
 
-
+from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.generate_propeller_wake_distribution import generate_propeller_wake_distribution
 # package imports
 import numpy as np
 import scipy as sp
@@ -91,11 +91,12 @@ class Rotor(Energy_Component):
         self.tangential_velocities_2d  = None     # user input for additional velocity influences at the rotor
         self.radial_velocities_2d      = None     # user input for additional velocity influences at the rotor
 
-        self.Wake_VD                   = Data()
-        self.wake_method               = "momentum"
-        self.number_rotor_rotations    = 6
-        self.number_steps_per_rotation = 100
-        self.wake_settings             = Data()
+        self.Wake_VD                    = Data()
+        self.wake_method                = "momentum"
+        self.number_rotor_rotations     = 6
+        self.number_steps_per_rotation  = 100
+        self.wake_settings              = Data()
+        self.system_vortex_distribution = None
 
         self.wake_settings.initial_timestep_offset   = 0    # initial timestep
         self.wake_settings.wake_development_time     = 0.05 # total simulation time required for wake development
@@ -657,6 +658,7 @@ class Rotor(Energy_Component):
                     rotor_drag                        = rotor_drag,
                     rotor_drag_coefficient            = Crd,
             )
+        self.outputs = outputs
 
         return thrust_vector, torque, power, Cp, outputs , etap
 
@@ -731,29 +733,42 @@ class Rotor(Energy_Component):
         # Initialize by running BEMT to get initial blade circulation
         #--------------------------------------------------------------------------------
         _, _, _, _, bemt_outputs , _ = self.spin(conditions)
-        conditions.noise.sources.propellers[self.tag] = bemt_outputs
         self.outputs = bemt_outputs
         omega = self.inputs.omega
 
-        #--------------------------------------------------------------------------------
-        # generate rotor wake vortex distribution
-        #--------------------------------------------------------------------------------
-        props = Data()
-        props.propeller = self
-
-        # generate wake distribution for n rotor rotation
-        nrots         = self.number_rotor_rotations
-        steps_per_rot = self.number_steps_per_rotation
-        rpm           = omega/Units.rpm
-
-        # simulation parameters for n rotor rotations
-        init_timestep_offset     = 0.
-        time                     = 60*nrots/rpm[0][0]
-        number_of_wake_timesteps = steps_per_rot*nrots
-
-        self.wake_settings.init_timestep_offset     = init_timestep_offset
-        self.wake_settings.wake_development_time    = time
-        self.wake_settings.number_of_wake_timesteps = number_of_wake_timesteps
+        #---------------------------------------------------------------------------------
+        # Check for rotor wake distribution, if not present then generate for single rotor
+        #---------------------------------------------------------------------------------
+        if self.system_vortex_distribution is not None:
+            VD = self.system_vortex_distribution
+        else:
+            print("System vortex distribution not yet generated. Generating wake distribution for single rotor.")
+            VD = Data()
+            props = Data()
+            props.propeller = self
+            
+            # generate wake distribution for n rotor rotation
+            nrots         = self.number_rotor_rotations
+            steps_per_rot = self.number_steps_per_rotation
+            rpm           = omega/Units.rpm
+        
+            # simulation parameters for n rotor rotations
+            time                     = 60*nrots/rpm[0][0]
+            number_of_wake_timesteps = steps_per_rot*nrots
+        
+            self.wake_settings.wake_development_time    = time
+            self.wake_settings.number_of_wake_timesteps = number_of_wake_timesteps
+            
+            
+            Vv  = conditions.frames.inertial.velocity_vector
+            m   = len(Vv)
+            WD,_,_ = generate_propeller_wake_distribution(props,m,VD )
+            
+            VD.Wake_collapsed = WD
+            
+            self.system_vortex_distribution = VD
+            
+        
         self.use_2d_analysis                        = True
 
         # spin propeller with helical fixed-wake

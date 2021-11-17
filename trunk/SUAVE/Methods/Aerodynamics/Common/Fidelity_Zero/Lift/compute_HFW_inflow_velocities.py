@@ -27,14 +27,7 @@ def compute_HFW_inflow_velocities( prop ):
     Outputs:
         Va   - axial velocity array of shape (ctrl_pts, Nr, Na)        [m/s]
         Vt   - tangential velocity array of shape (ctrl_pts, Nr, Na)   [m/s]
-    """
-    
-    VD                       = Data()
-    omega                    = prop.inputs.omega
-    time                     = prop.wake_settings.wake_development_time
-    init_timestep_offset     = prop.wake_settings.init_timestep_offset
-    number_of_wake_timesteps = prop.wake_settings.number_of_wake_timesteps
-
+    """     
     # use results from prior bemt iteration
     prop_outputs  = prop.outputs
     cpts          = len(prop_outputs.velocity)
@@ -42,45 +35,37 @@ def compute_HFW_inflow_velocities( prop ):
     Nr            = len(prop.chord_distribution)
     r             = prop.radius_distribution
 
-    conditions = Data()
-    conditions.noise = Data()
-    conditions.noise.sources = Data()
-    conditions.noise.sources.propellers = Data()
-    conditions.noise.sources.propellers.propeller = prop_outputs
 
-    props=Data()
-    props.propeller = prop
-    identical=False
-
-    # compute radial blade section locations based on initial timestep offset
-    dt   = time/number_of_wake_timesteps
-    t0   = dt*init_timestep_offset
+    # check if VD for rotor system has already been computed
+    try:
+        VD = prop.system_vortex_distribution
+        WD = VD.Wake_collapsed
+    except:
+        print("Vortex distribution not yet computed. Generating distribution for single rotor...")
+    
+        props=Data()
+        props.propeller = prop
+        
+        # generate wake distribution using initial circulation from BEMT
+        VD = Data()
+        WD, _, _  = generate_propeller_wake_distribution(props,m,VD )   
 
     # set shape of velocitie arrays
     Va = np.zeros((cpts,Nr,Na))
     Vt = np.zeros((cpts,Nr,Na))
     for i in range(Na):
-        # increment blade angle to new azimuthal position
-        blade_angle   = (omega[0]*t0 + i*(2*np.pi/(Na))) * prop.rotation  # Positive rotation, positive blade angle
-
-        # update wake geometry
-        init_timestep_offset = blade_angle/(omega * dt)
-
-        # generate wake distribution using initial circulation from BEMT
-        WD, _, _, _, _  = generate_propeller_wake_distribution(props,identical,cpts,VD,
-                                                               init_timestep_offset, time,
-                                                               number_of_wake_timesteps,conditions )
-
+        blade_angle  = (i*(2*np.pi/(Na))) * prop.rotation
+        
         prop.wake_skew_angle = WD.wake_skew_angle
         
         # ----------------------------------------------------------------
         # Compute the wake-induced velocities at propeller blade
         # ----------------------------------------------------------------
-        # set the evaluation points in the vortex distribution: (ncpts, nblades, Nr, Ntsteps)
+        # set the evaluation points in the vortex distribution: (Na, nblades, Nr)
         r = prop.radius_distribution 
-        Yb   = prop.Wake_VD.Yblades_cp[0,0,:,0] 
-        Zb   = prop.Wake_VD.Zblades_cp[0,0,:,0] 
-        Xb   = prop.Wake_VD.Xblades_cp[0,0,:,0] 
+        Yb   = prop.Wake_VD.Yblades_cp[i,0,:] 
+        Zb   = prop.Wake_VD.Zblades_cp[i,0,:] 
+        Xb   = prop.Wake_VD.Xblades_cp[i,0,:] 
         
 
         VD.YC = (Yb[1:] + Yb[:-1])/2
@@ -90,9 +75,7 @@ def compute_HFW_inflow_velocities( prop ):
         
         VD.n_cp = np.size(VD.YC)
 
-        # Compute induced velocities at blade from the helical fixed wake
-        VD.Wake_collapsed = WD
-
+        # Compute induced velocities at blade from the system of prescribed wakes
         V_ind   = compute_wake_induced_velocity(WD, VD, cpts)
         u       = V_ind[0,:,0]   # velocity in vehicle x-frame
         v       = V_ind[0,:,1]   # velocity in vehicle y-frame
