@@ -114,25 +114,12 @@ def generate_propeller_wake_distribution(props,m,VD,init_timestep_offset, time, 
         
         num       = Na//B
         time_idx  = np.arange(nts)
-        time_idx  = np.roll(time_idx,propi.rotation*int(init_timestep_offset[0][0])) # (nts//Na)*
+        time_idx  = np.roll(time_idx,propi.rotation*int(init_timestep_offset[0][0]))
         t_idx     = np.atleast_2d(time_idx).T 
         B_idx     = np.arange(B) 
         B_loc     = (B_idx*num + t_idx )%Na 
         Gamma     = gamma_new[:,:,B_loc]  
         Gamma     = Gamma.transpose(0,3,1,2)   
-        
-
-        ## --------------------------------------------------------------------------------------------------------------
-        ## DEBUG PLOTS OF GAMMA
-        ## --------------------------------------------------------------------------------------------------------------
-        #import pylab as plt
-        #psi            = np.linspace(0,2*np.pi,Na+1)[:-1]
-        #fig0 = plt.figure(figsize=(4,4))
-        #ax0 = fig0.add_subplot(111, polar=True)
-        #ax0.contourf(psi, r, gamma[0,:,:],50,cmap='jet')
-        #plt.show()
-        ## --------------------------------------------------------------------------------------------------------------
-        ## --------------------------------------------------------------------------------------------------------------        
         
         
         # --------------------------------------------------------------------------------------------------------------
@@ -204,9 +191,9 @@ def generate_propeller_wake_distribution(props,m,VD,init_timestep_offset, time, 
         
         r_4d = np.tile(r[None,None,:,None], (m,B,1,number_of_wake_timesteps))
         
-        x0 = 0 #
-        y0 = r_4d*azi_y  #
-        z0 = r_4d*azi_z #
+        x0 = 0 
+        y0 = r_4d*azi_y 
+        z0 = r_4d*azi_z 
         
         x_pts0 = x0 + xte_rotor
         y_pts0 = y0 + yte_rotor

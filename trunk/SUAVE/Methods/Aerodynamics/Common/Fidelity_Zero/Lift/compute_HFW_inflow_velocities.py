@@ -18,7 +18,7 @@ from scipy.interpolate import interp1d
 import copy
 from SUAVE.Input_Output.VTK.save_vehicle_vtk import save_vehicle_vtks
 
-def compute_HFW_inflow_velocities( prop ):
+def compute_HFW_inflow_velocities( prop , debug=False):
     """
     Assumptions:
         None
@@ -137,7 +137,7 @@ def compute_HFW_inflow_velocities( prop ):
         #====================================================================================
         #======DEBUG: STORE VTKS AFTER NEW WAKE GENERATION===================================
         #====================================================================================       
-        debug = False
+        
         if debug:
             print("\nStoring VTKs...")
             vehicle = prop.vehicle
@@ -147,12 +147,9 @@ def compute_HFW_inflow_velocities( prop ):
             Results.identical = True
             
             conditions=None
-            save_vehicle_vtks(vehicle, conditions, Results, time_step=i,save_loc="/Users/rerha/Desktop/Test_SBS_VTKs/A60/")         
+            save_vehicle_vtks(vehicle, conditions, Results, time_step=i,save_loc=None)                           
     
-
-        #====================================================================================   
-        #====================================================================================                     
-
+        #====================================================================================    
 
         prop.vortex_distribution = VD
 

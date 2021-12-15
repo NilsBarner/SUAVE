@@ -11,6 +11,7 @@
 #           Jul 2021, E. Botero
 #           Jul 2021, R. Erhard
 #           Sep 2021, R. Erhard
+#           Dec 2021, R. Erhard
 
 # ----------------------------------------------------------------------
 #  Imports
@@ -22,11 +23,9 @@ from SUAVE.Methods.Geometry.Three_Dimensional \
 from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.compute_HFW_inflow_velocities \
      import compute_HFW_inflow_velocities
 
-from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.generate_propeller_wake_distribution import generate_propeller_wake_distribution
 # package imports
 import numpy as np
 import scipy as sp
-from scipy.interpolate import RectBivariateSpline
 
 # ----------------------------------------------------------------------
 #  Generalized Rotor Class
@@ -410,13 +409,7 @@ class Rotor(Energy_Component):
                 if ii>10000:
                     print("Rotor BEMT did not converge to a solution (Iteration Limit)")
                     break
-            ## smooth disc circulation from BEMT
-            #Gspline = RectBivariateSpline(r_1d, psi, Gamma[0,:,:],s=.5)
-            #Gamma[0,:,:] = Gspline(r_1d,psi)
 
-            #Gamma[Gamma<=0] = 1e-4
-            ##Gamma[:,0,:] = 0
-            ##Gamma[:,-1,:] = 0
 
         elif wake_method == "helical_fixed_wake":
 
@@ -443,8 +436,8 @@ class Rotor(Energy_Component):
 
 
                         # update the axial disc velocity based on new va from HFW
-                        self.outputs.disc_axial_induced_velocity = F*va #self.outputs.disc_axial_induced_velocity + 0.5*(va - self.outputs.disc_axial_induced_velocity)
-
+                        self.outputs.disc_axial_induced_velocity = F*va 
+                        
                         ii+=1
                         if ii>ii_max and va_diff>tol:
                             print("Semi-prescribed helical wake did not converge on axial inflow used for wake shape.")
@@ -460,22 +453,7 @@ class Rotor(Energy_Component):
 
                     print("\nRg: ", np.max(abs(self.outputs.disc_circulation-Gamma)))
                     self.outputs.disc_circulation = Gamma
-                ## plot converged va
-                #plt.figure()
-                #plt.plot(r_1d, (F*va)[0,:,0],label="va, converged")
-                #plt.plot(r_1d, bemt_outs.disc_axial_induced_velocity[0,:,0],label="va (BEMT)")
-                #plt.legend()
-                #plt.show()
 
-                #poly_Gnew = np.poly1d(np.polyfit(r_1d,Gamma[0,:,0],3))
-                #poly_bemt = np.poly1d(np.polyfit(r_1d,bemt_outs.disc_circulation[0,:,0],3))
-
-                #plt.plot(r_1d, Gamma[0,:,0],label="New Gamma")
-                #plt.plot(r_1d, bemt_outs.disc_circulation[0,:,0],label="Gamma (BEMT)")
-                #plt.plot(r_1d, poly_Gnew(r_1d),label="New Gamma (poly)")
-                #plt.plot(r_1d, poly_bemt(r_1d),label="Gamma (BEMT) (poly")
-                #plt.legend()
-                #plt.show()
 
             else:
                 try:
@@ -495,35 +473,6 @@ class Rotor(Energy_Component):
 
                 # compute HFW circulation at the blade
                 Gamma = 0.5*W*c*Cl*F
-
-
-
-        #
-        if self.uq_flag:
-            va += self.axial_velocities_2d
-            vt += self.tangential_velocities_2d
-            # compute new blade velocities
-            Wa   = va + Ua
-            Wt   = Ut - vt
-
-            lamdaw, F, _ = compute_inflow_and_tip_loss(r,R,Wa,Wt,B)
-
-            # Compute aerodynamic forces based on specified input airfoil or surrogate
-            Cl, Cdval, alpha, Ma,W = compute_airfoil_aerodynamics(beta,c,r,R,B,Wa,Wt,a,nu,a_loc,a_geo,cl_sur,cd_sur,ctrl_pts,Nr,Na,tc,use_2d_analysis)
-
-            # compute HFW circulation at the blade
-            Gamma = 0.5*W*c*Cl*F
-
-
-        ## smooth disc circulation
-        #Gspline = RectBivariateSpline(r_1d, psi, Gamma[0,:,:],s=.5)
-        #for i in range(Na):
-            #Gamma[0,:,i] = Gspline(r_1d,psi[i])[:,0]
-
-        #Gamma[Gamma<=0] = 1e-4
-        ##Gamma[:,0,:] = 0
-        ##Gamma[:,-1,:] = 0
-
 
 
         # tip loss correction for velocities, since tip loss correction is only applied to loads in prior BEMT iteration
@@ -1114,11 +1063,6 @@ def compute_inflow_and_tip_loss(r,R,Wa,Wt,B):
     tipfactor = B/2.0*(  (Rtip/r)**et1 - 1  )**et2/lamdaw**et3
     tipfactor[tipfactor<0.]   = 0.
     Ftip = 2.*np.arccos(np.exp(-tipfactor))/np.pi
-
-    #import pylab as plt
-    #plt.plot(r[0,:,0], Fhub[0,:,0],label="hub")
-    #plt.plot(r[0,:,0], Ftip[0,:,0],label="tip")
-    #plt.legend()
 
     F = Ftip*Fhub
 

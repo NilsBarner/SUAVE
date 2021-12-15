@@ -8,8 +8,7 @@
 #----------------------------
 # Imports
 #----------------------------
-from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.generate_vortex_distribution  \
-     import generate_vortex_distribution
+
 from SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Lift.VLM import VLM
 from SUAVE.Analyses.Aerodynamics import Vortex_Lattice
 
@@ -115,7 +114,7 @@ def save_vehicle_vtks(vehicle, conditions, Results, time_step,VLM_settings=None,
                     
                     # save prop wake
                     
-                    save_prop_wake_vtk(wVD, gamma, file, Results)#,i_prop=i)   
+                    save_prop_wake_vtk(wVD, gamma, file, Results)  
                 
                     
         try:
