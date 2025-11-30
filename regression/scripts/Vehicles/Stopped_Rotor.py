@@ -15,7 +15,7 @@ from SUAVE.Methods.Propulsion.electric_motor_sizing                       import
 from SUAVE.Methods.Propulsion                                             import propeller_design
 from SUAVE.Methods.Weights.Buildups.eVTOL.empty                           import empty
 from SUAVE.Methods.Center_of_Gravity.compute_component_centers_of_gravity import compute_component_centers_of_gravity
-from SUAVE.Methods.Geometry.Two_Dimensional.Planform import segment_properties
+from SUAVE.Methods.Geometry.Two_Dimensional.Planform import wing_segmented_planform
 
 
 import numpy as np
@@ -110,7 +110,7 @@ def vehicle_setup():
     wing.Segments.append(segment)
     
     # Fill out more segment properties automatically
-    wing = segment_properties(wing)        
+    wing = wing_segmented_planform(wing)        
 
     # add to vehicle
     vehicle.append_component(wing)
@@ -582,17 +582,17 @@ def vehicle_setup():
     propeller.design_Cl              = 0.7
     propeller.design_altitude        = 1000 * Units.feet
     propeller.design_thrust          = (Drag*2.5)/net.number_of_propeller_engines
-    propeller.variable_pitch         = True
-
-    propeller.airfoil_geometry       =  ['../Vehicles/Airfoils/NACA_4412.txt']
-    propeller.airfoil_polars         = [['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
-
+    propeller.variable_pitch         = True  
+    airfoil                          = SUAVE.Components.Airfoils.Airfoil()   
+    airfoil.coordinate_file          = '../Vehicles/Airfoils/NACA_4412.txt'
+    airfoil.polar_files              = ['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
+                                     '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
+                                     '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
+                                     '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
+                                     '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ] 
+    propeller.append_airfoil(airfoil)  
     propeller.airfoil_polar_stations = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    propeller                        = propeller_design(propeller)
+    propeller                        = propeller_design(propeller) 
     propeller.origin                 = [[16.*0.3048 , 0. ,2.02*0.3048 ]]
     net.propellers.append(propeller)
 
@@ -608,17 +608,17 @@ def vehicle_setup():
     lift_rotor.design_Cl                  = 0.7
     lift_rotor.design_altitude            = 20 * Units.feet
     lift_rotor.design_thrust              = Hover_Load/(net.number_of_lift_rotor_engines-1) # contingency for one-engine-inoperative condition
-    lift_rotor.variable_pitch             = True
-
-    lift_rotor.airfoil_geometry           =  ['../Vehicles/Airfoils/NACA_4412.txt']
-    lift_rotor.airfoil_polars             = [['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
-
+    lift_rotor.variable_pitch             = True  
+    airfoil                               = SUAVE.Components.Airfoils.Airfoil()   
+    airfoil.coordinate_file               = '../Vehicles/Airfoils/NACA_4412.txt'
+    airfoil.polar_files                   = ['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
+                                          '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
+                                          '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
+                                          '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
+                                          '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ] 
+    lift_rotor.append_airfoil(airfoil)    
     lift_rotor.airfoil_polar_stations     = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    lift_rotor                            = propeller_design(lift_rotor)
+    lift_rotor                            = propeller_design(lift_rotor)  
 
     # Appending rotors with different origins
     rotations = [1,-1,1,-1,1,-1,1,-1,1,-1,1,-1]
@@ -705,7 +705,7 @@ def vehicle_setup():
     vehicle.wings['main_wing'].thickness_to_chord      = 0.18
     vehicle.wings['main_wing'].chords.mean_aerodynamic = 0.9644599977664836
 
-    vehicle.weight_breakdown  = empty(vehicle)
+    vehicle.weight_breakdown  = empty(vehicle,settings=Data())
     compute_component_centers_of_gravity(vehicle)
     vehicle.center_of_gravity()
 

@@ -9,7 +9,7 @@
 #------------------------------------------------------------------------------
 
 import SUAVE
-from SUAVE.Core import Units, Data
+from SUAVE.Core import Units
 
 from SUAVE.Methods.Performance.propeller_single_point import propeller_single_point
 
@@ -29,8 +29,7 @@ def electric_V_h_diagram(vehicle,
                          altitude_ceiling = 2e4 * Units.ft,
                          max_speed = 130 * Units['m/s'],
                          test_omega = 800. * Units.rpm,
-                         display_plot = True,
-                         climb_rate_contours = [0.]
+                         display_plot = True, 
                          ):
     """electric_V_h_diagram(vehicle,
                             analyses,
@@ -53,6 +52,8 @@ def electric_V_h_diagram(vehicle,
         Assumptions:
 
         Assumes use of Battery Propeller Energy Network
+        Assumes identical operating conditions of propellers
+
 
         Inputs:
 
@@ -68,8 +69,7 @@ def electric_V_h_diagram(vehicle,
             altitude_ceiling                Maximum Test Altitude       [User Set]
             max_speed                       Maximum Test Speed          [User Set]
             test_omega                      Maximum Power Prop Speed    [User Set]
-            display_plot                    Flag for Plot Generation    [Boolean]
-            climb_rate_contours             Climb Rates to Display      [ft/min]
+            display_plot                    Flag for Plot Generation    [Boolean] 
 
         Outputs:
 
@@ -78,9 +78,11 @@ def electric_V_h_diagram(vehicle,
 
     # Unpack Inputs
 
-    g       = analyses.atmosphere.planet.sea_level_gravity
-    W       = vehicle.mass_properties.takeoff * g
-    S       = vehicle.reference_area
+    g               = analyses.atmosphere.planet.sea_level_gravity
+    W               = vehicle.mass_properties.takeoff * g
+    S               = vehicle.reference_area
+    Nprops          = int(vehicle.networks.battery_propeller.number_of_propeller_engines)
+    identical_props = vehicle.networks.battery_propeller.identical_propellers
 
     # Single Point Mission for Drag Determination
 
@@ -131,18 +133,29 @@ def electric_V_h_diagram(vehicle,
                 D = -results.segments.single_point.conditions.frames.wind.drag_force_vector[0][0]
 
                 # Determine Propeller Power at Altitude and Speed
-
-                P = propeller_single_point(vehicle.networks.battery_propeller,
-                                           analyses,
-                                           pitch=0.,
-                                           omega=test_omega,
-                                           altitude=altitude,
-                                           delta_isa=0.,
-                                           speed=V).power
+                
+                if identical_props:
+                    n_laps = 1
+                    p_factor = Nprops
+                else:
+                    n_laps = Nprops
+                    p_factor = 1
+                
+                Power = 0
+                for i in range(n_laps):
+                    prop_key = list(vehicle.networks.battery_propeller.propellers.keys())[i]
+                    _,res = propeller_single_point(vehicle.networks.battery_propeller.propellers[prop_key],
+                                               analyses=analyses,
+                                               pitch=0.,
+                                               omega=test_omega,
+                                               altitude=altitude,
+                                               delta_isa=0.,
+                                               speed=V)
+                    Power += res.power * p_factor
+                        
 
                 # Check if Propeller Power Exceeds Max Battery Power, Switch to Max Battery Power if So
-
-                P = np.min([P, vehicle.networks.battery_propeller.battery.max_power])
+                P = np.min([Power, vehicle.networks.battery_propeller.battery.max_power])
 
                 # Determine Climb Rate (ref. Raymer)
 
@@ -163,14 +176,11 @@ def electric_V_h_diagram(vehicle,
         speed_space             = np.transpose(speed_space)
         alt_space               = np.transpose(alt_space) / Units.ft
 
-        # Make Contour Plot of Climb Rates
-
-        CS = plt.contour(speed_space, alt_space, climb_rate, levels = climb_rate_contours)
+        # Make Contour Plot of Climb Rates 
+        CS = plt.contour(speed_space, alt_space, climb_rate)  
         plt.xlabel('Airspeed (m/s)')
         plt.ylabel('Altitude (ft)')
         plt.title('Climb Rate (ft/min)')
-        plt.clabel(CS)
-
-        plt.show()
-
+        plt.clabel(CS) 
+        
     return climb_rate

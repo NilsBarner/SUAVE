@@ -13,6 +13,7 @@ from SUAVE.Core import Units, Data
 from SUAVE.Methods.Performance.electric_V_h_diagram import electric_V_h_diagram
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('../Vehicles')
@@ -61,19 +62,21 @@ def main():
 
     climb_rate = electric_V_h_diagram(vehicle,
                                       analyses,
-                                      CL_max=1.4,
-                                      delta_isa=0.,
-                                      grid_points=5,
-                                      altitude_ceiling= 2e4 * Units.ft,
-                                      max_speed=130 * Units['m/s'],
-                                      test_omega= 1000 * Units.rpm,
+                                      CL_max          = 1.4,
+                                      delta_isa       = 0.,
+                                      grid_points     = 5,
+                                      altitude_ceiling= 1e4 * Units.ft,
+                                      max_speed       = 150 * Units.knots,
+                                      test_omega      = 1900 * Units.rpm,
                                       display_plot=True)
 
-    climb_rate_r = [[  0.        ,   0.        ,   0.        ,   0.        ,          0.        ],
-                    [  0.        ,   0.        ,   0.        ,   0.        ,          0.        ],
-                    [719.7179757 , 582.17272069, 452.68248026, 329.12481042,        212.19190451],
-                    [  0.        ,   0.        ,   0.        ,   0.        ,          0.        ],
-                    [  0.        ,   0.        ,   0.        ,   0.        ,          0.        ]]
+
+    climb_rate_r = [[  0.        ,   0.        ,   0.        ,   0.        ,              0.        ],
+                    [  0.        ,   0.        ,   0.        ,   0.        ,              0.        ],
+                    [487.63179542,   0.        ,   0.        ,   0.        ,              0.        ],
+                    [772.92643016, 666.52055528, 562.06865597, 459.0544259 ,            356.95140061],
+                    [447.06298061, 375.79491086, 305.65495126, 236.2785227 ,            167.26496564]]
+
 
     assert (np.all(np.nan_to_num(np.abs(climb_rate-climb_rate_r)/climb_rate_r) < 1e-6)), "Electric V_h Diagram Regression Failed"
 
@@ -81,5 +84,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    plt.show()
 
     print('Electric V_h Diagram Regression Passed.')

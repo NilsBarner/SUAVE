@@ -74,10 +74,10 @@ def main():
     
     # Truth results
 
-    truth_F   = 105.36115293829462
-    truth_rpm = 218.18739964349612
-    truth_i   = 130.17994767726535
-    truth_bat = 136584698.345862
+    truth_F   = 82.50753846534539
+    truth_rpm = 194.40119841317366
+    truth_i   = 86.06579017876555
+    truth_bat = 124628733.8676211
     
     print('battery energy')
     print(energy)
@@ -201,7 +201,7 @@ def mission_setup(analyses,vehicle):
     # segment attributes     
     segment.start_time     = time.strptime("Tue, Jun 21 11:30:00  2020", "%a, %b %d %H:%M:%S %Y",)
     segment.altitude       = 15.0  * Units.km 
-    segment.mach           = 0.12
+    segment.mach           = 0.1
     segment.distance       = 3050.0 * Units.km
     segment.battery_energy = vehicle.networks.solar.battery.max_energy*0.3 #Charge the battery to start
     segment.latitude       = 37.4300   # this defaults to degrees (do not use Units.degrees)
@@ -247,8 +247,6 @@ def plot_mission(results,line_style='bo-'):
     plot_solar_flux(results,line_style) 
     
     return
-
-
 
 def load_results():
     return SUAVE.Input_Output.SUAVE.load('solar_uav_mission.res')

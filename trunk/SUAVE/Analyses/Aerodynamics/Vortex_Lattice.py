@@ -12,6 +12,7 @@
 #           Sep 2020, M. Clarke 
 #           May 2021, E. Botero
 #           Jun 2021, R. Erhard
+#           Nov 2022, D. Enriquez
 
 # ----------------------------------------------------------------------
 #  Imports
@@ -31,7 +32,7 @@ from SUAVE.Methods.Aerodynamics.Supersonic_Zero.Drag.Cubic_Spline_Blender import
 
 # package imports
 import numpy as np 
-from scipy.interpolate import interp2d, RectBivariateSpline, RegularGridInterpolator
+from scipy.interpolate import RectBivariateSpline, RegularGridInterpolator
 
 # ----------------------------------------------------------------------
 #  Class
@@ -80,11 +81,7 @@ class Vortex_Lattice(Aerodynamics):
         self.settings.model_fuselage                  = False
         self.settings.model_nacelle                   = False
         self.settings.leading_edge_suction_multiplier = 1.0
-        self.settings.initial_timestep_offset         = 0
-        self.settings.wake_development_time           = 0.05
-        self.settings.number_of_wake_timesteps        = 30
         self.settings.propeller_wake_model            = False
-        self.settings.use_bemt_wake_model             = False
         self.settings.discretize_control_surfaces     = False
         self.settings.use_VORLAX_matrix_calculation   = False
         self.settings.floating_point_precision        = np.float32
@@ -129,7 +126,7 @@ class Vortex_Lattice(Aerodynamics):
         
         self.evaluate                                = None
         
-    def initialize(self,use_surrogate,n_sw,n_cw,propeller_wake_model, use_bemt_wake_model,ito,wdt,nwts,mf,mn,dcs):
+    def initialize(self,use_surrogate,n_sw,n_cw,propeller_wake_model,mf,mn,dcs):
         """Drives functions to get training samples and build a surrogate.
 
         Assumptions:
@@ -143,9 +140,6 @@ class Vortex_Lattice(Aerodynamics):
         n_sw                   number of spanwise vortices  [int]
         n_cw                   number of chordwise vortices [int]
         propeller_wake_model                                [bool] 
-        ito                    initial timestep offset      [s]            
-        wdt                    wake development time        [s]
-        nwts                   number of wake timesteps     [int]
 
         Outputs:
         None
@@ -164,10 +158,6 @@ class Vortex_Lattice(Aerodynamics):
             
         settings.use_surrogate              = use_surrogate
         settings.propeller_wake_model       = propeller_wake_model 
-        settings.use_bemt_wake_model        = use_bemt_wake_model
-        settings.initial_timestep_offset    = ito
-        settings.wake_development_time      = wdt
-        settings.number_of_wake_timesteps   = nwts
         settings.discretize_control_surfaces= dcs
         settings.model_fuselage             = mf
         settings.model_nacelle              = mn
@@ -351,7 +341,7 @@ class Vortex_Lattice(Aerodynamics):
         
         # Evaluate the VLM
         # if in transonic regime, use surrogate
-        inviscid_lift, inviscid_drag, wing_lifts, wing_drags, wing_lift_distribution, \
+        inviscid_lift, inviscid_drag, inviscid_side, wing_lifts, wing_drags, wing_lift_distribution, \
         wing_drag_distribution, induced_angle_distribution, pressure_coefficient, CYMTOT,CRMTOT,CM = \
             calculate_VLM(conditions,settings,geometry)
         
@@ -369,6 +359,9 @@ class Vortex_Lattice(Aerodynamics):
         conditions.aerodynamics.drag_breakdown.induced.inviscid_wings  = wing_drags
         conditions.aerodynamics.drag_breakdown.induced.wings_sectional = wing_drag_distribution 
         conditions.aerodynamics.drag_breakdown.induced.angle           = induced_angle_distribution
+        
+        #Side
+        conditions.aerodynamics.side_force_coefficient                 = inviscid_side
         
         # Pressure and moment coefficients
         conditions.aerodynamics.pressure_coefficient = pressure_coefficient
@@ -438,7 +431,7 @@ class Vortex_Lattice(Aerodynamics):
         konditions.freestream.mach_number       = Machs
         konditions.freestream.velocity          = zeros
         
-        total_lift, total_drag, wing_lifts, wing_drags, _, _, _, _, _, _, _ = calculate_VLM(konditions,settings,geometry)     
+        total_lift, total_drag, total_side, wing_lifts, wing_drags, _, _, _, _, _, _, _ = calculate_VLM(konditions,settings,geometry)     
     
         # Split subsonic from supersonic
         if np.sum(Machs<1.)==0:
@@ -674,6 +667,7 @@ def calculate_VLM(conditions,settings,geometry):
     results = VLM(conditions,settings,geometry)
     total_lift_coeff          = results.CL
     total_induced_drag_coeff  = results.CDi
+    total_side_coef           = results.CYTOT
     CL_wing                   = results.CL_wing  
     CDi_wing                  = results.CDi_wing 
     cl_y                      = results.cl_y     
@@ -704,4 +698,4 @@ def calculate_VLM(conditions,settings,geometry):
             wing_induced_angle[wing.tag] = alpha_i[i]
         i+=1
 
-    return total_lift_coeff, total_induced_drag_coeff, wing_lifts, wing_drags, cl_y, cdi_y, wing_induced_angle, CPi,CYMTOT,CRMTOT, CM
+    return total_lift_coeff, total_induced_drag_coeff, total_side_coef, wing_lifts, wing_drags, cl_y, cdi_y, wing_induced_angle, CPi,CYMTOT,CRMTOT, CM

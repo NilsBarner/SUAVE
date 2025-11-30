@@ -4,6 +4,7 @@
 # Created:  Nov 2021, S. Claridge
 # 
 
+
 # ----------------------------------------------------------------------
 #   Imports
 # ----------------------------------------------------------------------
@@ -22,7 +23,7 @@ from SUAVE.Core import (
 Data, Units,
 )
 from SUAVE.Methods.Propulsion.ducted_fan_sizing import ducted_fan_sizing
-   
+
 ### @ingroup Regression-scripts-turboelectric_HTS_ducted_fan_network
 def main():   
     
@@ -31,10 +32,9 @@ def main():
     
     return
 
-
 def energy_network():
 
-   # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Evaluation Conditions
     # ------------------------------------------------------------------    
     
@@ -135,6 +135,7 @@ def energy_network():
     # 6. Lead          
     # 7. CCS           
     # 8. Cryocooler    
+    # 9. Heat Exchanger
     # The components are then sized
 
     # ------------------------------------------------------------------
@@ -274,7 +275,7 @@ def energy_network():
 
     # ------------------------------------------------------------------
     #  Component 4 - Electronic Speed Controller (ESC)
-    
+
     efan.esc = SUAVE.Components.Energy.Distributors.HTS_DC_Supply()     # Could make this where the ESC is defined as a Siemens SD104
     efan.esc.tag = 'esc'
 
@@ -330,6 +331,17 @@ def energy_network():
     efan.cryocooler.min_cryo_temp      = efan.rotor.temperature     # [K]
     efan.cryocooler.ambient_temp       = 300.0                      # [K]
 
+    # ------------------------------------------------------------------
+    #  Component 9 - Cryogenic Heat Exchanger, to cool the HTS Rotor
+    efan.heat_exchanger = SUAVE.Components.Energy.Cooling.Cryogenic_Heat_Exchanger()
+    efan.heat_exchanger.tag = 'heat_exchanger'
+
+    efan.heat_exchanger.cryogen                         = SUAVE.Attributes.Cryogens.Liquid_H2()
+    efan.heat_exchanger.cryogen_inlet_temperature       =     20.0                  # [K]
+    efan.heat_exchanger.cryogen_outlet_temperature      = efan.rotor.temperature    # [K]
+    efan.heat_exchanger.cryogen_pressure                = 100000.0                  # [Pa]
+    efan.heat_exchanger.cryogen_is_fuel                 =      0.0
+
     # Sizing Conditions. The cryocooler may have greater power requirement at low altitude as the cooling requirement may be static during the flight but the ambient temperature may change.
     cryo_temp       =  50.0     # [K]
     amb_temp        = 300.0     # [K]
@@ -345,27 +357,30 @@ def energy_network():
     
     print("Sealevel static thrust ",efan.ducted_fan.sealevel_static_thrust)
     
-    results_design     = efan(state_sizing)
-    results_off_design = efan(state_off_design)
-    F                  = results_design.thrust_force_vector
-    mdot               = results_design.vehicle_mass_rate
-    F_off_design       = results_off_design.thrust_force_vector
-    mdot_off_design    = results_off_design.vehicle_mass_rate
-    
+    results_design          = efan(state_sizing)
+    results_off_design      = efan(state_off_design)
+    F                       = results_design.thrust_force_vector
+    mdot                    = results_design.vehicle_mass_rate
+    mdot_fuel               = results_design.vehicle_fuel_rate
+    mdot_additional_fuel    = results_design.vehicle_additional_fuel_rate 
+    F_off_design            = results_off_design.thrust_force_vector
+    mdot_off_design         = results_off_design.vehicle_mass_rate
     
     # Test the model 
     # Specify the expected values
     expected = Data()
-    expected.thrust = 47826.12361690928
-    expected.mdot = 0.8051162227457257
+    expected.thrust                 = 47826.12361690928
+    expected.mdot                   = 0.807913394579505
+    expected.mdot_fuel              = 0.79080567
+    expected.mdot_additional_fuel   = 0.01710773
     
     #error data function
     error =  Data()
-    error.thrust_error = (F[0][0] -  expected.thrust)/expected.thrust
-    error.mdot_error   = (mdot[0][0]-expected.mdot)/expected.mdot
+    error.thrust_error                  = (F[0][0] -  expected.thrust)/expected.thrust
+    error.mdot_error                    = (mdot[0][0]-expected.mdot)/expected.mdot
+    error.mdot_fuel_error               = (mdot_fuel[0][0]-expected.mdot_fuel)/expected.mdot_fuel
+    error.mdot_additional_fuel_error    = (mdot_additional_fuel[0][0]-expected.mdot_additional_fuel)/expected.mdot_additional_fuel
     
-    print(F[0][0])
-    print(mdot[0][0])
     for k,v in list(error.items()):
         assert(np.abs(v)<1e-6)    
         

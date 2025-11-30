@@ -74,25 +74,25 @@ def main():
             print(val)
     
     # Truth values
-    climb_throttle_1_truth   = 1.076870435474248
-    climb_throttle_2_truth   = 1.0811705275252188
-    climb_throttle_3_truth   = 0.6708679936668738
-    climb_throttle_4_truth   = 1.1265503689284677
-    climb_throttle_5_truth   = 1.1770721802348285
-    climb_throttle_6_truth   = 0.7772366352514147
-    climb_throttle_7_truth   = 0.9754619978463199
-    climb_throttle_8_truth   = 1.2263494140483848
-    climb_throttle_9_truth   = 1.339647400470607
+    climb_throttle_1_truth   = 1.0779172001580895
+    climb_throttle_2_truth   = 1.0825266956923534
+    climb_throttle_3_truth   = 0.674659924528744
+    climb_throttle_4_truth   = 1.1315563076928277
+    climb_throttle_5_truth   = 1.1836299998309165
+    climb_throttle_6_truth   = 1.8029235225146518
+    climb_throttle_7_truth   = 2.162410758508211
+    climb_throttle_8_truth   = 1.1553353775037472
+    climb_throttle_9_truth   = 1.2526488110631937
     climb_throttle_10_truth  = 1.0
-    cruise_CL_1_truth        = 0.6972564737884285
-    cruise_CL_2_truth        = 0.6975787113223217
-    cruise_CL_3_truth        = 0.7852502026240504
-    descent_throttle_1_truth = 0.09102457856960339
-    descent_throttle_2_truth = 0.24465051386674283
-    single_pt_CL_1_truth     = 0.251138262389197
-    single_pt_CL_2_truth     = 0.25113968108269286
-    loiter_CL_truth          = 0.5114262749651366
-    descent_throttle_3_truth = 0.17797156049307095
+    cruise_CL_1_truth        = 0.6922081900548479
+    cruise_CL_2_truth        = 0.6924899560446343
+    cruise_CL_3_truth        = 0.7831614422287909
+    descent_throttle_1_truth = 0.09429690800605248
+    descent_throttle_2_truth = 0.2436300668288393
+    single_pt_CL_1_truth     = 0.24927935053641762
+    single_pt_CL_2_truth     = 0.2492810778918667
+    loiter_CL_truth          = 0.5076303507170998
+    descent_throttle_3_truth = 0.17737866994148493
     
     # Store errors 
     error = Data()
@@ -118,7 +118,7 @@ def main():
      
     print('Errors:')
     print(error)
-    
+     
     for k,v in list(error.items()):
         assert(np.abs(v)<1e-6)  
     
@@ -485,6 +485,8 @@ def mission_setup(analyses):
     segment.throttle                  = 0.6
     segment.distance                  = 500 * Units.km 
     segment.state.numerics.number_control_points = 16
+    segment.state.unknowns.accel_x               = -1. * ones_row(1)
+    segment.state.unknowns.time                  = 10.
     
     # add to misison
     mission.append_segment(segment)   
@@ -590,6 +592,7 @@ def mission_setup(analyses):
     segment.analyses.extend( analyses.landing )
     segment.velocity_start           = 150 * Units.knots
     segment.velocity_end             = 100 * Units.knots
+    segment.state.unknowns.time      = 30.
     segment.friction_coefficient     = 0.4
     segment.altitude                 = 0.0
 
