@@ -16,7 +16,7 @@ from SUAVE.Components.Energy.Storages.Batteries  import Battery
 
 # package imports
 import numpy as np 
-from scipy.integrate import  cumtrapz
+# from scipy.integrate import  cumtrapz  # NILS: commented to avoid `ImportError: cannot import name 'cumtrapz' from 'scipy.integrate'`
 
 # ----------------------------------------------------------------------
 #  Lithium_Ion

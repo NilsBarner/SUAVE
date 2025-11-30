@@ -15,7 +15,7 @@ from SUAVE.Methods.Power.Battery.compute_net_generated_battery_heat            i
 
 import numpy as np
 import os
-from scipy.integrate    import  cumtrapz
+# from scipy.integrate    import  cumtrapz  # NILS: commented to avoid `ImportError: cannot import name 'cumtrapz' from 'scipy.integrate'`
 from scipy.interpolate  import RegularGridInterpolator 
 
 ## @ingroup Components-Energy-Storages-Batteries-Constant_Mass

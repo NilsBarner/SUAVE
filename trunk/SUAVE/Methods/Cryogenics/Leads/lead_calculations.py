@@ -15,7 +15,7 @@ from SUAVE.Components.Energy.Energy_Component import Energy_Component
 from SUAVE.Attributes.Solids.Solid import Solid
 from scipy import integrate
 from scipy import interpolate
-from scipy.misc import derivative
+# from scipy.misc import derivative  # NILS: commented to avoid `ImportError: cannot import name 'cumtrapz' from 'scipy.integrate'`
 import numpy as np
 
 # ----------------------------------------------------------------------
