@@ -50,7 +50,7 @@ def write_avl_airfoil_file(suave_airfoil_filename):
     # import airfoil coordinates 
     airfoil_geometry_data = import_airfoil_geometry([f_path])
     dim = len(airfoil_geometry_data.x_coordinates[0])
-              
+    
     # write file  
     with open(avl_airfoil_filename,'w') as afile:
             afile.write(airfoil_name + "\n")  

@@ -267,6 +267,7 @@ class Container(ContainerBase):
             """        
         
         for tag,analysis in self.items():
+            print('tag =', tag)
             if hasattr(analysis,'finalize'):
                 analysis.finalize(*args,**kwarg)
     

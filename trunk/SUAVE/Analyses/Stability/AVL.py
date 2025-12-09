@@ -114,8 +114,8 @@ class AVL(Stability):
         self.geometry                               = Data()
                                                     
         # Regression Status      
-        self.keep_files                             = False
-        self.save_regression_results                = False          
+        self.keep_files                             = True  # False  # NILS: save these for plotting geometry
+        self.save_regression_results                = True  # False  # NILS: save these for visualisation
         self.regression_flag                        = False 
 
     def finalize(self):
@@ -135,7 +135,7 @@ class AVL(Stability):
 
         Properties Used:
         self.geometry.tag
-        """          
+        """
         geometry                       = self.geometry
         self.tag                       = 'avl_analysis_of_{}'.format(geometry.tag) 
             
@@ -175,6 +175,7 @@ class AVL(Stability):
            neutral_point            [-] NP
 
         """          
+        # print('__call__')
         
         # Unpack
         surrogates          = self.surrogates       
@@ -184,6 +185,8 @@ class AVL(Stability):
         Cm_alpha_model      = surrogates.Cm_alpha_moment_coefficient
         Cn_beta_model       = surrogates.Cn_beta_moment_coefficient      
         neutral_point_model = surrogates.neutral_point
+        cg                  = self.geometry.mass_properties.center_of_gravity[0][0]  # copied over from SUAVE 2.5.2
+        MAC                 = self.geometry.wings.main_wing.chords.mean_aerodynamic  # copied over from SUAVE 2.5.2
         
         # set up data structures
         static_stability    = Data()
@@ -205,7 +208,8 @@ class AVL(Stability):
         static_stability.CM            = CM
         static_stability.Cm_alpha      = Cm_alpha 
         static_stability.Cn_beta       = Cn_beta   
-        static_stability.neutral_point = NP 
+        static_stability.neutral_point = NP
+        static_stability.static_margin = (NP - cg)/MAC
  
         results         = Data()
         results.static  = static_stability
@@ -239,26 +243,35 @@ class AVL(Stability):
           Mach             [-]
         self.training_file (optional - file containing previous AVL data)
         """ 
+        # print('sample_training')
         # Unpack
         run_folder    = os.path.abspath(self.settings.filenames.run_folder)
         geometry      = self.geometry
+        # print("geometry.wings['main_wing'].Segments.keys() =", geometry.wings['main_wing'].Segments.keys())
         training      = self.training 
         trim_aircraft = self.settings.trim_aircraft  
         AoA           = training.angle_of_attack
         Mach          = training.Mach
         atmosphere    = SUAVE.Analyses.Atmospheric.US_Standard_1976()
         atmo_data     = atmosphere.compute_values(altitude = 0.0)         
+        cg            = geometry.mass_properties.center_of_gravity[0][0]  # copied over from SUAVE 2.5.2
+        MAC           = geometry.wings.main_wing.chords.mean_aerodynamic  # copied over from SUAVE 2.5.2
                       
         CM            = np.zeros((len(AoA),len(Mach)))
         Cm_alpha      = np.zeros_like(CM)
         Cn_beta       = np.zeros_like(CM)
         NP            = np.zeros_like(CM)
+        static_margin = np.zeros_like(CM)  # copied over from SUAVE 2.5.2
+        Cl_beta = np.zeros_like(CM)  # added by NILS
+        Cn_r = np.zeros_like(CM)  # added by NILS
+        Cl_r = np.zeros_like(CM)  # added by NILS
        
         # remove old files in run directory  
         if os.path.exists('avl_files'):
             if not self.regression_flag:
                 rmtree(run_folder)
                 
+        results_list = []  # NILS: added to store dynamic stability analysis results
         for i,_ in enumerate(Mach):
             # Set training conditions
             run_conditions = Aerodynamics()
@@ -272,13 +285,18 @@ class AVL(Stability):
             
             #Run Analysis at AoA[i] and Mach[i]
             results =  self.evaluate_conditions(run_conditions, trim_aircraft)
+            results_list.append(results)  # NILS: added to store dynamic stability analysis results
 
             # Obtain CM Cm_alpha, Cn_beta and the Neutral Point 
             CM[:,i]       = results.aerodynamics.Cmtot[:,0]
             Cm_alpha[:,i] = results.stability.static.Cm_alpha[:,0]
             Cn_beta[:,i]  = results.stability.static.Cn_beta[:,0]
             NP[:,i]       = results.stability.static.neutral_point[:,0]
-        
+            static_margin[:,i] = (results.stability.static.neutral_point[:,0] - cg) / MAC  # copied over from SUAVE 2.5.2
+            Cl_beta[:,i]  = results.stability.static.Cl_beta[:,0]
+            Cn_r[:,i]  = results.stability.static.Cn_r[:,0]
+            Cl_r[:,i]  = results.stability.static.Cl_r[:,0]
+            
         if self.training_file:
             # load data 
             data_array   = np.loadtxt(self.training_file)  
@@ -299,8 +317,145 @@ class AVL(Stability):
             CM_1D       = CM.reshape([len(AoA)*len(Mach),1]) 
             Cm_alpha_1D = Cm_alpha.reshape([len(AoA)*len(Mach),1])  
             Cn_beta_1D  = Cn_beta.reshape([len(AoA)*len(Mach),1])         
-            NP_1D       = Cn_beta.reshape([len(AoA)*len(Mach),1]) 
-            np.savetxt(geometry.tag+'_stability_data.txt',np.hstack([CM_1D,Cm_alpha_1D, Cn_beta_1D,NP_1D ]),fmt='%10.8f',header='   CM       Cm_alpha       Cn_beta       NP ')
+            NP_1D       = NP.reshape([len(AoA)*len(Mach),1])  # NILS: TYPO - said `Cn_beta` like in line above
+            static_margin_1D = static_margin.reshape([len(AoA)*len(Mach),1])  # copied over from SUAVE 2.5.2
+            Cl_beta_1D = Cl_beta.reshape([len(AoA)*len(Mach),1])  # added by NILS
+            Cn_r_1D = Cn_r.reshape([len(AoA)*len(Mach),1])  # added by NILS
+            Cl_r_1D = Cl_r.reshape([len(AoA)*len(Mach),1])  # added by NILS
+            # print("geometry.tag+'_stability_data.txt' =", geometry.tag+'_stability_data.txt')
+            np.savetxt(
+                geometry.tag+'_stability_data.txt',
+                np.hstack([
+                    CM_1D,Cm_alpha_1D, Cn_beta_1D,NP_1D,static_margin_1D, Cl_beta_1D, Cn_r_1D, Cl_r_1D,
+                ]),fmt='%10.8f',header='   CM       Cm_alpha       Cn_beta       NP       static_margin       Cl_beta       Cn_r       Cl_r')
+            
+        # =============================================================================
+        # NILS: save dynamic stability results too
+        if self.save_regression_results:
+            
+            # Loop over dynamic stability analysis results across all Mach numbers
+            final_out_list = []
+            for results in results_list:
+            
+                # Extract SUAVE dynamic stability results
+                dyn = results.dynamic_stability
+                long = dyn.LongModes
+                lat = dyn.LatModes
+            
+                # ---- Collect all fields (robust to scalars, 1D arrays, lists, eigenvalues) ---- #
+                fields = [
+                    long.phugoidInd,
+                    long.phugoidFreqHz,
+                    long.phugoidDamp,
+                    long.phugoidTimeDoubleHalf,
+                    long.shortPeriodInd,
+                    long.shortPeriodFreqHz,
+                    long.shortPeriodDamp,
+                    long.shortPeriodTimeDoubleHalf,
+            
+                    lat.dutchRollInd,
+                    lat.dutchRollFreqHz,
+                    lat.dutchRollDamping,
+                    lat.dutchRollTimeDoubleHalf,
+                    lat.dutchRoll_mode_real,
+                    lat.rollSubsistenceInd,
+                    lat.rollSubsistenceFreqHz,
+                    lat.rollSubsistenceTimeConstant,
+                    lat.rollSubsistenceDamping,
+                    lat.spiralInd,
+                    lat.spiralFreqHz,
+                    lat.spiralTimeDoubleHalf,
+                    lat.spiralDamping,
+            
+                    dyn.pMax,
+                ]
+                
+                # =============================================================================
+                # @ NILS: next, add long.polyLon and lat.polyLat to header below!
+                # =============================================================================
+            
+                # Convert each to a 1D numpy array
+                cols = [np.atleast_1d(np.array(f)) for f in fields]
+            
+                # Determine max length
+                L = max(len(c) for c in cols)
+            
+                # Pad columns to equal length with NaNs
+                cols_padded = [
+                    np.pad(c, (0, L - len(c)), mode='constant', constant_values=np.nan)
+                    for c in cols
+                ]
+            
+                # Build final 2D array (L rows × 17 columns)
+                data_out = np.column_stack(cols_padded)
+            
+                # ----------------------- Write to text file ----------------------------- #
+                header = (
+                    "phugoidInd  phugoidFreqHz  phugoidDamp  phugoidTimeDoubleHalf  "
+                    "shortPeriodInd  shortPeriodFreqHz  shortPeriodDamp  shortPeriodTimeDoubleHalf  "
+                    "dutchRollInd  dutchRollFreqHz  dutchRollDamping  dutchRollTimeDoubleHalf  dutchRoll_mode_real  "
+                    "rollSubsistenceInd  rollSubsistenceFreqHz  rollSubsistenceTimeConstant  rollSubsistenceDamping  "
+                    "spiralInd  spiralFreqHz  spiralTimeDoubleHalf  spiralDamping  "
+                    "pMax  "
+                    "Long_Re1  Long_Im1  Long_Re2  Long_Im2  Long_Re3  Long_Im3  Long_Re4  Long_Im4  "
+                    "Lat_Re1   Lat_Im1   Lat_Re2   Lat_Im2   Lat_Re3   Lat_Im3   Lat_Re4   Lat_Im4  "
+                    "Long_A  Long_B  Long_C  Long_D  Long_E  "
+                    "Lat_A  Lat_B  Lat_C  Lat_D  Lat_E"
+                )
+                # ---------- Save LongModes and LatModes in same output file ---------- #
+    
+                # Convert complex matrices to real+imag pairs
+                def split_complex_matrix(M):
+                    M = np.asarray(M)
+                    real = M.real
+                    imag = M.imag
+                    # stack as [Re1 Im1 Re2 Im2 ...]
+                    cols = []
+                    for k in range(M.shape[1]):
+                        cols.append(real[:, k])
+                        cols.append(imag[:, k])
+                    return np.column_stack(cols)
+                
+                # Longitudinal modes (Nx4 complex → Nx8 real)
+                long_modes_mat = split_complex_matrix(long.LongModes)
+                
+                # Lateral-directional modes (Nx4 complex → Nx8 real)
+                lat_modes_mat = split_complex_matrix(lat.LatModes)
+                
+                # Pad dynamic scalar/vector data to same number of rows as modes
+                n_long = long_modes_mat.shape[0]
+                n_lat = lat_modes_mat.shape[0]
+                nrows = max(n_long, n_lat, data_out.shape[0])
+                
+                def pad_rows(A, n):
+                    if A.shape[0] == n:
+                        return A
+                    pad = np.full((n - A.shape[0], A.shape[1]), np.nan)
+                    return np.vstack((A, pad))
+                
+                data_out_padded = pad_rows(data_out, nrows)
+                long_modes_padded = pad_rows(long_modes_mat, nrows)
+                lat_modes_padded = pad_rows(lat_modes_mat, nrows)
+                long_poly_padded = np.array(long.polyLon)
+                lat_poly_padded = np.array(lat.polyLat)
+                
+                # Final array: [dynamic stability scalars | LongModes | LatModes]
+                final_out = np.hstack([data_out_padded, long_modes_padded, lat_modes_padded, long_poly_padded, lat_poly_padded])
+                final_out_list.append(final_out)
+                
+            # Stack dynamic stability analysis results across all Mach numbers
+            final_out_array = np.vstack(final_out_list)
+                
+            np.savetxt(
+                geometry.tag + "_dynamic_stability_data.txt",
+                final_out_array,  # data_out,
+                fmt="%12.6f",
+                header=header,
+                comments="",  # prevents '#' from being added
+            )
+        
+            sys.exit("Saved SUAVE dynamic stability results to dynamic_stability_data.txt")
+        # =============================================================================
         
         # Store training data
         # Save the data for regression
@@ -340,6 +495,7 @@ class AVL(Stability):
         Properties Used:
         No others
         """  
+        # print('build_surrogate')
         # Unpack data
         training                                    = self.training
         AoA_data                                    = training.angle_of_attack
@@ -353,7 +509,8 @@ class AVL(Stability):
         self.surrogates.Cm_alpha_moment_coefficient = RectBivariateSpline(AoA_data, mach_data, Cm_alpha_data) 
         self.surrogates.Cn_beta_moment_coefficient  = RectBivariateSpline(AoA_data, mach_data, Cn_beta_data ) 
         self.surrogates.neutral_point               = RectBivariateSpline(AoA_data, mach_data, NP_data      )  
-                                                       
+                    
+        # raise Exception('Follow traceback from here.')                                   
         return
 
     
@@ -389,7 +546,8 @@ class AVL(Stability):
           batch_file
           deck_file
           cases
-        """           
+        """    
+        # print('evaluate_conditions')
         
         # unpack
         run_folder                       = os.path.abspath(self.settings.filenames.run_folder)
@@ -404,6 +562,11 @@ class AVL(Stability):
         deck_template                    = self.settings.filenames.deck_template 
         
         # rename defaul avl aircraft tag
+        # print('self.__class__ =', self.__class__)
+        # print('self.geometry._base =', self.geometry._base)
+        # raise Exception
+        # import sys
+        # sys.exit()
         self.tag                         = 'avl_analysis_of_{}'.format(self.geometry.tag) 
         self.settings.filenames.features = self.geometry._base.tag + '.avl'
         self.settings.filenames.mass_file= self.geometry._base.tag + '.mass'
@@ -470,10 +633,16 @@ class AVL(Stability):
         # Dynamic Stability & System Matrix Computation
         # -----------------------------------------------------------------------------------------------------------------------      
         # Dynamic Stability
-        if np.count_nonzero(self.geometry.mass_properties.moments_of_inertia.tensor) > 0:  
-                results = compute_dynamic_flight_modes(results,self.geometry,run_conditions,cases)        
+        # print('self.geometry.mass_properties.moments_of_inertia.tensor =', self.geometry.mass_properties.moments_of_inertia.tensor)
+        if np.count_nonzero(self.geometry.mass_properties.moments_of_inertia.tensor) > 0:
+            results = compute_dynamic_flight_modes(results,self.geometry,run_conditions,cases)        
+            
+        # print('TEST results.dynamic_stability.LongModes =', results.dynamic_stability.LongModes)
+        # sys.exit()
              
         if not self.keep_files:
-            rmtree( run_folder )           
- 
+            rmtree( run_folder )   
+        
+        # sys.exit('Stop here.')
+        
         return results

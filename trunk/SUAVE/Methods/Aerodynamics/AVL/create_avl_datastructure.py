@@ -135,7 +135,7 @@ def populate_wing_sections(avl_wing,suave_wing):
         n_segments           = len(segments.keys())
         segment_sweeps       = []
         origin               = []
-
+        
         origin.append(suave_wing.origin)
 
         for i_segs in range(n_segments):

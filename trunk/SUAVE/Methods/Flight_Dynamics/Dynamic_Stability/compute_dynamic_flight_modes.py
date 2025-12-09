@@ -91,7 +91,7 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
         CLon[i,:,:] = np.eye(4)       
     DLon = np.zeros((num_cases,4,1))
     
-    Cw         = m * g / (qDyn0 * S_ref) 
+    Cw         = m * g / (qDyn0 * S_ref)  # NILS: should this not have a "-" sign? 
     Cxu        = st.CX_u
     Xu         = rho * u0 * S_ref * Cw * np.sin(theta0) + 0.5 * rho * u0 * S_ref * Cxu
     Cxalpha    = (CLtot - 2 * CLtot / (np.pi * AR * e ) * st.CL_alpha)
@@ -138,7 +138,6 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
                     BLon[:,2,0] = (Me / Iyy + MwDot / Iyy * Ze / (m - ZwDot)).T[0]
                     BLon[:,3,0] = 0
                     
-    
     ALon[:,0,0] = (Xu / m).T[0]
     ALon[:,0,1] = (Xw / m).T[0]
     ALon[:,0,2] =  Xq / m 
@@ -155,28 +154,40 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
     ALon[:,3,1] = 0
     ALon[:,3,2] = 1
     ALon[:,3,3] = 0
-     
+    
     # Look at eigenvalues and eigenvectors
     LonModes                  = np.zeros((num_cases,4), dtype = complex)
+    _phugoidInd = np.zeros((num_cases,1))  # added by NILS
     phugoidFreqHz             = np.zeros((num_cases,1))
     phugoidDamping            = np.zeros((num_cases,1))
     phugoidTimeDoubleHalf     = np.zeros((num_cases,1))
+    _shortPeriodInd = np.zeros((num_cases,1))  # added by NILS
     shortPeriodFreqHz         = np.zeros((num_cases,1))
     shortPeriodDamping        = np.zeros((num_cases,1))
     shortPeriodTimeDoubleHalf = np.zeros((num_cases,1))
+    _polyLon = np.zeros((num_cases,5))  # added by NILS
     
     for i in range(num_cases):
         D  , V = np.linalg.eig(ALon[i,:,:]) # State order: u, w, q, theta
         LonModes[i,:] = D
         
+        # =============================================================================
+        # Calculate coefficients of characteristic equation
+        # see 5-3 of AE3202 Flight Dynamics Lecture Notes
+        polyLon = np.poly(ALon[i,:,:])  # returns [A, B, C, D, E]
+        _polyLon[i] = polyLon
+        # =============================================================================
+        
         # Find phugoid
         phugoidInd               = np.argmax(V[0,:]) # u is the primary state involved
+        _phugoidInd[i] = phugoidInd  # added by NILS
         phugoidFreqHz[i]         = abs(LonModes[i,phugoidInd]) / 2 / np.pi
         phugoidDamping[i]        = -np.cos(np.angle(LonModes[i,phugoidInd]))
         phugoidTimeDoubleHalf[i] = np.log(2) / abs(2 * np.pi * phugoidFreqHz[i] * phugoidDamping[i])
         
         # Find short period
         shortPeriodInd               = np.argmax(V[1,:]) # w is the primary state involved
+        _shortPeriodInd[i] = shortPeriodInd  # added by NILS
         shortPeriodFreqHz[i]         = abs(LonModes[i, shortPeriodInd]) / 2 / np.pi
         shortPeriodDamping[i]        = -np.cos(np.angle(LonModes[i, shortPeriodInd ]))
         shortPeriodTimeDoubleHalf[i] = np.log(2) / abs(2 * np.pi * shortPeriodFreqHz[i] * shortPeriodDamping[i]) 
@@ -198,8 +209,14 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
         R       = np.array( [[np.cos(AoA[i][0]*Units.degrees) ,  - np.sin(AoA[i][0]*Units.degrees) ], [ np.sin( AoA[i][0]*Units.degrees) , np.cos(AoA[i][0]*Units.degrees)]])
         modI    = np.array([[moments_of_inertia[0][0],moments_of_inertia[0][2]],[moments_of_inertia[2][0],moments_of_inertia[2][2]]] ) 
         INew    = R * modI  * np.transpose(R)
+        # # =============================================================================
+        # INew = R @ modI @ R.T  # CHECK WHETHER THIS IS THE CORRECT FORM!
+        # # =============================================================================
         IxxStab =  INew[0,0]
         IxzStab = -INew[0,1]
+        # # =============================================================================
+        # IxzStab = INew[0,1]  # ARBITRARY "-" SIGN
+        # # =============================================================================
         IzzStab =  INew[1,1]
         Ixp[i]  = (IxxStab * IzzStab - IxzStab**2) / IzzStab
         Izp[i]  = (IxxStab * IzzStab - IxzStab**2) / IxxStab
@@ -248,26 +265,42 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
     ALat[:,3,3] = 0
                                 
     LatModes                    = np.zeros((num_cases,4),dtype=complex)
+    _dutchRollInd = np.zeros((num_cases,1))  # added by NILS
     dutchRollFreqHz             = np.zeros((num_cases,1))
     dutchRollDamping            = np.zeros((num_cases,1))
     dutchRollTimeDoubleHalf     = np.zeros((num_cases,1))
+    _rollInd = np.zeros((num_cases,1))  # added by NILS
     rollSubsistenceFreqHz       = np.zeros((num_cases,1))
     rollSubsistenceTimeConstant = np.zeros((num_cases,1))
     rollSubsistenceDamping      = np.zeros((num_cases,1))
+    _spiralInd = np.zeros((num_cases,1))  # added by NILS
     spiralFreqHz                = np.zeros((num_cases,1))
     spiralTimeDoubleHalf        = np.zeros((num_cases,1))
     spiralDamping               = np.zeros((num_cases,1))
     dutchRoll_mode_real         = np.zeros((num_cases,1))
+    _polyLat = np.zeros((num_cases,5))  # added by NILS
     
     for i in range(num_cases):        
         D  , V = np.linalg.eig(ALat[i,:,:]) # State order: u, w, q, theta
         LatModes[i,:] = D  
+        
+        # =============================================================================
+        # Calculate coefficients of characteristic equation
+        # see 5-3 of AE3202 Flight Dynamics Lecture Notes
+        polyLat = np.poly(ALat[i,:,:])  # returns [A, B, C, D, E]
+        _polyLat[i] = polyLat  # added by NILS
+        # =============================================================================
         
         # Find dutch roll (complex pair)
         done = 0
         for j in range(3):
             for k in range(j+1,4):
                 if LatModes[i,j].real ==  LatModes[i,k].real:
+                # # =============================================================================
+                # if np.isclose(LatModes[i,j].imag, -LatModes[i,k].imag, rtol=1e-6) \
+                #     and np.isclose(LatModes[i,j].real,  LatModes[i,k].real, rtol=1e-6):
+                # # =============================================================================
+                    _dutchRollInd[i] = j  # added by NILS
                     dutchRollFreqHz[i] = abs(LatModes[i,j]) / 2 / np.pi
                     dutchRollDamping[i] = -np.cos(np.angle(LatModes[i,j]))
                     dutchRollTimeDoubleHalf[i] = np.log(2) / abs(2 * np.pi * dutchRollFreqHz[i] * dutchRollDamping[i])
@@ -282,12 +315,14 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
         tmpInd   = np.setdiff1d(diff_vec , [j,k])
         rollInd  = np.argmax(abs(LatModes[i,tmpInd])) # higher frequency than spiral
         rollInd  = tmpInd[rollInd]
+        _rollInd[i] = rollInd  # added by NILS
         rollSubsistenceFreqHz[i]       = abs(LatModes[i,rollInd]) / 2 / np.pi
         rollSubsistenceDamping[i]      = - np.sign(LatModes[i,rollInd].real)
         rollSubsistenceTimeConstant[i] = 1 / (2 * np.pi * rollSubsistenceFreqHz[i] * rollSubsistenceDamping[i])
         
         # Find spiral mode
         spiralInd               = np.setdiff1d(diff_vec,[j,k,rollInd])
+        _spiralInd[i] = spiralInd  # added by NILS
         spiralFreqHz[i]         = abs(LatModes[i,spiralInd]) / 2 / np.pi
         spiralDamping[i]        = - np.sign(LatModes[i,spiralInd].real)
         spiralTimeDoubleHalf[i] = np.log(2) / abs(2 * np.pi * spiralFreqHz[i] * spiralDamping[i])
@@ -313,24 +348,31 @@ def compute_dynamic_flight_modes(results,aircraft,flight_conditions,cases):
     # ------------------------------------------------------------------------------------------------------------------------  
     results.dynamic_stability.LongModes.LongModes                    = LonModes
     #results.dynamic_stability.LongModes.LongSys                      = LonSys    
+    results.dynamic_stability.LongModes.phugoidInd = _phugoidInd  # added by NILS
     results.dynamic_stability.LongModes.phugoidFreqHz                = phugoidFreqHz
     results.dynamic_stability.LongModes.phugoidDamp                  = phugoidDamping
     results.dynamic_stability.LongModes.phugoidTimeDoubleHalf        = phugoidTimeDoubleHalf
+    results.dynamic_stability.LongModes.shortPeriodInd = _shortPeriodInd  # added by NILS
     results.dynamic_stability.LongModes.shortPeriodFreqHz            = shortPeriodFreqHz
     results.dynamic_stability.LongModes.shortPeriodDamp              = shortPeriodDamping
     results.dynamic_stability.LongModes.shortPeriodTimeDoubleHalf    = shortPeriodTimeDoubleHalf
+    results.dynamic_stability.LongModes.polyLon = _polyLon  # added by NILS
                                                                     
     results.dynamic_stability.LatModes.LatModes                      = LatModes  
     #results.dynamic_stability.LatModes.Latsys                        = LatSys   
+    results.dynamic_stability.LatModes.dutchRollInd = _dutchRollInd  # added by NILS
     results.dynamic_stability.LatModes.dutchRollFreqHz               = dutchRollFreqHz
     results.dynamic_stability.LatModes.dutchRollDamping              = dutchRollDamping
     results.dynamic_stability.LatModes.dutchRollTimeDoubleHalf       = dutchRollTimeDoubleHalf
     results.dynamic_stability.LatModes.dutchRoll_mode_real           = dutchRoll_mode_real 
+    results.dynamic_stability.LatModes.rollSubsistenceInd = _rollInd  # added by NILS
     results.dynamic_stability.LatModes.rollSubsistenceFreqHz         = rollSubsistenceFreqHz
     results.dynamic_stability.LatModes.rollSubsistenceTimeConstant   = rollSubsistenceTimeConstant
     results.dynamic_stability.LatModes.rollSubsistenceDamping        = rollSubsistenceDamping
+    results.dynamic_stability.LatModes.spiralInd = _spiralInd  # added by NILS
     results.dynamic_stability.LatModes.spiralFreqHz                  = spiralFreqHz
     results.dynamic_stability.LatModes.spiralTimeDoubleHalf          = spiralTimeDoubleHalf 
     results.dynamic_stability.LatModes.spiralDamping                 = spiralDamping
+    results.dynamic_stability.LatModes.polyLat = _polyLat  # added by NILS
     
     return results 

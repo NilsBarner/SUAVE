@@ -75,7 +75,8 @@ def call_avl(avl_object):
             ctime = time.ctime() # Current date and time stamp
     
             with open(in_deck,'r') as commands:
-                print_output = False
+                # print_output = False
+                print_output = True  # NILS: uncomment for debugging
                 
                 # Initialize suppression of console window output
                 if print_output == False:
@@ -83,6 +84,9 @@ def call_avl(avl_object):
                     sys.stdout = devnull       
                     
                 # Run AVL
+                print('<><><>')
+                print(avl_call)
+                print('<><><>')
                 avl_run = subprocess.Popen([avl_call,geometry],stdout=sys.stdout,stderr=sys.stderr,stdin=subprocess.PIPE)
                 for line in commands:
                     avl_run.stdin.write(line.encode('utf-8'))
