@@ -6,7 +6,8 @@
 #           Jan 2020, T. MacDonald
 
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
     pass # This allows SUAVE to build without OpenVSP
 import numpy as np

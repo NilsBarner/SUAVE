@@ -14,7 +14,7 @@ from .purge_files import purge_files
 from SUAVE.Methods.Aerodynamics.AVL.Data.Settings    import Settings
 import numpy as np
 import shutil
-from .create_avl_datastructure import translate_avl_wing, translate_avl_body 
+from .create_avl_datastructure import translate_avl_wing, translate_avl_body, translate_avl_nacelle_nils  # NILS: added 'translate_avl_nacelle
 
 ## @ingroup Methods-Aerodynamics-AVL
 def write_geometry(avl_object,run_script_path):
@@ -57,8 +57,18 @@ def write_geometry(avl_object,run_script_path):
             
         for b in aircraft.fuselages:
             avl_body  = translate_avl_body(b)
-            body_text = make_body_text(avl_body,number_chordwise_vortices)
+            body_text = make_body_text(avl_body,number_spanwise_vortices,number_chordwise_vortices)  # NILS: added second argument
             geometry.write(body_text)
+            
+        # NILS: TODO implement separate chord- and spanwise number of vortices for nacelles
+        for n in aircraft.nacelles:
+            avl_nacelle = translate_avl_nacelle_nils(n)
+            
+            if n.flow_through == True:
+                nacelle_text = make_surface_text(avl_nacelle, 12, 6)
+            elif n.flow_through == False:
+                nacelle_text = make_body_text(avl_nacelle, 11, 6)  # NILS: added second argument
+            geometry.write(nacelle_text)
             
     return
 
@@ -152,47 +162,78 @@ def make_surface_text(avl_wing,number_spanwise_vortices,number_chordwise_vortice
 SURFACE
 {0}
 #Nchordwise  Cspace   Nspanwise  Sspace
-{1}         {2}         {3}      {4}{5}
-'''        
+{1}         {2}         {3}      {4}{5}{6}{7}{8}
+'''  # NILS: added {6}{7}{8} and reassigned {5}
     # Unpack inputs
     symm = avl_wing.symmetric
     name = avl_wing.tag
+    
+    # NILS
+    if avl_wing.tag == 'nacelle':
+        ycomp = '\n\nCOMPONENT\n1\n'
+        yscale = f'\n\nSCALE\n{avl_wing.x_scale}  {avl_wing.y_scale}  {avl_wing.z_scale}\n'
+        ytransl = f'\n\nTRANSLATE\n{avl_wing.x_transl}  {avl_wing.y_transl}  {avl_wing.z_transl}\n'
+    else:
+        ycomp     = ' ' 
+        yscale     = ' ' 
+        ytransl     = ' ' 
 
     if symm:
         ydup = '\n\nYDUPLICATE\n0.0\n' # Duplication of wing about xz plane
     else:
         ydup     = ' ' 
     
-    # Vertical Wings
-    if avl_wing.vertical:
-        # Define precision of analysis. See AVL documentation for reference 
-        chordwise_vortex_spacing = 1.0
-        spanwise_vortex_spacing  = -1.1                              # cosine distribution i.e. || |   |    |    |  | ||
-        ordered_tags = sorted(avl_wing.sections, key = lambda x: x.origin[0][2])
-        
-        # Write text 
-        surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ydup)
-        for i in range(len(ordered_tags)):
-            section_text    = make_wing_section_text(ordered_tags[i])
-            surface_text    = surface_text + section_text
-            
-    # Horizontal Wings        
-    else:        
+    # NILS: Circular nacelles
+    if avl_wing.tag == 'nacelle':
         # Define precision of analysis. See AVL documentation for reference
         chordwise_vortex_spacing = 1.0        
-        spanwise_vortex_spacing  = 1.0                              # cosine distribution i.e. || |   |    |    |  | ||
-        ordered_tags = sorted(avl_wing.sections, key = lambda x: x.origin[0][1])
+        spanwise_vortex_spacing  = 0.0
+        ordered_tags = sorted(
+            avl_wing.sections,
+            key=lambda s: np.arctan2(s.origin[0][2], s.origin[0][1])
+        )  # sort by angle rather than spanwise coordinate
     
         # Write text  
-        surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ydup)
+        # surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ydup)
+        surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ycomp,ydup,yscale,ytransl)
         for i in range(len(ordered_tags)):
-            section_text    = make_wing_section_text(ordered_tags[i])
+            section_text    = make_turbofan_nacelle_section_text_nils(ordered_tags[i])
             surface_text    = surface_text + section_text
-
+            
+    else:
+    
+        # Vertical Wings
+        if avl_wing.vertical:
+            # Define precision of analysis. See AVL documentation for reference 
+            chordwise_vortex_spacing = 1.0
+            spanwise_vortex_spacing  = -1.1                              # cosine distribution i.e. || |   |    |    |  | ||
+            ordered_tags = sorted(avl_wing.sections, key = lambda x: x.origin[0][2])
+            
+            # Write text 
+            # surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ydup)
+            surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ycomp,ydup,yscale,ytransl)
+            for i in range(len(ordered_tags)):
+                section_text    = make_wing_section_text(ordered_tags[i])
+                surface_text    = surface_text + section_text
+        
+        # Horizontal Wings        
+        else:        
+            # Define precision of analysis. See AVL documentation for reference
+            chordwise_vortex_spacing = 1.0        
+            spanwise_vortex_spacing  = 1.0                              # cosine distribution i.e. || |   |    |    |  | ||
+            ordered_tags = sorted(avl_wing.sections, key = lambda x: x.origin[0][1])
+        
+            # Write text  
+            # surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ydup)
+            surface_text = surface_base.format(name,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices ,spanwise_vortex_spacing,ycomp,ydup,yscale,ytransl)
+            for i in range(len(ordered_tags)):
+                section_text    = make_wing_section_text(ordered_tags[i])
+                surface_text    = surface_text + section_text
+    
     return surface_text
 
 
-def make_body_text(avl_body,number_chordwise_vortices):   
+def make_body_text(avl_body,number_spanwise_vortices,number_chordwise_vortices):   
     """This function writes the body text using the template required for the AVL executable to read
 
     Assumptions:
@@ -218,17 +259,23 @@ def make_body_text(avl_body,number_chordwise_vortices):
 SURFACE
 {0}
 #Nchordwise  Cspace   Nspanwise  Sspace
-{1}           {2}      
-'''
+{1}           {2}        {3}      {4}{5}
+'''  # NILS: added {3}{4}{5}
     # Unpack inputs
     name = avl_body.tag
     
     # Define precision of analysis. See AVL documentation for reference 
     chordwise_vortex_spacing = 1.0 
     
+    if name == 'nacelle':
+        ydup = '\n\nYDUPLICATE\n0.0\n' # Duplication of wing about xz plane
+    else:
+        ydup = ' ' 
+    
     # Form the horizontal part of the + shaped fuselage    
     hname           = name + '_horizontal'
-    horizontal_text = surface_base.format(hname,number_chordwise_vortices,chordwise_vortex_spacing)
+    spanwise_vortex_spacing  = 0.0  # NILS: impose spanwise symmetry
+    horizontal_text = surface_base.format(hname,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices,spanwise_vortex_spacing,ydup)  # NILS: added last three arguments
        
     ordered_tags = []
     ordered_tags = sorted(avl_body.sections.horizontal, key = lambda x: x.origin[1])
@@ -238,7 +285,8 @@ SURFACE
         
     # Form the vertical part of the + shaped fuselage
     vname         = name + '_vertical'
-    vertical_text = surface_base.format(vname,number_chordwise_vortices,chordwise_vortex_spacing)   
+    spanwise_vortex_spacing  = 0.0  # NILS: impose spanwise symmetry
+    vertical_text = surface_base.format(vname,number_chordwise_vortices,chordwise_vortex_spacing,number_spanwise_vortices,spanwise_vortex_spacing,ydup)  # NILS: added last three arguments
     ordered_tags = []
     ordered_tags = sorted(avl_body.sections.vertical, key = lambda x: x.origin[2])
     for i in range(len(ordered_tags)):
@@ -291,7 +339,7 @@ SECTION
     chord         = avl_section.chord
     ainc          = avl_section.twist
     airfoil_coord = avl_section.airfoil_coord_file
-    naca_airfoil  = avl_section.naca_airfoil 
+    naca_airfoil  = avl_section.naca_airfoil
      
     wing_section_text = section_base.format(round(x_le,4),round(y_le,4), round(z_le,4),round(chord,4),round(ainc,4))
     if airfoil_coord:
@@ -307,6 +355,58 @@ SECTION
 
     return wing_section_text
 
+# NILS
+def make_turbofan_nacelle_section_text_nils(avl_section):
+    """This function writes the wing text using the template required for the AVL executable to read
+
+    Assumptions:
+        None
+        
+    Source:
+        None
+
+    Inputs:
+       avl_section.origin             [meters]
+       avl_section.chord              [meters]
+       avl_section.twist              [radians]
+       avl_section.airfoil_coord_file [-] 
+        
+    Outputs:
+        wing_section_text                                                 
+
+    Properties Used:
+        N/A
+    """      
+    section_base = \
+'''
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+{0}    {1}     {2}     {3}     {4}      1        0.
+'''
+    airfoil_base = \
+'''AFILE
+{}
+'''
+    naca_airfoil_base = \
+'''NACA
+{}
+'''
+    # Unpack inputs
+    x_le          = avl_section.origin[0][0]
+    y_le          = avl_section.origin[0][1]
+    z_le          = avl_section.origin[0][2]
+    chord         = avl_section.chord
+    ainc          = avl_section.twist
+    airfoil_coord = avl_section.airfoil_coord_file
+    naca_airfoil  = avl_section.naca_airfoil
+     
+    wing_section_text = section_base.format(round(x_le,4),round(y_le,4), round(z_le,4),round(chord,4),round(ainc,4))
+    if airfoil_coord:
+        wing_section_text = wing_section_text + airfoil_base.format(airfoil_coord)
+    if naca_airfoil:
+        wing_section_text = wing_section_text + naca_airfoil_base.format(naca_airfoil)        
+    
+    return wing_section_text
     
 def make_body_section_text(avl_body_section):
     """This function writes the body text using the template required for the AVL executable to read

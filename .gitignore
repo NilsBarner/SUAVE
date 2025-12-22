@@ -80,3 +80,9 @@ ide/Wing/SUAVE.wpr
 !/doc/suave_logo.png
 /trunk/SUAVE/version.py
 
+# NILS: application folders
+/OpenVSP-3.46.0-win64-Python3.9
+/gmsh-3.0.6-Windows64
+/SU2-6.0.0
+/jvl2.16
+/avl3.52

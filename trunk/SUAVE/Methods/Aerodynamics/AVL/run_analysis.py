@@ -5,6 +5,12 @@
 # Modified: Jan 2016, E. Botero
 #           Jul 2017, M. Clarke
 #           Aug 2019, M. Clarke
+#           Dec 2021, M. Clarke
+
+"""
+NILS: THIS FILE CORRESPONDS TO SUAVE 2.5.2!
+"""
+
 # ----------------------------------------------------------------------
 #  Imports
 # ----------------------------------------------------------------------
@@ -18,7 +24,7 @@ from SUAVE.Methods.Aerodynamics.AVL.purge_files  import purge_files
 from SUAVE.Core                                  import redirect
 
 ## @ingroup Methods-Aerodynamics-AVL
-def run_analysis(avl_object):
+def run_analysis(avl_object,print_output):
     """ This calls the AVL executable and runs an analysis
 
     Assumptions:
@@ -36,13 +42,13 @@ def run_analysis(avl_object):
     Properties Used:
         N/A
     """    
-    call_avl(avl_object)
+    call_avl(avl_object,print_output)
     results = read_results(avl_object)
 
     return results
 
 
-def call_avl(avl_object):
+def call_avl(avl_object,print_output):
     """ This function calls the AVL executable and executes analyses
     Assumptions:
         None
@@ -55,8 +61,10 @@ def call_avl(avl_object):
         exit_status
     Properties Used:
         N/A
-    """    
-    avl_regression_flag = avl_object.regression_flag
+    """
+    # import sys
+    # sys.exit('Stop here.')  # NILS
+    avl_regression_flag = avl_object.settings.regression_flag
     if avl_regression_flag:
         exit_status = 0 
     else:
@@ -74,9 +82,7 @@ def call_avl(avl_object):
     
             ctime = time.ctime() # Current date and time stamp
     
-            with open(in_deck,'r') as commands:
-                # print_output = False
-                print_output = True  # NILS: uncomment for debugging
+            with open(in_deck,'r') as commands: 
                 
                 # Initialize suppression of console window output
                 if print_output == False:
@@ -84,9 +90,6 @@ def call_avl(avl_object):
                     sys.stdout = devnull       
                     
                 # Run AVL
-                print('<><><>')
-                print(avl_call)
-                print('<><><>')
                 avl_run = subprocess.Popen([avl_call,geometry],stdout=sys.stdout,stderr=sys.stderr,stdin=subprocess.PIPE)
                 for line in commands:
                     avl_run.stdin.write(line.encode('utf-8'))
@@ -102,4 +105,3 @@ def call_avl(avl_object):
             ctime = time.ctime()
 
     return exit_status
-

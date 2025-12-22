@@ -18,10 +18,10 @@ from SUAVE.Methods.Geometry.Two_Dimensional.Planform import wing_planform, wing_
 import numpy as np
 import string
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
-    # This allows SUAVE to build without OpenVSP
-    pass 
+    pass # This allows SUAVE to build without OpenVSP
 # This enforces lowercase names
 chars = string.punctuation + string.whitespace
 t_table = str.maketrans( chars          + string.ascii_uppercase , 

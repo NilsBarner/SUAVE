@@ -54,7 +54,7 @@ class Settings(Data):
         
                 Properties Used:
                     N/A
-                """  
+                """
 
                 self.run_cases                           = Run_Case.Container()
                 self.filenames                           = Data()

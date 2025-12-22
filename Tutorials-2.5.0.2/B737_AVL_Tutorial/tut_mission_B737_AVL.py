@@ -23,6 +23,7 @@ from SUAVE.Methods.Geometry.Two_Dimensional.Planform import segment_properties  
 
 # Python Imports
 import numpy as np
+import pandas as pd
 import pylab as plt
 
 from copy import deepcopy
@@ -35,11 +36,8 @@ def main():
 
     configs, analyses = full_setup()
 
-    print('simple_sizing(configs)')
     simple_sizing(configs)
-    print('configs.finalize()')
     configs.finalize()
-    print('analyses.finalize()')
     analyses.finalize()
 
     # weight analysis
@@ -50,43 +48,10 @@ def main():
     mission = analyses.missions.base
     results = mission.evaluate()
 
-    # =============================================================================
     # NILS: commented to suppress mission plots for time being
     # plt the old results
     plot_mission(results)
-    # print(type(results))
-    # print()
-    # print(type(results['analyses']))
-    # print()
-    # print(dir(results['analyses']))
-    # print()
     
-    print('results.segments =', type(results.segments.values()[0]))
-    print()
-    
-    for segment in results.segments.values():
-        print(type(segment.conditions.aerodynamics))
-        print()
-        print('segment.conditions.stability =', segment.conditions.stability)
-        print()
-        print('segment.conditions.stability.static =', segment.conditions.stability.static)
-        print()
-        print('segment.conditions.stability.dynamic.LongModes =', segment.conditions.stability.dynamic.LongModes)
-        # print(segment.conditions.dynamic_stability.LongModes)
-        # print()
-        # print(segment.conditions.dynamic_stability.LatModes)
-        import sys
-        sys.exit('Stop here.')
-    
-    # print(results['analyses'].mission.segments.conditions.aerodynamics)
-    # print(results.keys())
-    # print(results)
-    # print('results.analyses.mission.segments.conditions.aerodynamics =', results.analyses.mission.segments.conditions.aerodynamics)
-    # print('results.dynamic_stability.LongModes =', results.dynamic_stability.LongModes)
-    # print()
-    # print('results.dynamic_stability.LatModes =', results.dynamic_stability.LatModes)
-    # =============================================================================
-
     return
 
 # ----------------------------------------------------------------------
@@ -199,17 +164,19 @@ def vehicle_setup():
     # ------------------------------------------------------------------    
 
     # mass properties
-    vehicle.mass_properties.max_takeoff               = 79015.8 * Units.kilogram 
+    # vehicle.mass_properties.max_takeoff               = 79015.8 * Units.kilogram 
+    vehicle.mass_properties.max_takeoff               = 0.0  # NILS
     vehicle.mass_properties.takeoff                   = 79015.8 * Units.kilogram   
     vehicle.mass_properties.operating_empty           = 62746.4 * Units.kilogram 
     vehicle.mass_properties.takeoff                   = 79015.8 * Units.kilogram 
     vehicle.mass_properties.max_zero_fuel             = 62732.0 * Units.kilogram 
     vehicle.mass_properties.cargo                     = 10000.  * Units.kilogram   
     # =============================================================================
-    # NILS: copied from regression\scripts\Vehicles\Boeing_737.py
+    vehicle.mass_properties.mass = 79015.8 * Units.kilogram  # NILS
+    # =============================================================================
+    # NILS: copied from regression\scripts\Vehicles\Boeing_737.py (inertias required for dynamic stability analysis)
     vehicle.mass_properties.center_of_gravity         = [[ 15.30987849,   0.        ,  -0.48023939]]
     vehicle.mass_properties.moments_of_inertia.tensor = [[3173074.17, 0 , 28752.77565],[0 , 3019041.443, 0],[0, 0, 5730017.433]] # estimated, not correct
-    # =============================================================================
     
     # envelope properties
     vehicle.envelope.ultimate_load = 2.5
@@ -242,6 +209,8 @@ def vehicle_setup():
     #   Main Wing
     # ------------------------------------------------------------------        
     
+    # NILS: Tutorials-2.5.0.2\B737_AVL_Tutorial\tut_mission_B737_AVL.py originally used a single-segment simple wing
+    
     # wing = SUAVE.Components.Wings.Main_Wing()
     # wing.tag = 'main_wing'
     
@@ -265,7 +234,8 @@ def vehicle_setup():
     # # add to vehicle
     # vehicle.append_component(wing)    
     
-    # =============================================================================
+    # NILS: regression\scripts\Vehicles\Boeing_737.py defines a multi-segment wing (as I would get from TASOPT.jl)
+    
     wing = SUAVE.Components.Wings.Main_Wing()
     wing.tag = 'main_wing'
 
@@ -382,8 +352,8 @@ def vehicle_setup():
     
     # add to vehicle
     vehicle.append_component(wing)
-    # =============================================================================
-
+    
+    """ NILS: the below horizontal and vertical stabilisers are defined as single-segment wings
     # ------------------------------------------------------------------        
     #  Horizontal Stabilizer
     # ------------------------------------------------------------------        
@@ -406,6 +376,15 @@ def vehicle_setup():
     wing.vertical                = False 
     wing.symmetric               = True
     wing.dynamic_pressure_ratio  = 0.9  
+    
+    # control surfaces -------------------------------------------
+    elevator                       = SUAVE.Components.Wings.Control_Surfaces.Elevator()
+    elevator.tag                   = 'elevator'
+    elevator.span_fraction_start   = 0.09
+    elevator.span_fraction_end     = 0.92
+    elevator.deflection            = 0.0  * Units.deg
+    elevator.chord_fraction        = 0.3
+    wing.append_control_surface(elevator)
     
     # add to vehicle
     vehicle.append_component(wing)
@@ -436,7 +415,155 @@ def vehicle_setup():
         
     # add to vehicle
     vehicle.append_component(wing)
+    """
+    
+    # NILS: for the `trim_aircraft = True` in trunk\SUAVE\Analyses\Stability\AVL.py
+    # to work, ALSO THESE MUST BE DEFINED AS MULTI-SEGMENT WINGS, otherwise
+    # 'elevator' won't feature in `wing.control_surfaces` in
+    # trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
+    
+    # ------------------------------------------------------------------
+    #  Horizontal Stabilizer
+    # ------------------------------------------------------------------
 
+    wing = SUAVE.Components.Wings.Horizontal_Tail()
+    wing.tag = 'horizontal_stabilizer'
+
+    wing.aspect_ratio            = 4.99
+    wing.sweeps.quarter_chord    = 28.2250 * Units.deg  
+    wing.thickness_to_chord      = 0.08
+    wing.taper                   = 0.3333 
+
+    wing.spans.projected         = 14.4
+
+    wing.chords.root             = 4.2731 
+    wing.chords.tip              = 1.4243 
+    wing.chords.mean_aerodynamic = 8.0
+
+    wing.areas.reference         = 41.49
+    wing.areas.exposed           = 59.354    # Exposed area of the horizontal tail
+    wing.areas.wetted            = 71.81     # Wetted area of the horizontal tail
+    wing.twists.root             = 3.0 * Units.degrees
+    wing.twists.tip              = 3.0 * Units.degrees
+
+    wing.origin                  = [[33.02,0,1.466]]
+    wing.aerodynamic_center      = [0,0,0]
+
+    wing.vertical                = False
+    wing.symmetric               = True
+
+    wing.dynamic_pressure_ratio  = 0.9
+
+
+    # Wing Segments
+    segment                        = SUAVE.Components.Wings.Segment()
+    segment.tag                    = 'root_segment'
+    segment.percent_span_location  = 0.0
+    segment.twist                  = 0. * Units.deg
+    segment.root_chord_percent     = 1.0
+    segment.dihedral_outboard      = 8.63 * Units.degrees
+    segment.sweeps.quarter_chord   = 28.2250  * Units.degrees 
+    segment.thickness_to_chord     = .1
+    wing.append_segment(segment)
+
+    segment                        = SUAVE.Components.Wings.Segment()
+    segment.tag                    = 'tip_segment'
+    segment.percent_span_location  = 1.
+    segment.twist                  = 0. * Units.deg
+    segment.root_chord_percent     = 0.3333               
+    segment.dihedral_outboard      = 0 * Units.degrees
+    segment.sweeps.quarter_chord   = 0 * Units.degrees  
+    segment.thickness_to_chord     = .1
+    wing.append_segment(segment)
+    
+    # Fill out more segment properties automatically
+    wing = segment_properties(wing)        
+
+    # control surfaces -------------------------------------------
+    elevator                       = SUAVE.Components.Wings.Control_Surfaces.Elevator()
+    elevator.tag                   = 'elevator'
+    elevator.span_fraction_start   = 0.09
+    elevator.span_fraction_end     = 0.92
+    elevator.deflection            = 0.0  * Units.deg
+    elevator.chord_fraction        = 0.3
+    wing.append_control_surface(elevator)
+
+    # add to vehicle
+    vehicle.append_component(wing)
+
+
+    # ------------------------------------------------------------------
+    #   Vertical Stabilizer
+    # ------------------------------------------------------------------
+
+    wing = SUAVE.Components.Wings.Vertical_Tail()
+    wing.tag = 'vertical_stabilizer'
+
+    wing.aspect_ratio            = 1.98865
+    wing.sweeps.quarter_chord    = 31.2  * Units.deg   
+    wing.thickness_to_chord      = 0.08
+    wing.taper                   = 0.1183
+
+    wing.spans.projected         = 8.33
+    wing.total_length            = wing.spans.projected 
+    
+    wing.chords.root             = 10.1 
+    wing.chords.tip              = 1.20 
+    wing.chords.mean_aerodynamic = 4.0
+
+    wing.areas.reference         = 34.89
+    wing.areas.wetted            = 57.25 
+    
+    wing.twists.root             = 0.0 * Units.degrees
+    wing.twists.tip              = 0.0 * Units.degrees
+
+    wing.origin                  = [[26.944,0,1.54]]
+    wing.aerodynamic_center      = [0,0,0]
+
+    wing.vertical                = True
+    wing.symmetric               = False
+    wing.t_tail                  = False
+
+    wing.dynamic_pressure_ratio  = 1.0
+
+
+    # Wing Segments
+    segment                               = SUAVE.Components.Wings.Segment()
+    segment.tag                           = 'root'
+    segment.percent_span_location         = 0.0
+    segment.twist                         = 0. * Units.deg
+    segment.root_chord_percent            = 1.
+    segment.dihedral_outboard             = 0 * Units.degrees
+    segment.sweeps.quarter_chord          = 61.485 * Units.degrees  
+    segment.thickness_to_chord            = .1
+    wing.append_segment(segment)
+
+    segment                               = SUAVE.Components.Wings.Segment()
+    segment.tag                           = 'segment_1'
+    segment.percent_span_location         = 0.2962
+    segment.twist                         = 0. * Units.deg
+    segment.root_chord_percent            = 0.45
+    segment.dihedral_outboard             = 0. * Units.degrees
+    segment.sweeps.quarter_chord          = 31.2 * Units.degrees   
+    segment.thickness_to_chord            = .1
+    wing.append_segment(segment)
+
+    segment                               = SUAVE.Components.Wings.Segment()
+    segment.tag                           = 'segment_2'
+    segment.percent_span_location         = 1.0
+    segment.twist                         = 0. * Units.deg
+    segment.root_chord_percent            = 0.1183 
+    segment.dihedral_outboard             = 0.0 * Units.degrees
+    segment.sweeps.quarter_chord          = 0.0    
+    segment.thickness_to_chord            = .1  
+    wing.append_segment(segment)
+    
+    # Fill out more segment properties automatically
+    wing = segment_properties(wing)        
+
+    # add to vehicle
+    vehicle.append_component(wing)
+    
     # ------------------------------------------------------------------
     #  Fuselage
     # ------------------------------------------------------------------
@@ -904,12 +1031,10 @@ def missions_setup(base_mission):
 
 def plot_mission(results,line_style='bo-'):
     
-    # =============================================================================
     # NILS: plot_stability_coefficients()
     plot_stability_coefficients(results, line_style)
     # import sys
     # sys.exit('Plot only stability coefficients.')
-    # =============================================================================
 
     # Plot Aerodynamic Forces 
     plot_aerodynamic_forces(results, line_style)
@@ -925,7 +1050,10 @@ def plot_mission(results,line_style='bo-'):
         
     return
 
-if __name__ == '__main__': 
+#%%
+
+if __name__ == '__main__':
+    
     # NILS: original call (runs various analyses, including stability)
     # main()    
     # plt.show()
@@ -933,27 +1061,34 @@ if __name__ == '__main__':
     # NILS: perform stability analysis only
     configs, analyses = full_setup()
     avl_object = analyses.configs.base.stability
-    # =============================================================================
-    aircraft = avl_object.geometry  # correspons to `vehicle`
-    # # To modify STATIC stability
+    aircraft = avl_object.geometry  # corresponds to `vehicle`
+    
+    # To modify STATIC stability
     # aircraft.mass_properties.center_of_gravity[0][0] += 2
     # To modify DYNAMIC stability
     # aircraft.mass_properties.moments_of_inertia.tensor[0][0] *= 2
     # aircraft.mass_properties.moments_of_inertia.tensor[1][1] *= 2
-    aircraft.mass_properties.moments_of_inertia.tensor[2][2] *= 2
-    # =============================================================================
-    avl_object.sample_training()
+    # aircraft.mass_properties.moments_of_inertia.tensor[2][2] *= 2
+    
+    # Run sweep over flight condition parameters only
+    # avl_object.sample_training()
     
     #%% Extract data for verification of TASOPT-SUAVE-AVL interface
+    # NOTE: comment `avl_object.sample_training()` line above, else will get
+    # `UnsupportedOperation: fileno` error (SUAVE-AVL WRAPPER CAN ONLY BE
+    # EXECUTED FROM A COMMAND PROMPT, NOT FROM AN IPYTHON CONSOLE LIKE SPYDER)!
     
     avl_object = analyses.configs.base.stability
-    # aircraft = avl_object.geometry._base  # correspons to `vehicle`
-    aircraft = avl_object.geometry  # correspons to `vehicle`
+    # aircraft = avl_object.geometry._base  # corresponds to `vehicle`
+    aircraft = avl_object.geometry  # corresponds to `vehicle`
     
     x_cg = aircraft.mass_properties.center_of_gravity[0][0]
     y_cg = aircraft.mass_properties.center_of_gravity[0][1]
     z_cg = aircraft.mass_properties.center_of_gravity[0][2]
-    mass = aircraft.mass_properties.max_takeoff
+    mass = aircraft.mass_properties.mass
+    max_takeoff = aircraft.mass_properties.max_takeoff
+    takeoff = aircraft.mass_properties.takeoff
+    max_zero_fuel = aircraft.mass_properties.max_zero_fuel
     moments_of_inertia = aircraft.mass_properties.moments_of_inertia.tensor
     Ixx = moments_of_inertia[0][0]
     Iyy = moments_of_inertia[1][1]
@@ -999,19 +1134,21 @@ if __name__ == '__main__':
         
     #%%
     
-    import pandas as pd
-    
     main_wing_dict = wing_dict['main_wing']
     horizontal_stabilizer_dict = wing_dict['horizontal_stabilizer']
     vertical_stabilizer_dict = wing_dict['vertical_stabilizer']
     
     main_wing = aircraft.wings['main_wing']
+    htail = aircraft.wings['horizontal_stabilizer']
     
     df = pd.DataFrame({
         "x_cg": [x_cg],
         "y_cg": [y_cg],
         "z_cg": [z_cg],
         "mass": [mass],
+        "max_takeoff": [max_takeoff],
+        "takeoff": [takeoff],
+        "max_zero_fuel": [max_zero_fuel],
     
         "Ixx": Ixx,
         "Iyy": Iyy,
@@ -1094,27 +1231,81 @@ if __name__ == '__main__':
         'wing_tip_thickness_to_chord': [main_wing.Segments['tip'].thickness_to_chord],
         'wing_tip_dihedral_outboard': [main_wing.Segments['tip'].dihedral_outboard],
         'wing_tip_sweeps_quarter_chord': [main_wing.Segments['tip'].sweeps.quarter_chord],
+        
+        'wing_slat_span_fraction_start': [main_wing.control_surfaces['slat'].span_fraction_start],
+        'wing_slat_span_fraction_end': [main_wing.control_surfaces['slat'].span_fraction_end],
+        'wing_slat_deflection': [main_wing.control_surfaces['slat'].deflection],
+        'wing_slat_chord_fraction': [main_wing.control_surfaces['slat'].chord_fraction],
+        
+        'wing_flap_span_fraction_start': [main_wing.control_surfaces['flap'].span_fraction_start],
+        'wing_flap_span_fraction_end': [main_wing.control_surfaces['flap'].span_fraction_end],
+        'wing_flap_deflection': [main_wing.control_surfaces['flap'].deflection],
+        'wing_flap_configuration_type': [main_wing.control_surfaces['flap'].configuration_type],
+        'wing_flap_chord_fraction': [main_wing.control_surfaces['flap'].chord_fraction],
+        
+        'wing_aileron_span_fraction_start': [main_wing.control_surfaces['aileron'].span_fraction_start],
+        'wing_aileron_span_fraction_end': [main_wing.control_surfaces['aileron'].span_fraction_end],
+        'wing_aileron_deflection': [main_wing.control_surfaces['aileron'].deflection],
+        'wing_aileron_chord_fraction': [main_wing.control_surfaces['aileron'].chord_fraction],
         # =============================================================================
         
         # Horizontal stabiliser
-        "htail_aspect_ratio": horizontal_stabilizer_dict['aspect_ratio'],
-        "htail_sweeps_quarter_chord": horizontal_stabilizer_dict['sweeps_quarter_chord'],
-        "htail_thickness_to_chord": horizontal_stabilizer_dict['thickness_to_chord'],
-        "htail_taper": horizontal_stabilizer_dict['taper'],
-        "htail_spans_projected": horizontal_stabilizer_dict['spans_projected'],
-        "htail_chords_root": horizontal_stabilizer_dict['chords_root'],
-        "htail_chords_tip": horizontal_stabilizer_dict['chords_tip'],
-        "htail_chords_mean_aerodynamic": horizontal_stabilizer_dict['chords_mean_aerodynamic'],
-        "htail_areas_reference": horizontal_stabilizer_dict['areas_reference'],
-        "htail_twists_root": horizontal_stabilizer_dict['twists_root'],
-        "htail_twists_tip": horizontal_stabilizer_dict['twists_tip'],
-        "htail_origin_x": horizontal_stabilizer_dict['origin_x'],
-        "htail_origin_y": horizontal_stabilizer_dict['origin_y'],
-        "htail_origin_z": horizontal_stabilizer_dict['origin_z'],
-        "htail_vertical": horizontal_stabilizer_dict['vertical'],
-        "htail_symmetric": horizontal_stabilizer_dict['symmetric'],
-        "htail_high_lift": horizontal_stabilizer_dict['high_lift'],
-        "htail_dihedral": horizontal_stabilizer_dict['dihedral'],
+        # "htail_aspect_ratio": horizontal_stabilizer_dict['aspect_ratio'],
+        # "htail_sweeps_quarter_chord": horizontal_stabilizer_dict['sweeps_quarter_chord'],
+        # "htail_thickness_to_chord": horizontal_stabilizer_dict['thickness_to_chord'],
+        # "htail_taper": horizontal_stabilizer_dict['taper'],
+        # "htail_spans_projected": horizontal_stabilizer_dict['spans_projected'],
+        # "htail_chords_root": horizontal_stabilizer_dict['chords_root'],
+        # "htail_chords_tip": horizontal_stabilizer_dict['chords_tip'],
+        # "htail_chords_mean_aerodynamic": horizontal_stabilizer_dict['chords_mean_aerodynamic'],
+        # "htail_areas_reference": horizontal_stabilizer_dict['areas_reference'],
+        # "htail_twists_root": horizontal_stabilizer_dict['twists_root'],
+        # "htail_twists_tip": horizontal_stabilizer_dict['twists_tip'],
+        # "htail_origin_x": horizontal_stabilizer_dict['origin_x'],
+        # "htail_origin_y": horizontal_stabilizer_dict['origin_y'],
+        # "htail_origin_z": horizontal_stabilizer_dict['origin_z'],
+        # "htail_vertical": horizontal_stabilizer_dict['vertical'],
+        # "htail_symmetric": horizontal_stabilizer_dict['symmetric'],
+        # "htail_high_lift": horizontal_stabilizer_dict['high_lift'],
+        # "htail_dihedral": horizontal_stabilizer_dict['dihedral'],
+        
+        'htail_aspect_ratio': [htail.aspect_ratio],
+        'htail_sweeps_quarter_chord': [htail.sweeps.quarter_chord],
+        'htail_thickness_to_chord': [htail.thickness_to_chord],
+        'htail_taper': [htail.taper],
+        'htail_spans_projected': [htail.spans.projected],
+        'htail_chords_root': [htail.chords.root],
+        'htail_chords_tip': [htail.chords.tip],
+        'htail_chords_mean_aerodynamic': [htail.chords.mean_aerodynamic],
+        'htail_areas_reference': [htail.areas.reference],
+        'htail_twists_root': [htail.twists.root],
+        'htail_twists_tip': [htail.twists.tip],
+        'htail_origin_x': [htail.origin[0][0]],
+        'htail_origin_y': [htail.origin[0][1]],
+        'htail_origin_z': [htail.origin[0][2]],
+        'htail_vertical': [htail.vertical],
+        'htail_symmetric': [htail.symmetric],
+        'htail_high_lift': [htail.high_lift],
+        'htail_dihedral': [htail.dihedral],
+        
+        'htail_root_percent_span_location': [htail.Segments['root_segment'].percent_span_location],
+        'htail_root_twist': [htail.Segments['root_segment'].twist],
+        'htail_root_root_chord_percent': [htail.Segments['root_segment'].root_chord_percent],
+        'htail_root_thickness_to_chord': [htail.Segments['root_segment'].thickness_to_chord],
+        'htail_root_dihedral_outboard': [htail.Segments['root_segment'].dihedral_outboard],
+        'htail_root_sweeps_quarter_chord': [htail.Segments['root_segment'].sweeps.quarter_chord],
+        
+        'htail_tip_percent_span_location': [htail.Segments['tip_segment'].percent_span_location],
+        'htail_tip_twist': [htail.Segments['tip_segment'].twist],
+        'htail_tip_root_chord_percent': [htail.Segments['tip_segment'].root_chord_percent],
+        'htail_tip_thickness_to_chord': [htail.Segments['tip_segment'].thickness_to_chord],
+        'htail_tip_dihedral_outboard': [htail.Segments['tip_segment'].dihedral_outboard],
+        'htail_tip_sweeps_quarter_chord': [htail.Segments['tip_segment'].sweeps.quarter_chord],
+        
+        'htail_elevator_span_fraction_start': [htail.control_surfaces['elevator'].span_fraction_start],
+        'htail_elevator_span_fraction_end': [htail.control_surfaces['elevator'].span_fraction_end],
+        'htail_elevator_deflection': [htail.control_surfaces['elevator'].deflection],
+        'htail_elevator_chord_fraction': [htail.control_surfaces['elevator'].chord_fraction],
         
         # Vertical stabiliser
         "vtail_aspect_ratio": vertical_stabilizer_dict['aspect_ratio'],
@@ -1137,7 +1328,7 @@ if __name__ == '__main__':
         "vtail_dihedral": vertical_stabilizer_dict['dihedral'],
     })
     
-    df.to_csv("suave_avl_wrapper_tasopt_inputs_b737.csv", index=False)
+    df.to_csv(r"C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\suave_avl_wrapper_tasopt_inputs_b737.csv", index=False)
 
     
     

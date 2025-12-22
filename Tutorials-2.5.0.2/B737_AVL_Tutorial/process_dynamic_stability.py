@@ -1,107 +1,24 @@
+"""
+This script post-processes the result of the dynamic stability
+analysis conducted using the TASOPT-SUAVE-AVL wrapper.
+"""
+
+__all__ = []
+
 import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from ambiance import Atmosphere
+from matplotlib import gridspec
 
 from matplotlib_custom_settings import *
 
-#%% Static stability
+# @NILS: could the complex eigenvalues at low Mach numbers have to do
+# witht the wing being stalled there?
 
-# --- Load the data ---
-data = np.loadtxt(r"C:\Users\nmb48\base_stability_data.txt")      # shape (36, 4)
-
-# --- Extract just one quantity (example: CM = col 0) ---
-CM_flat = data[:, 0]
-Cm_alpha_flat = data[:, 1]
-Cn_beta_flat = data[:, 2]
-NP_flat = data[:, 3]
-static_margin_flat = data[:, 4]
-Cl_beta_flat = data[:, 5]
-Cn_r_flat = data[:, 6]
-Cl_r_flat = data[:, 7]
-
-# --- Reshape to (6 AoA × 6 Mach) ---
-CM = CM_flat.reshape(6, 6)
-Cm_alpha = Cm_alpha_flat.reshape(6, 6)
-Cn_beta = Cn_beta_flat.reshape(6, 6)
-NP = NP_flat.reshape(6, 6)
-static_margin = static_margin_flat.reshape(6, 6)
-Cl_beta = Cl_beta_flat.reshape(6, 6)
-Cn_r = Cn_r_flat.reshape(6, 6)
-Cl_r = Cl_r_flat.reshape(6, 6)
-
-# --- Define axes ---
-mach_vals = np.array([0.05, 0.15, 0.25, 0.45, 0.65, 0.85])
-aoa_vals = np.array([-2., 0., 2., 5., 7., 10.])
-
-# --- Build DataFrame ---
-df_CM = pd.DataFrame(CM, index=mach_vals, columns=aoa_vals)
-df_Cm_alpha = pd.DataFrame(Cm_alpha, index=mach_vals, columns=aoa_vals)
-df_Cn_beta = pd.DataFrame(Cn_beta, index=mach_vals, columns=aoa_vals)
-df_NP = pd.DataFrame(NP, index=mach_vals, columns=aoa_vals)
-df_static_margin = pd.DataFrame(static_margin, index=mach_vals, columns=aoa_vals)
-
-MACH, AOA = np.meshgrid(mach_vals, aoa_vals)
-df_list = [df_CM, df_Cm_alpha, df_Cn_beta, df_NP, df_static_margin]
-
-r"""
-# for df in df_list:
-
-#     fig, ax = plt.subplots()
-#     cf = ax.contour(MACH, AOA, df.to_numpy())
-#     fig.colorbar(cf)
-#     plt.show()
-    
-#%%
-
-fig, ax = plt.subplots()
-
-for i, mach in enumerate(mach_vals):
-    ax.plot(aoa_vals, df_list[0].to_numpy()[i,:])
-
-plt.show()
-
-#%%
-
-fig, ax = plt.subplots()
-
-for i, mach in enumerate(mach_vals):
-    ax.plot(aoa_vals, df_list[1].to_numpy()[i,:])
-
-plt.show()
-
-#%%
-
-fig, ax = plt.subplots()
-
-for i, mach in enumerate(mach_vals):
-    ax.plot(aoa_vals, df_list[2].to_numpy()[i,:])
-
-plt.show()
-
-#%%
-
-# fig, ax = plt.subplots()
-
-# for i, mach in enumerate(mach_vals):
-#     ax.plot(aoa_vals, df_list[4].to_numpy()[i,:])
-
-# plt.show()
-
-fig, ax = plt.subplots()
-
-for i, mach in enumerate(aoa_vals):
-    ax.plot(mach_vals, df_list[4].to_numpy()[:,i])
-
-plt.show()
-
-# sys.exit()
-"""
-
-#%% Dynamic stability
-
-#  MIL-STD-1797 requirements (section 3.4.2 in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris)
+# mach_vals = np.array([0.05, 0.15, 0.25, 0.45, 0.65, 0.85])
+# aoa_vals = np.array([-2., 0., 2., 5., 7., 10.])
 
 # NOTE: cbar is the MAC (see page 98 in AE3202 Flight Dynamics Lecture Notes)
 
@@ -130,21 +47,14 @@ def tau(lamda, V, cbar):
     return -np.log(0.5) * T0p5(lamda, V, cbar)
 
 def compute_lambdas_from_zeta_omega(zeta0, omega0, V, cbar):
-    # if not (-1.0 <= zeta0 <= 1.0):
-    #     raise ValueError("zeta must be in [-1, 1].")
-    # if omega0 <= 0:
-    #     raise ValueError("omega0 must be > 0.")
 
     r0 = omega0 * cbar / V
     x = zeta0 * r0
     y_mag = r0 * np.sqrt(max(0.0, 1.0 - zeta0**2))
 
-    lam_plus  = x + 1j * y_mag
+    lam_plus = x + 1j * y_mag
     lam_minus = x - 1j * y_mag
     return lam_plus, lam_minus, r0
-
-# @NILS: could the complex eigenvalues at low Mach numbers have to do
-# witht the wing being stalled there?
 
 df = pd.read_csv(r"C:\Users\nmb48\base_dynamic_stability_data.txt", sep=r"\s+")
 re_cols = df.filter(regex="_Re")
@@ -163,54 +73,250 @@ def pick(arr, ind):
     return arr[np.arange(len(arr)), idx]
 
 # Longitudinal modes
-phugoid_data = pick(long_complex, df["phugoidInd"])
 shortPeriod_data = pick(long_complex, df["shortPeriodInd"])
+phugoid_data = pick(long_complex, df["phugoidInd"])
 
 # Lateral modes
-dutchRoll_data = pick(lat_complex, df["dutchRollInd"])
 rollSubsistence_data = pick(lat_complex, df["rollSubsistenceInd"])
 spiral_data = pick(lat_complex, df["spiralInd"])
+dutchRoll_data = pick(lat_complex, df["dutchRollInd"])
 
-aoa_vals_flat = np.tile(aoa_vals, 6)
-mach_vals_flat = np.hstack(np.tile(mach_vals, (6, 1)).T)
+data_list = [shortPeriod_data, phugoid_data, rollSubsistence_data, spiral_data, dutchRoll_data]
 
-# aoa_target = 0.0
-# mach_target = 0.65
+aoa_vals_flat = df['AoA'].to_numpy()
+mach_vals_flat = df['Mach'].to_numpy()
+beta_vals_flat = df['Beta'].to_numpy()
+h_vals_flat = df['h'].to_numpy()
 
-# mach_vals = np.array([0.05, 0.15, 0.25, 0.45, 0.65, 0.85])
-# aoa_vals = np.array([-2., 0., 2., 5., 7., 10.])
-
-# aoa_targets = aoa_vals
-# # mach_targets = [0.15] * len(aoa_vals)
-# mach_targets = [0.05]
-
-# # aoa_targets = [0.0] * len(mach_vals)
-# aoa_targets = [0.0]
-# mach_targets = mach_vals
+# aoa_vals = np.array([-2.0, 0.0, 5.0])
+# mach_vals = np.array([0.05, 0.45, 0.85]) 
+# beta_vals = np.array([-5.0, 0.0, 10.0])
+# h_vals = np.linspace(0, 11e3, 3)
+aoa_vals = np.unique(aoa_vals_flat)
+mach_vals = np.unique(mach_vals_flat) 
+beta_vals = np.unique(beta_vals_flat)
+h_vals = np.unique(h_vals_flat)
 
 aoa_targets = aoa_vals
 mach_targets = mach_vals
+beta_targets = beta_vals
+h_targets = h_vals
 
-#%% --- LATERAL modes ---
+MACH, AOA, BETA, H = np.meshgrid(mach_vals, aoa_vals, beta_vals, h_vals)
 
-_zeta0 = 0.08  # 3rd row of Table 3.14 (Class II, Category B, Level I)
-_omega0 = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
-_T2 = 20  # 2nd row of Table 3.13 (Category B, Level I)
-_tau = 1.4  # 3rd row of Table 3.12 (Class II, Category B, Level I)
+#%% Calculate MIL-STD-1797 requirements (section 3.4.2 in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris)
 
-_, _, r0 = compute_lambdas_from_zeta_omega(_zeta0, _omega0, V, cbar)
+def apply_mil_limits(aoa, mach, beta, h):
+    
+    amb = Atmosphere(h)
+    V = mach * amb.speed_of_sound[0]
 
-# --- optional plot of the locus (circle for omega0 and rays for zeta)
-theta = np.linspace(0, 2*np.pi, 400)
-circle_x = r0 * np.cos(theta)
-circle_y = r0 * np.sin(theta)
+    N_points = 50
+    
+    # Lateral stability limits
+    zeta_dr_min = 0.08  # 3rd row of Table 3.14 (Class II, Category B, Level I)
+    omega_n_dr_min = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
+    T_2_sl_min = 20  # 2nd row of Table 3.13 (Category B, Level I)
+    tau_roll_max = 1.4  # 3rd row of Table 3.12 (Class II, Category B, Level I)
+    
+    # Dutch roll
+    
+    _, _, r_circle_dr_min = compute_lambdas_from_zeta_omega(zeta_dr_min, omega_n_dr_min, V, cbar)
+    theta = np.linspace(0, 2 * np.pi, N_points)
+    x_circle_dr_min = r_circle_dr_min * np.cos(theta)
+    y_circle_dr_min = r_circle_dr_min * np.sin(theta)
+    
+    x_vert_dr_max = -zeta_dr_min * r_circle_dr_min * cbar / V
+    
+    a_dr = zeta_dr_min
+    t_dr = np.linspace(0, r_circle_dr_min / a_dr, N_points)
+    x_ray_dr_max = -t_dr * a_dr
+    y_ray_dr_max = t_dr * np.sqrt(1 - a_dr**2)
+    
+    # Spiral
+    x_vert_sl_max = -np.log(0.5) / T_2_sl_min * cbar / V
+    
+    # Roll
+    x_vert_roll_min = -np.log(0.5)**2 / tau_roll_max * cbar / V
+    
+    ###
+    
+    # Longitudinal stability limits
+    zeta_ph_min = 0.04  # 1st row in Table 3.9 (Class II, Category B, Level I)
+    zeta_sp_min = 0.3  # 1st row, 4th column in Table 3.10 (Class II, Category B, Level I)
+    zeta_sp_max = 2.0  # 1st row, 5th column in Table 3.10 (Class II, Category B, Level I)
+    CAP_sp_min = 0.085  # 1st row, 4th column in Table 3.11 (Class II, Category B, Level I)
+    CAP_sp_max = 3.6  # 1st row, 5th column in Table 3.11 (Class II, Category B, Level I)
+    
+    # Short period
+    
+    # NOTE!!!: abs() below not in original (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris but required to prevent nan when aoa < 0
+    omega_n_sp_min = np.sqrt(CAP_sp_min * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
+    omega_n_sp_max = np.sqrt(CAP_sp_max * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
+    print('omega_n_sp_min, omega_n_sp_max =', omega_n_sp_min, omega_n_sp_max)
+    _, _, r_circle_sp_min = compute_lambdas_from_zeta_omega(zeta_sp_min, omega_n_sp_min, V, cbar)
+    _, _, r_circle_sp_max = compute_lambdas_from_zeta_omega(zeta_sp_max, omega_n_sp_max, V, cbar)
+    theta = np.linspace(0, 2 * np.pi, N_points)
+    x_circle_sp_min = r_circle_sp_min * np.cos(theta)
+    y_circle_sp_min = r_circle_sp_min * np.sin(theta)
+    x_circle_sp_max = r_circle_sp_max * np.cos(theta)
+    y_circle_sp_max = r_circle_sp_max * np.sin(theta)
+    
+    a_sp = zeta_sp_min
+    t_sp = np.linspace(0, r_circle_sp_max / a_sp, N_points)
+    x_ray_sp_max = -t_sp * a_sp
+    y_ray_sp_max = t_sp * np.sqrt(1 - a_sp**2)
+    
+    # Phugoid
+    a_ph = zeta_ph_min
+    t_ph = np.linspace(0, 10 / np.sqrt(1 - a_ph**2), N_points)  # ax.get_ylim()[1]
+    x_ray_ph_max = -t_ph * a_ph
+    y_ray_ph_max = t_ph * np.sqrt(1 - a_ph**2)
+    
+    return (
+        x_circle_dr_min, y_circle_dr_min, x_vert_dr_max, x_ray_dr_max, y_ray_dr_max,
+        x_vert_sl_max,
+        x_vert_roll_min,
+        
+        x_circle_sp_min, y_circle_sp_min, x_circle_sp_max, y_circle_sp_max, x_ray_sp_max, y_ray_sp_max,
+        x_ray_ph_max, y_ray_ph_max,
+    )
 
-# ray line (plot as a line through origin with angle arccos(zeta0))
-tmax = 3 * r0
-t = np.linspace(0, tmax, 400)
-ray_x = -t * _zeta0
-# ray_y = t * np.sqrt(max(0.0, 1 - _zeta0**2))
-ray_y = np.sqrt((ray_x / _zeta0)**2 - ray_x)
+#%%
+
+# aoa_ref = 5.0
+aoa_ref = aoa_vals[1]
+mach_ref = 0.45
+# beta_ref = 0.0
+beta_ref = beta_vals[1]
+h_ref = 5500
+
+(
+    x_circle_dr_min, y_circle_dr_min, x_vert_dr_max, x_ray_dr_max, y_ray_dr_max,
+    x_vert_sl_max,
+    x_vert_roll_min,
+    
+    x_circle_sp_min, y_circle_sp_min, x_circle_sp_max, y_circle_sp_max, x_ray_sp_max, y_ray_sp_max,
+    x_ray_ph_max, y_ray_ph_max,
+) = \
+apply_mil_limits(aoa_ref, mach_ref, beta_ref, h_ref)
+
+#%%
+
+fig = plt.figure(figsize=(15,9), constrained_layout=True)
+gs = gridspec.GridSpec(2, 3, width_ratios=[1,1,1], hspace=0.2, height_ratios=[1,1], wspace=0.2)
+axes = [fig.add_subplot(gs[i,j]) for i in range(2) for j in range(3)]
+
+# =============================================================================
+# Remove the upper-right subplot (row 0, col 2 → index 2)
+axes[2].remove()
+
+# Create an empty Axes in the same grid position
+leg_ax = fig.add_subplot(gs[0,2])
+leg_ax.axis("off")     # hide frame
+
+# ---- your legend items here ----
+# Example legend:
+from matplotlib.lines import Line2D
+legend_elements = [
+    Line2D([], [], marker='o', linestyle='', label='Low h'),
+    Line2D([], [], marker='o', linestyle='', label='High h')
+]
+
+leg_ax.legend(handles=legend_elements, loc='center')
+# =============================================================================
+
+titles = ['Short period', 'Phugoid', 'Roll subsidence', 'Spiral', 'Dutch roll']
+
+for i, ax in enumerate([axes[j] for j in range(len(axes)) if j != 2]):
+    
+    data = data_list[i]
+    
+    mask_aoa = np.where((mach_vals_flat == mach_ref) & (beta_vals_flat == beta_ref) & (h_vals_flat == h_ref))[0]
+    filtered_data_aoa = data[mask_aoa]
+    
+    mask_mach = np.where((aoa_vals_flat == aoa_ref) & (beta_vals_flat == beta_ref) & (h_vals_flat == h_ref))[0]
+    filtered_data_mach = data[mask_mach]
+    
+    mask_beta = np.where((aoa_vals_flat == aoa_ref) & (mach_vals_flat == mach_ref) & (h_vals_flat == h_ref))[0]
+    filtered_data_beta = data[mask_beta]
+    
+    mask_h = np.where((aoa_vals_flat == aoa_ref) & (mach_vals_flat == mach_ref) & (beta_vals_flat == beta_ref))[0]
+    filtered_data_h = data[mask_h]
+    
+    ax.plot(filtered_data_aoa.real, filtered_data_aoa.imag, marker='.', color=colors[0])
+    ax.plot(filtered_data_aoa.real, -filtered_data_aoa.imag, marker='.', color=colors[0])
+    
+    ax.plot(filtered_data_mach.real, filtered_data_mach.imag, marker='.', color=colors[1])
+    ax.plot(filtered_data_mach.real, -filtered_data_mach.imag, marker='.', color=colors[1])
+    
+    ax.plot(filtered_data_beta.real, filtered_data_beta.imag, marker='.', color=colors[2])
+    ax.plot(filtered_data_beta.real, -filtered_data_beta.imag, marker='.', color=colors[2])
+    
+    ax.plot(filtered_data_h.real, filtered_data_h.imag, marker='.', color=colors[3])
+    ax.plot(filtered_data_h.real, -filtered_data_h.imag, marker='.', color=colors[3])
+    
+    if i == 0:  # short period
+    
+        # # for aoa in aoa_vals:
+        # for mach in mach_vals:
+            
+        #     (
+        #         x_circle_dr_min, y_circle_dr_min, x_vert_dr_max, x_ray_dr_max, y_ray_dr_max,
+        #         x_vert_sl_max,
+        #         x_vert_roll_min,
+                
+        #         x_circle_sp_min, y_circle_sp_min, x_circle_sp_max, y_circle_sp_max, x_ray_sp_max, y_ray_sp_max,
+        #         x_ray_ph_max, y_ray_ph_max,
+        #     ) = \
+        #     apply_mil_limits(aoa_ref, mach, beta_ref, h_ref)
+        #     # apply_mil_limits(aoa, mach_ref, beta_ref, h_ref)
+        
+        ax.plot(x_circle_sp_min, y_circle_sp_min, color='black')
+        ax.plot(x_circle_sp_max, y_circle_sp_max, color='black')
+    
+        ax.plot(x_ray_sp_max, y_ray_sp_max, '-', color='black')
+        ax.plot(x_ray_sp_max, -y_ray_sp_max, '-', color='black')
+        
+        for aoa in aoa_vals:
+            mask_aoa = np.where(aoa_vals_flat == aoa)[0]
+            
+            ax.scatter(data[mask_aoa].real, data[mask_aoa].imag)
+        
+    elif i == 1:  # phugoid
+        
+        ax.plot(x_ray_ph_max, y_ray_ph_max, '-', color='black')
+        ax.plot(x_ray_ph_max, -y_ray_ph_max, '-', color='black')
+        
+    elif i == 2:  # roll-subsidence
+    
+        ax.axvline(x_vert_roll_min, color='black')
+        
+    elif i == 3:  # spiral
+        
+        ax.axvline(x_vert_sl_max, color='black')
+        
+    elif i == 4:  # dutch roll
+        
+        ax.plot(x_circle_dr_min, y_circle_dr_min, color='black')
+        
+        ax.axvline(x_vert_dr_max, color='black')
+        
+        ax.plot(x_ray_dr_max, y_ray_dr_max, '-', color='black')
+        ax.plot(x_ray_dr_max, -y_ray_dr_max, '-', color='black')
+        
+    ax.set_title(titles[i])
+    ax.spines[['right','top']].set_visible(False)
+    ax.tick_params(axis='y', which='both', right=False, length=0)
+    ax.tick_params(axis='x', which='both', length=0)
+    ax.spines['bottom'].set_position(('data', 0.0))
+    ax.spines['left'].set_position(('data', 0.0))
+
+plt.show()
+
+sys.exit()
+
+#%%
 
 fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -485,47 +591,3 @@ plt.show()
 fig, ax = plt.subplots()
 ax.scatter(E_lat, R_lat)
 plt.show()
-
-#%%
-
-E = Cl_beta * Cn_r - Cn_beta * Cl_r
-Cl_beta_avg = np.average(Cl_beta)
-Cn_beta_avg = np.average(Cn_beta)
-
-fig, ax = plt.subplots(figsize=(8,6))
-# ax.scatter(-Cl_beta, Cn_beta, c=E)
-# ax.scatter(-Cl_beta, Cn_beta, c=MACH)
-ax.scatter(-Cl_beta, Cn_beta, c=AOA)
-
-for i in range(np.shape(Cl_beta)[0]):
-    ax.plot(-Cl_beta[i,:], Cn_beta[i,:], color=colors[0])
-
-for j in range(np.shape(Cl_beta)[1]):
-    ax.plot(-Cl_beta[:,j], Cn_beta[:,j], color=colors[1])
-
-ax.spines[['right', 'top']].set_visible(False)
-ax.tick_params(axis='y', which='both', right=False, length=0)
-ax.tick_params(axis='x', which='both', length=0)
-# ax.spines['bottom'].set_position(('data', 0.0))
-# ax.spines['left'].set_position(('data', 0.0))
-
-plt.show()
-
-#%% This is equivalent to the above code around pick()
-
-# dutchRoll_data = []
-# rollSubsistence_data = []
-# spiral_data = []
-                         
-# for i in range(len(df)):
-#     _dutchRollInd = df["dutchRollInd"][i].astype(int)
-#     _rollSubsistenceInd = df["rollSubsistenceInd"][i].astype(int)
-#     _spiralInd = df["spiralInd"][i].astype(int)
-    
-#     dutchRoll_data.append(df[f"Lat_Re{_dutchRollInd + 1}"][i] + 1j * df[f"Lat_Im{_dutchRollInd + 1}"][i])
-#     rollSubsistence_data.append(df[f"Lat_Re{_rollSubsistenceInd + 1}"][i] + 1j * df[f"Lat_Im{_rollSubsistenceInd + 1}"][i])
-#     spiral_data.append(df[f"Lat_Re{_spiralInd + 1}"][i] + 1j * df[f"Lat_Im{_spiralInd + 1}"][i])
-    
-# dutchRoll_data = np.array(dutchRoll_data)
-# rollSubsistence_data = np.array(rollSubsistence_data)
-# spiral_data = np.array(spiral_data)

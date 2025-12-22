@@ -25,10 +25,10 @@ from SUAVE.Input_Output.OpenVSP.vsp_fuselage  import write_vsp_fuselage
 from SUAVE.Input_Output.OpenVSP.vsp_wing      import write_vsp_wing
 from SUAVE.Input_Output.OpenVSP.vsp_nacelle   import write_vsp_nacelle 
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
-    # This allows SUAVE to build without OpenVSP
-    pass
+    pass # This allows SUAVE to build without OpenVSP
 import numpy as np
 import os
 

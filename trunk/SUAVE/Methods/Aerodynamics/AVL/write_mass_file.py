@@ -67,13 +67,18 @@ rho = {2}
         density = run_conditions.freestream.density 
         gravity = run_conditions.freestream.gravity
         
+        # NILS: note here that I EITHER have to
+        # set aircraft.mass_properties.mass OR
+        # aircraft.mass_properties.max_takeoff
+        # but NOT both, else `mass` in the xxx.mass
+        # file might be incorrect!
         if aircraft.mass_properties.mass == 0:
             mass = aircraft.mass_properties.max_takeoff
         elif aircraft.mass_properties.max_takeoff == 0:
             mass = aircraft.mass_properties.mass
         else:
             raise AttributeError("Specify Vehicle Mass")
-         
+        
         x       = aircraft.mass_properties.center_of_gravity[0][0]
         y       = aircraft.mass_properties.center_of_gravity[0][1]
         z       = aircraft.mass_properties.center_of_gravity[0][2]

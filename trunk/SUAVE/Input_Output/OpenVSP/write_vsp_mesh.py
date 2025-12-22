@@ -8,7 +8,8 @@
 #           Jan 2020, T. MacDonald
 
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
     pass # This allows SUAVE to build without OpenVSP
 import numpy as np
@@ -58,6 +59,7 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     
     # Set output file types and what will be meshed
     file_type = vsp.CFD_STL_TYPE + vsp.CFD_KEY_TYPE
+    degenset = vsp.SET_NONE  # NILS: based on https://openvsp.org/pyapi_docs/latest/openvsp.html#
     set_int   = vsp.SET_ALL
 
     vsp.SetComputationFileName(vsp.CFD_STL_TYPE, tag + '.stl')
@@ -105,7 +107,8 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     
     print('Starting mesh for ' + tag + ' (This may take several minutes)')
     ti = time.time()
-    vsp.ComputeCFDMesh(set_int,file_type)
+    # vsp.ComputeCFDMesh(set_int,file_type)
+    vsp.ComputeCFDMesh(set_int, degenset, file_type)  # NILS: based on https://openvsp.org/pyapi_docs/latest/openvsp.html#
     tf = time.time()
     dt = tf-ti
     print('VSP meshing for ' + tag + ' completed in ' + str(dt) + ' s')

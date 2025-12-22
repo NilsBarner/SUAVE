@@ -14,10 +14,10 @@ import SUAVE
 from SUAVE.Core import Units, Data  
 import numpy as np
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
-    # This allows SUAVE to build without OpenVSP
-    pass 
+    pass # This allows SUAVE to build without OpenVSP
 # ----------------------------------------------------------------------
 #  vsp read fuselage
 # ----------------------------------------------------------------------

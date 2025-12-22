@@ -15,10 +15,10 @@ import string
 from SUAVE.Methods.Geometry.Two_Dimensional.Cross_Section.Airfoil.import_airfoil_geometry\
      import import_airfoil_geometry
 try:
-    import vsp as vsp
+    # import vsp as vsp
+    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 except ImportError:
-    # This allows SUAVE to build without OpenVSP
-    pass 
+    pass # This allows SUAVE to build without OpenVSP
 
 # This enforces lowercase names
 chars = string.punctuation + string.whitespace
