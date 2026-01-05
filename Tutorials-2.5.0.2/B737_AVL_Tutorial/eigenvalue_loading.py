@@ -1,3 +1,14 @@
+"""
+This script reads all files obeying the pattern
+suave_dynamic_stability_outputs_[1-7]_*.txt and
+collates them into a single
+suave_dynamic_stability_outputs_combined.txt
+file that can then be read by
+process_dynamic_stability.py.
+"""
+
+__all__ = [
+
 import os
 import io
 import re
@@ -12,7 +23,7 @@ from collections import defaultdict
 from matplotlib import gridspec
 from matplotlib.cm import ScalarMappable
 
-#%% Static stability
+#%% Search for files following pattern
 
 folder = r"C:/Users/nmb48/"
 files = glob.glob(os.path.join(
@@ -23,33 +34,12 @@ txt_files = [
     f for f in files
     if 0 <= int(f.rsplit('_', 1)[1].split('.')[0]) <= 99
 ]
-
-# Nested dict: data[i][j] = DataFrame
-df_dict = defaultdict(dict)
-
 pattern = re.compile(r"suave_dynamic_stability_outputs_(\d+)_(\d+)\.txt$")
 
-#%%
-
-# for f in txt_files:
-#     match = pattern.search(os.path.basename(f))
-#     _i, _j = map(int, match.groups())
-#     # df_dict[_i][_j] = pd.read_csv(f, sep=r"\s+", header=0)
-    
-#     with open(f, "r") as fh:
-#         lines = fh.readlines()
-
-#     # Remove leading '#' from header if present
-#     if lines[0].lstrip().startswith("#"):
-#         lines[0] = lines[0].lstrip()[1:].lstrip()
-
-#     df_dict[_i][_j] = pd.read_csv(
-#         io.StringIO("".join(lines)),
-#         sep=r"\s+",
-#         header=0
-#     )
+#%% Create nested dict where data[i][j] = DataFrame
 
 N_COLS = 27  # expected number of columns per row
+df_dict = defaultdict(dict)
 
 for f in txt_files:
     match = pattern.search(os.path.basename(f))
@@ -80,8 +70,7 @@ for f in txt_files:
         dtype=float
     )
 
-    
-# %% Write combined output file
+#%% Write combined output file
 
 out_file = os.path.join(folder, "suave_dynamic_stability_outputs_combined.txt")
 
