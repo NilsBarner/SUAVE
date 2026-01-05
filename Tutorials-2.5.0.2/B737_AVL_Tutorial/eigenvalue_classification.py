@@ -1,424 +1,633 @@
-# python code to parse the uploaded eigenvalue file, associate 8 eigenvalues to 5 aircraft modes,
-# track modes across parameter combinations, and produce visual + quantitative checks.
-# This code is self-contained. It will:
-# 1. Read '/mnt/data/suave_dynamic_stability_outputs_combined.txt'
-# 2. Parse groups (parameter combinations) separated by blank lines.
-# 3. Expect 6 rows per group (six flight conditions). For each row: extract Re1..Re8, Im1..Im8 -> eigenvalues.
-# 4. For each flight-condition index (0..5) track modes across groups using a heuristic classifier + Hungarian matching.
-# 5. Produce plots: eigenvalue trajectories in complex plane (colored by mode), frequency & damping vs parameter index.
-# 6. Print summary and ambiguous-case flags.
-#
-# If scipy is not available, the code falls back to a simple greedy assignment.
-# Author: Assistant (adapted to user's data).
+"""
+This script implements a physics-based eigenvalue-to-eigenmode
+association.
+"""
 
+__all__ = ["match_evals_to_emodes"]
+
+import os
+import math
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from collections import defaultdict
-import math, sys, os
+import matplotlib.gridspec as gridspec
+from scipy.optimize import linear_sum_assignment
 
-filepath = r"C:/Users/nmb48/suave_dynamic_stability_outputs_combined.txt"
-if not os.path.exists(filepath):
-    raise FileNotFoundError(f"Expected file at {filepath} not found.")
+from matplotlib_custom_settings import *
 
-# Try to import Hungarian assignment; fallback to greedy if unavailable
-use_scipy = True
-try:
-    from scipy.optimize import linear_sum_assignment
-except Exception as e:
-    print("scipy.linear_sum_assignment not available, will use greedy matching fallback.", file=sys.stderr)
-    use_scipy = False
-
-def parse_groups(path):
-    text = open(path, "r", errors="ignore").read()
-    # Split into groups separated by blank lines (two or more newlines)
-    raw_groups = [g.strip() for g in text.split("\n\n") if g.strip()!='']
+# ---------------------------
+# Parsers and small helpers
+# ---------------------------
+def _parse_matrix_file(path):
+    lines = open(path, "r", errors="ignore").read().splitlines()
     groups = []
-    for g in raw_groups:
-        lines = [ln.strip() for ln in g.splitlines() if ln.strip()!='']
-        # Find header line (contains 'Re1' or 'sigma_fcs'); collect numeric lines after header
-        header_idx = None
-        for i,ln in enumerate(lines):
-            if 'Re1' in ln or 'sigma_fcs' in ln:
-                header_idx = i
-                break
-        # Numeric lines are those that start with digit or '-' or '.'
-        numeric_lines = []
-        for ln in lines:
-            if len(ln)==0: continue
-            first = ln[0]
-            if first.isdigit() or first in "-.":
-                numeric_lines.append(ln)
-            else:
-                # attempt to detect numeric line by splitting and checking first token
-                toks = ln.split()
-                if len(toks)>0 and (toks[0][0].isdigit() or toks[0][0] in "-."):
-                    numeric_lines.append(ln)
-        # If numeric_lines empty, try all lines except header
-        if not numeric_lines and header_idx is not None:
-            numeric_lines = lines[header_idx+1:]
-        # Convert numeric lines to lists of floats (tokens separated by whitespace)
-        parsed = []
-        for ln in numeric_lines:
-            toks = ln.split()
-            try:
-                vals = [float(t) for t in toks]
-                parsed.append(vals)
-            except:
-                # skip unparsable lines
-                continue
-        if parsed:
-            groups.append((lines, parsed))
+    i, N = 0, len(lines)
+    while i < N:
+        ln = lines[i].strip().lower()
+        if ln.startswith("u w q") or ln.startswith("u  w  q") or ln.startswith("u w q the"):
+            i += 1
+            mats = []
+            for _ in range(6):
+                while i < N and lines[i].strip() == "":
+                    i += 1
+                if i >= N: break
+                rows = []
+                while i < N and len(rows) < 12:
+                    s = lines[i].strip(); i += 1
+                    if s == "": continue
+                    toks = s.split(); nums = []
+                    for t in toks:
+                        try: nums.append(float(t))
+                        except: pass
+                    if len(nums) >= 12:
+                        rows.append(nums)
+                if len(rows) < 12: break
+                arr = np.array(rows, dtype=float)
+                A = arr[:, :12]; B = arr[:, 12:] if arr.shape[1] > 12 else None
+                mats.append({'A': A, 'B': B})
+            if mats:
+                groups.append(mats)
+        else:
+            i += 1
     return groups
 
-groups = parse_groups(filepath)
-n_groups = len(groups)
-if n_groups == 0:
-    raise RuntimeError("No numeric groups were parsed - file format unexpected.")
-
-print(f"Parsed {n_groups} parameter-combination groups.")
-
-# Expecting 6 rows per group (user indicated 6 flight conditions across each parameter combination)
-rows_per_group = [len(parsed) for (_,parsed) in groups]
-unique_counts = sorted(set(rows_per_group))
-print(f"Rows per group counts observed (unique): {unique_counts}")
-# Choose the most common as expected rows per group
-from collections import Counter
-cnt = Counter(rows_per_group)
-expected_rows = cnt.most_common(1)[0][0]
-print(f"Using expected rows per group = {expected_rows} (most common)")
-
-# Build structured dataset: groups_data[g][r] -> dict with params and eigenvalues (list of 8 complex)
-groups_data = []
-for idx,(raw_lines, parsed) in enumerate(groups):
-    if len(parsed) < expected_rows:
-        # skip groups with fewer rows (if any)
-        continue
-    # inspect header (if included) to find column indices
-    header_tokens = None
-    for ln in raw_lines:
-        if 'Re1' in ln and 'Im1' in ln:
-            header_tokens = ln.split()
-            break
-    # If no header, assume Re1..Re8 start after the 11th number as in example: W is 11th index
-    # We'll attempt to find Re1/Im1 by matching token counts:
-    sample = parsed[0]
-    ncols = len(sample)
-    # Heuristic: last 16 columns are Re1..Re8 Im1..Im8
-    if ncols >= 16:
-        re_start = ncols - 16  # index of Re1
-        im_start = re_start + 8
-    else:
-        raise RuntimeError("Unexpected number of columns in numeric line; can't locate Re/Im columns.")
-    rows = []
-    for vals in parsed[:expected_rows]:
-        Re = vals[re_start:re_start+8]
-        Im = vals[im_start:im_start+8]
-        eigs = np.array([complex(Re[i], Im[i]) for i in range(8)])
-        # Also capture a few identifying params (first 11 columns as in header)
-        params = vals[:min(11, len(vals))]
-        rows.append({"params": params, "eigs": eigs})
-    groups_data.append(rows)
-
-n_groups = len(groups_data)
-print(f"Using {n_groups} clean groups (each with {expected_rows} rows). Total flight-condition sequences = {expected_rows}.")
-
-# Helper functions for pairing and classification
-def pair_eigenvalues(eigs, imag_tol=1e-6):
-    """
-    Given 8 eigenvalues, pair conjugate complex eigenvalues and leave real ones.
-    Returns:
-      complex_reps: list of representative eigenvalues for conjugate pairs (positive-imag chosen)
-      real_vals: list of real eigenvalues (imag ~ 0)
-      pairs_full: list of tuples (pos_im, neg_im) for complex pairs
-    """
-    eigs = np.array(eigs)
-    reals = []
-    complex_pos = []
-    complex_neg = []
-    for lam in eigs:
-        if abs(lam.imag) <= imag_tol:
-            reals.append(np.real(lam))
-        else:
-            if lam.imag > 0:
-                complex_pos.append(lam)
-            else:
-                complex_neg.append(lam)
-    # Pair each positive imag with the closest negative imag by distance
-    pairs = []
-    used_neg = set()
-    for p in complex_pos:
-        if not complex_neg:
-            break
-        dists = [abs(p - n) for n in complex_neg]
-        j = int(np.argmin(dists))
-        pairs.append((p, complex_neg[j]))
-        used_neg.add(j)
-    # if any negative left unpaired, try to pair remaining negatives to positives (unlikely)
-    remaining_neg = [n for i,n in enumerate(complex_neg) if i not in used_neg]
-    for n in remaining_neg:
-        if complex_pos:
-            dists = [abs(n - p) for p in complex_pos]
-            j = int(np.argmin(dists))
-            pairs.append((complex_pos[j], n))
-    # Complex reps choose the positive-imag eigenvalue as representative
-    complex_reps = [p for p,n in pairs if p.imag>0]
-    # Convert real list to floats
-    real_vals = [float(r) for r in reals]
-    # If due to numeric issues we end up with wrong counts, attempt fallback pairing by magnitude sorting
-    if len(complex_reps) + len(real_vals) != 5:
-        # fallback: sort eigs by imaginary absolute descending and make first 3 as complex pairs and remaining 2 as reals
-        sorted_by_im = sorted(eigs, key=lambda x: abs(x.imag), reverse=True)
-        complex_reps = []
-        real_vals = []
-        taken = set()
-        for lam in sorted_by_im:
-            if len(complex_reps) < 3 and abs(lam.imag) > imag_tol:
-                if lam.imag > 0:
-                    complex_reps.append(lam)
-                elif lam.imag < 0:
-                    # will be ignored as representative
+def _parse_eigfile_row_per_group(path, row_index=0):
+    assert 0 <= row_index <= 5
+    lines = open(path, "r", errors="ignore").read().splitlines()
+    def _is_header(s): return s.startswith("sigma_fcs") and "Re1" in s and "Im8" in s
+    parsed = []
+    i, N = 0, len(lines)
+    while i < N:
+        s = lines[i].strip()
+        if _is_header(s):
+            numeric_rows = []
+            blank_count = 0
+            j = i + 1
+            while j < N:
+                s2 = lines[j].strip()
+                if _is_header(s2):
+                    break
+                if s2 == "":
+                    blank_count += 1
+                    if blank_count >= 2:
+                        j += 1
+                        break
+                    j += 1
                     continue
-            else:
-                if abs(lam.imag) <= imag_tol:
-                    real_vals.append(float(np.real(lam)))
-        # reduce lists to expected sizes
-        complex_reps = complex_reps[:3]
-        real_vals = real_vals[:2]
-    return complex_reps, real_vals, pairs
-
-def compute_mode_descriptors(rep):
-    """Compute descriptors for a representative eigenvalue (complex for oscillatory, real for non-oscillatory)."""
-    if isinstance(rep, complex) or np.iscomplexobj(rep):
-        sigma = rep.real
-        wd = abs(rep.imag)
-        wn = math.hypot(sigma, wd)
-        zeta = -sigma / wn if wn>0 else np.nan
-        freq_hz = wd / (2*math.pi)
-        return {"lambda": rep, "sigma": sigma, "wd": wd, "wn": wn, "zeta": zeta, "freq_hz": freq_hz, "osc": True}
-    else:
-        sigma = float(rep)
-        t_half = math.log(2)/abs(sigma) if sigma!=0 else np.inf
-        return {"lambda": sigma, "sigma": sigma, "wd": 0.0, "wn": abs(sigma), "zeta": np.nan, "freq_hz": 0.0, "t_half": t_half, "osc": False}
-
-# Classification per group-row: assign the 5 modes using heuristic:
-def classify_modes_from_eigs(eigs):
-    complex_reps, real_vals, pairs = pair_eigenvalues(eigs)
-    # descriptors for complex reps: keep positive-imag representatives
-    complex_desc = [compute_mode_descriptors(rep) for rep in complex_reps]
-    # sort complexes by damped frequency (wd) descending
-    complex_desc_sorted = sorted(complex_desc, key=lambda d: d["wd"], reverse=True)
-    # Assign ordering: highest wd -> short-period, next -> dutch-roll, lowest -> phugoid
-    mode_names = []
-    mode_map = {}
-    if len(complex_desc_sorted) >= 3:
-        labels = ["short-period", "dutch-roll", "phugoid"]
-        for lab,d in zip(labels, complex_desc_sorted[:3]):
-            mode_map[lab] = d
-            mode_names.append(lab)
-    else:
-        # fallback: whatever we have
-        labels = ["short-period", "dutch-roll", "phugoid"]
-        for i,d in enumerate(complex_desc_sorted):
-            lab = labels[i]
-            mode_map[lab] = d
-            mode_names.append(lab)
-    # For the reals: more negative sigma -> roll (fast), less negative -> spiral (slow)
-    real_sorted = sorted(real_vals)
-    # real_sorted ascending (most negative first)
-    if len(real_sorted) >= 2:
-        roll = real_sorted[0]
-        spiral = real_sorted[1]
-        mode_map["roll"] = compute_mode_descriptors(roll)
-        mode_map["spiral"] = compute_mode_descriptors(spiral)
-        mode_names += ["roll","spiral"]
-    else:
-        # fallback: assign any leftover
-        if len(real_sorted)==1:
-            mode_map["roll"] = compute_mode_descriptors(real_sorted[0])
-            mode_map["spiral"] = compute_mode_descriptors(real_sorted[0])
-            mode_names += ["roll","spiral"]
-    return mode_map
-
-# Build per-flight-condition sequences across groups
-n_conditions = expected_rows
-sequences = [ [] for _ in range(n_conditions) ]  # sequences[c][g] -> dict of modes for group g at condition c
-for gidx,rows in enumerate(groups_data):
-    for cidx in range(n_conditions):
-        row = rows[cidx]
-        eigs = row["eigs"]
-        mode_map = classify_modes_from_eigs(eigs)
-        sequences[cidx].append(mode_map)
-
-# Now do tracking across groups (parameter index) for each sequence (flight condition)
-# We'll produce tracked trajectories for 5 mode labels for each condition.
-tracked = []  # list per condition: dict label->list of descriptors across groups
-ambiguous_flags = defaultdict(list)  # condition -> list of group indices flagged ambiguous
-
-for cidx,seq in enumerate(sequences):
-    # seq is list of mode_maps (length n_groups)
-    # initialize tracking with the first group's labels and representatives
-    labels = list(seq[0].keys())
-    # Ensure consistent label ordering: prefer ['roll','short-period','dutch-roll','phugoid','spiral']
-    preferred_order = ["roll","short-period","dutch-roll","phugoid","spiral"]
-    # Create current_order: intersection preserving preferred order
-    current_order = [lab for lab in preferred_order if lab in labels] + [lab for lab in labels if lab not in preferred_order]
-    # tracked_data: dict label -> list of descriptors per group
-    tracked_data = {lab: [seq[0].get(lab, None)] for lab in current_order}
-    # track across subsequent groups using assignment
-    for g in range(1, n_groups):
-        prev_labels = list(tracked_data.keys())
-        prev_descs = [tracked_data[lab][-1] for lab in prev_labels]
-        next_map = seq[g]
-        next_labels = list(next_map.keys())
-        next_descs = [next_map[lab] for lab in next_labels]
-        # Build cost matrix between prev_labels and next_labels based on complex-plane distance of representative eigenvalues
-        m = len(prev_labels); n = len(next_labels)
-        cost = np.zeros((m,n))
-        for i, pd in enumerate(prev_descs):
-            for j, nd in enumerate(next_descs):
-                if pd is None or nd is None:
-                    cost[i,j] = 1e6
                 else:
-                    # Use complex distance normalized by magnitude
-                    lam_p = pd["lambda"]
-                    lam_n = nd["lambda"]
-                    dist = abs(lam_p - lam_n)
-                    norm = max(1.0, abs(lam_p), abs(lam_n))
-                    # also include damping difference term (zeta), scaled
-                    zeta_p = pd.get("zeta", 0.0) if pd.get("zeta", None) is not None else 0.0
-                    zeta_n = nd.get("zeta", 0.0) if nd.get("zeta", None) is not None else 0.0
-                    dz = abs((zeta_p or 0.0) - (zeta_n or 0.0))
-                    cost[i,j] = dist / norm + 0.5 * dz
-        # Solve assignment
-        assignment = []
-        if use_scipy:
-            try:
-                row_ind, col_ind = linear_sum_assignment(cost)
-                assignment = list(zip(row_ind, col_ind))
-            except Exception as e:
-                use_scipy = False
-        if (not use_scipy) or (len(assignment)==0):
-            # greedy fallback
-            assignment = []
-            cost_cp = cost.copy()
-            m,n = cost_cp.shape
-            assigned_rows = set(); assigned_cols = set()
-            while True:
-                if cost_cp.size==0:
-                    break
-                i,j = np.unravel_index(np.argmin(cost_cp), cost_cp.shape)
-                if cost_cp[i,j] > 1e5:
-                    break
-                assignment.append((i,j))
-                # invalidate row i and col j
-                cost_cp[i,:] = 1e6
-                cost_cp[:,j] = 1e6
-                assigned_rows.add(i); assigned_cols.add(j)
-                if len(assigned_rows) >= m or len(assigned_cols) >= n:
-                    break
-        # Build new tracked_data by reordering next labels to match prev_labels according to assignment
-        new_tracked = {}
-        assigned_next = set()
-        for i,j in assignment:
-            prev_lab = prev_labels[i]
-            next_lab = next_labels[j]
-            new_tracked[prev_lab] = tracked_data[prev_lab] + [ next_map[next_lab] ]
-            assigned_next.add(next_lab)
-        # For any prev_label unassigned, append None
-        for pl in prev_labels:
-            if pl not in new_tracked:
-                new_tracked[pl] = tracked_data[pl] + [ None ]
-        # For any next_label unassigned (new emergent), create a series with None for previous groups
-        for nl in next_labels:
-            if nl not in assigned_next:
-                new_tracked[nl] = [ None ]*(g) + [ next_map[nl] ]
-        tracked_data = new_tracked
-        # detect ambiguous cases: if any two representatives are very close in the next_map
-        # compute pairwise distances
-        reps = [d["lambda"] for d in next_descs]
-        for i in range(len(reps)):
-            for j in range(i+1, len(reps)):
-                if abs(reps[i] - reps[j]) / max(1.0, abs(reps[i]), abs(reps[j])) < 0.02:
-                    ambiguous_flags[cidx].append((g, i, j, next_labels[i], next_labels[j], float(abs(reps[i]-reps[j]))))
-    tracked.append(tracked_data)
-
-# Visualization: for each flight condition, plot eigenvalue trajectories (complex plane) with one color per tracked label
-colors = {
-    "roll":"tab:blue", "short-period":"tab:orange", "dutch-roll":"tab:green", "phugoid":"tab:red", "spiral":"tab:purple"
-}
-for cidx,tracked_data in enumerate(tracked):
-    plt.figure(figsize=(8,6))
-    ax = plt.gca()
-    for lab, series in tracked_data.items():
-        # series is list of descriptors length n_groups
-        xs = []
-        ys = []
-        for d in series:
-            if d is None:
-                xs.append(np.nan); ys.append(np.nan)
-            else:
-                lam = d["lambda"]
-                xs.append(lam.real); ys.append(lam.imag)
-        ax.scatter(xs, ys, marker='.', label=lab, color=colors.get(lab,None))
-    ax.set_xlabel("Real (rad/s)")
-    ax.set_ylabel("Imag (rad/s)")
-    ax.set_title(f"Condition {cidx+1}: Eigenvalue trajectories in complex plane across {n_groups} parameter combos")
-    ax.grid(True)
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-
-    # Plot frequency and damping vs parameter index
-    plt.figure(figsize=(10,4))
-    ax1 = plt.subplot(1,2,1)
-    for lab, series in tracked_data.items():
-        freqs = [ (d["wd"]/(2*np.pi) if d is not None else np.nan) for d in series ]
-        ax1.scatter(range(n_groups), freqs, marker='.', label=lab, color=colors.get(lab,None))
-    ax1.set_xlabel("Parameter combo index")
-    ax1.set_ylabel("Damped freq (Hz)")
-    ax1.set_title("Frequency vs parameter index")
-    ax1.grid(True)
-    ax1.legend()
-
-    ax2 = plt.subplot(1,2,2)
-    for lab, series in tracked_data.items():
-        zetas = [ (d["zeta"] if d is not None else np.nan) for d in series ]
-        ax2.scatter(range(n_groups), zetas, marker='.', label=lab, color=colors.get(lab,None))
-    ax2.set_xlabel("Parameter combo index")
-    ax2.set_ylabel("Damping ratio zeta")
-    ax2.set_title("Damping ratio vs parameter index")
-    ax2.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-import sys
-sys.exit()
-
-# Print a compact summary and ambiguous flags
-print("\nSummary per flight condition (first few groups shown):\n")
-for cidx,tracked_data in enumerate(tracked[:min(6,len(tracked))]):
-    print(f"Condition {cidx+1}:")
-    for lab, series in tracked_data.items():
-        first = series[0]
-        if first is not None:
-            lam = first["lambda"]
-            print(f"  {lab:12s} repr lambda = {lam.real:+8.4f}{lam.imag:+8.4f}j, zeta={first.get('zeta',np.nan):6.3f}, f_d={first.get('wd',0)/ (2*np.pi):6.3f} Hz")
+                    blank_count = 0
+                toks = s2.split(); nums = []
+                for t in toks:
+                    try: nums.append(float(t))
+                    except: pass
+                if len(nums) >= 16:
+                    numeric_rows.append(nums)
+                j += 1
+            if len(numeric_rows) > row_index:
+                row = numeric_rows[row_index]
+                re_start = len(row) - 16
+                parsed.append({'params': row[:re_start], 'raw': row, 'row_index': row_index})
+            i = j
         else:
-            print(f"  {lab:12s} repr = None")
-    print("")
+            i += 1
+    return parsed
 
-# Ambiguity report
-total_amb = sum(len(v) for v in ambiguous_flags.values())
-print(f"\nAmbiguity flags detected: {total_amb} events across conditions. Showing up to 20:")
-count = 0
-for cidx, events in ambiguous_flags.items():
-    for ev in events:
-        g, i, j, lab_i, lab_j, dist = ev
-        print(f" Condition {cidx+1}, group idx {g}: close pair {lab_i} vs {lab_j} (abs dist = {dist:.4e})")
-        count += 1
-        if count>=20:
-            break
-    if count>=20:
-        break
+# ---------------------------
+# Modal analysis primitives
+# ---------------------------
+def _eig_from_A(A):
+    vals, vecs = np.linalg.eig(A)
+    return np.array(vals, dtype=complex), np.array(vecs, dtype=complex)
 
-print("\nDone. The figures above show eigenvalue trajectories and mode metrics. \nIf you want, I can (a) save these plots to disk, (b) output a CSV with the tracked modal data, or (c) adjust thresholds/weights used in the matching and ambiguity detection. Which would you like?")
+def _normalize_vec(v):
+    v = v.copy().astype(complex)
+    m = np.max(np.abs(v))
+    if m == 0: return v
+    v /= m
+    k = int(np.argmax(np.abs(v)))
+    phase = np.angle(v[k])
+    return v * np.exp(-1j * phase)
+
+def _participation(v):
+    vabs = np.abs(v.flatten())
+    lon = np.sum(vabs[[0,1,2,3]]); lat = np.sum(vabs[[4,5,6,7]]); oth = np.sum(vabs[8:12])
+    s = lon + lat + oth + 1e-12
+    return {'lon': lon/s, 'lat': lat/s, 'oth': oth/s, 'comp': vabs}
+
+def _mode_metrics(lam):
+    sigma = lam.real; wd = abs(lam.imag)
+    wn = math.hypot(sigma, wd)
+    zeta = -sigma / wn if wn > 0 else float('nan')
+    return {'lambda': lam, 'sigma': sigma, 'wd': wd, 'wn': wn, 'zeta': zeta, 'freq': wd / (2*math.pi)}
+
+def _MAC(a, b):
+    num = abs(np.vdot(a, b))**2
+    den = (np.vdot(a, a).real) * (np.vdot(b, b).real)
+    return float(num/den) if den > 0 else 0.0
+
+# ---------------------------
+# Classification and tracking
+# ---------------------------
+def _classify_group_from_A(A):
+    """
+    Minimal edit here: skip kinematic integrator eigenpairs (those dominated by x,y,z,psi
+    components and numerically zero eigenvalue). This removes the 4 zero eigenpairs that
+    are not physical dynamic modes.
+    """
+    vals, vecs = _eig_from_A(A)
+    used = set()
+    reps = []
+    # threshold for treating eigenvalue as 'zero' and for kinematic-dominance
+    ZERO_EIG_TOL = 1e-8
+    KIN_FRAC_TOL = 0.7  # if >70% of eigenvector energy in indices 8..11 -> kinematic
+
+    for i, lam in enumerate(vals):
+        # check raw eigenvector kinematic fraction before normalizing
+        v_raw = vecs[:, i]
+        kin_frac = np.sum(np.abs(v_raw[8:12])) / (np.sum(np.abs(v_raw)) + 1e-16)
+        if abs(lam) < ZERO_EIG_TOL and kin_frac > KIN_FRAC_TOL:
+            # skip kinematic integrator eigenpair entirely
+            continue
+
+        if i in used:
+            continue
+
+        if abs(lam.imag) < 1e-8:
+            v = _normalize_vec(vecs[:, i])
+            reps.append((lam, v)); used.add(i)
+        else:
+            conj = np.conj(lam); j = None
+            for k in range(len(vals)):
+                if k in used or k == i: continue
+                if abs(vals[k] - conj) < 1e-6:
+                    # also check and skip if the partner is kinematic-zero dominated
+                    v_k_raw = vecs[:, k]
+                    kin_frac_k = np.sum(np.abs(v_k_raw[8:12])) / (np.sum(np.abs(v_k_raw)) + 1e-16)
+                    if abs(vals[k]) < ZERO_EIG_TOL and kin_frac_k > KIN_FRAC_TOL:
+                        continue
+                    j = k; break
+            if j is None:
+                v = _normalize_vec(vecs[:, i])
+                reps.append((lam, v)); used.add(i)
+            else:
+                # choose positive-imag representative
+                if lam.imag > 0:
+                    reps.append((lam, _normalize_vec(vecs[:, i])))
+                else:
+                    reps.append((vals[j], _normalize_vec(vecs[:, j])))
+                used.add(i); used.add(j)
+
+    classified = []
+    for lam, v in reps:
+        part = _participation(v)
+        met = _mode_metrics(lam)
+        if abs(lam.imag) < 1e-8:
+            label = 'real'
+        else:
+            if part['lon'] >= 0.6:
+                label = 'longitudinal'
+            elif part['lat'] >= 0.5:
+                label = 'dutch-roll'
+            else:
+                label = 'longitudinal' if abs(v[2]) > abs(v[6]) else 'dutch-roll'
+        classified.append({'lambda': lam, 'vec': v, 'part': part, 'metrics': met, 'label': label})
+
+    # longitudinal split (unchanged)
+    longitudinal = [c for c in classified if c['label'] == 'longitudinal']
+    longitudinal = sorted(longitudinal, key=lambda x: x['metrics']['wd'], reverse=True)
+    if len(longitudinal) >= 2:
+        longitudinal[0]['label'] = 'short-period'
+        longitudinal[-1]['label'] = 'phugoid'
+        for mid in longitudinal[1:-1]:
+            mid['label'] = 'short-period'
+    elif len(longitudinal) == 1:
+        freq = longitudinal[0]['metrics']['freq']
+        longitudinal[0]['label'] = 'short-period' if freq > 0.15 else 'phugoid'
+
+    # reals -> roll/spiral with p-vs-phi heuristic but robust fallback
+    reals = [c for c in classified if abs(c['lambda'].imag) < 1e-8]
+    if len(reals) >= 2:
+        p_vals = np.array([abs(r['vec'][5]) for r in reals])
+        phi_vals = np.array([abs(r['vec'][7]) for r in reals])
+        p_idx = int(np.argmax(p_vals)); phi_idx = int(np.argmax(phi_vals))
+        p_decisive = p_vals[p_idx] > 1.1 * phi_vals[phi_idx]
+        phi_decisive = phi_vals[phi_idx] > 1.1 * p_vals[p_idx]
+        if (p_idx != phi_idx) and (p_decisive or phi_decisive):
+            reals[p_idx]['label'] = 'roll'; reals[phi_idx]['label'] = 'spiral'
+            unlabeled = [r for r in reals if r.get('label','real') == 'real']
+            if unlabeled:
+                unlabeled_sorted = sorted(unlabeled, key=lambda x: x['lambda'].real)
+                if len(unlabeled_sorted) == 1:
+                    unlabeled_sorted[0]['label'] = 'spiral' if unlabeled_sorted[0]['lambda'].real > reals[p_idx]['lambda'].real else 'roll'
+                else:
+                    unlabeled_sorted[0]['label'] = 'roll'; unlabeled_sorted[-1]['label'] = 'spiral'
+        else:
+            reals_sorted = sorted(reals, key=lambda x: x['lambda'].real)
+            reals_sorted[0]['label'] = 'roll'; reals_sorted[-1]['label'] = 'spiral'
+            if len(reals_sorted) > 2:
+                for r in reals_sorted[1:-1]:
+                    r['label'] = 'roll' if abs(r['lambda'].real - reals_sorted[0]['lambda'].real) < abs(r['lambda'].real - reals_sorted[-1]['lambda'].real) else 'spiral'
+    elif len(reals) == 1:
+        r = reals[0]; r['label'] = 'roll' if r['part']['lat'] > r['part']['oth'] and r['part']['lat'] > 0.2 else 'spiral'
+
+    for c in classified:
+        if 'label' not in c: c['label'] = 'unknown'
+    return classified
+
+def _track_groups(classified_groups):
+    canonical = ['roll', 'short-period', 'dutch-roll', 'phugoid', 'spiral']
+    n = len(classified_groups)
+    tracks = {lab: [None]*n for lab in canonical}
+    g0 = classified_groups[0]
+    for lab in canonical:
+        found = next((m for m in g0 if m['label'] == lab), None)
+        if found is None:
+            raise RuntimeError(f"Initial group missing canonical label '{lab}'; cannot proceed.")
+        tracks[lab][0] = found
+    for g in range(1, n):
+        prevs = [tracks[lab][g-1] for lab in canonical]
+        cur = classified_groups[g]
+        m = len(canonical); q = len(cur)
+        cost = np.full((m, q), 1e6)
+        for i, prev in enumerate(prevs):
+            for j, cand in enumerate(cur):
+                mac = _MAC(prev['vec'], cand['vec'])
+                lamdist = abs(prev['lambda'] - cand['lambda']) / max(1.0, abs(prev['lambda']), abs(cand['lambda']))
+                penalty = 0.0 if cand['label'] == canonical[i] else 0.2
+                cost[i, j] = (1.0 - mac) + 0.5 * lamdist + penalty
+        rows, cols = linear_sum_assignment(cost)
+        for r, c in zip(rows, cols):
+            if cost[r, c] > 1e5:
+                raise RuntimeError(f"Assignment cost too large at group {g}: row {r} col {c}")
+            tracks[canonical[r]][g] = cur[c]
+    return tracks
+
+# ---------------------------
+# Main exported function
+# ---------------------------
+def match_evals_to_emodes(matfile, eigfile, plot_matching=True):
+    assert os.path.exists(matfile) and os.path.exists(eigfile), "Input files not found."
+    mat_groups = _parse_matrix_file(matfile)
+    if len(mat_groups) == 0:
+        raise RuntimeError("No matrix groups parsed.")
+    total_groups = len(mat_groups)
+    if total_groups != 210:
+        raise RuntimeError(f"Expected 210 groups; found {total_groups}")
+    def _category_for_index(g):
+        if g < 100: return 'fuselage'
+        if g < 200: return 'wing'
+        return 'nacelle'
+    categories = ['fuselage', 'wing', 'nacelle']
+    # modes = ['roll', 'short-period', 'dutch-roll', 'phugoid', 'spiral']
+    modes = ['short-period', 'phugoid', 'roll', 'spiral', 'dutch-roll']
+    result = {cat: {m: {} for m in modes} for cat in categories}
+    plot_data = {ridx: {m: {'lon': [], 'lat': [], 'freq': [], 'zeta': [], 'gindex': [], 'params': []} for m in modes} for ridx in range(6)}
+
+    for ridx in range(6):
+        eig_rows = _parse_eigfile_row_per_group(eigfile, row_index=ridx)
+        if len(eig_rows) != len(mat_groups):
+            raise RuntimeError(f"Mismatch groups: mat_groups={len(mat_groups)} vs eig_rows for row {ridx}={len(eig_rows)}")
+        n_groups = len(mat_groups)
+        classified_groups = []
+        for g in range(n_groups):
+            A = mat_groups[g][ridx]['A']
+            classified_groups.append(_classify_group_from_A(A))
+        tracks = _track_groups(classified_groups)
+        for g in range(n_groups):
+            params = eig_rows[g].get('params', [])
+            params_first5 = list(params)[:5] + [np.nan] * max(0, 5 - len(params))
+            for m in modes:
+                t = tracks[m][g]
+                if t is None: continue
+                plot_data[ridx][m]['lon'].append(t['part']['lon'])
+                plot_data[ridx][m]['lat'].append(t['part']['lat'])
+                plot_data[ridx][m]['freq'].append(t['metrics']['freq'])
+                plot_data[ridx][m]['zeta'].append(t['metrics']['zeta'])
+                plot_data[ridx][m]['gindex'].append(g)
+                plot_data[ridx][m]['params'].append(params_first5)
+        cols = ['sigma_fcs','span_loc','fcs_loc','wing_frac','nacelle_frac','AoA','Mach','Beta','h','n','W','Re','Im']
+        result_data = {cat: {m: [] for m in modes} for cat in categories}
+        for g in range(n_groups):
+            params = eig_rows[g]['params']
+            params_padded = list(params)[:11] + [np.nan] * max(0, 11 - len(params))
+            cat = _category_for_index(g)
+            for m in modes:
+                entry = params_padded.copy()
+                assigned = tracks[m][g]
+                if assigned is None:
+                    entry += [np.nan, np.nan]
+                else:
+                    lam = assigned['lambda']
+                    entry += [float(lam.real), float(lam.imag)]
+                result_data[cat][m].append(entry)
+        for cat in categories:
+            for m in modes:
+                df = pd.DataFrame(result_data[cat][m], columns=cols)
+                result[cat][m][ridx+1] = df
+
+    # Diagnostic plots (unchanged)
+    colors_dict = {
+        'roll':colors[0],
+        'short-period':colors[1],
+        'dutch-roll':colors[2],
+        'phugoid':colors[3],
+        'spiral':colors[4],
+    }
+    
+    if plot_matching == True:
+    
+        titles = ['1. Take-off', '2. Climb', '3. Beginning of cruise', '4. End of cruise', '5. Descent', '6. Landing']
+        markers = ['o', 's', 'o', 's', 'd']
+        marker_colors = [colors[0], colors[0], colors[1], colors[1], colors[1]]
+        
+        # NILS: plot longitudinal and lateral contributions
+        # of various eigenmodes to rows in system matrix A
+        
+        fig = plt.figure(figsize=(15,9))
+        gs = gridspec.GridSpec(
+            2, 3,
+            figure=fig,
+            left=0.075,
+            right=0.75,
+            bottom=0.075,
+            top=0.9,
+            hspace=0.1,
+            wspace=0.2,
+        )
+        axes = [fig.add_subplot(gs[_i,_j]) for _i in range(2) for _j in range(3)]
+        
+        for ridx, ax in enumerate(axes[:6]):
+            for mode_counter, m in enumerate(modes):
+                ax.scatter(
+                    plot_data[ridx][m]['lon'],
+                    plot_data[ridx][m]['lat'],
+                    marker=markers[mode_counter],
+                    alpha=0.8,
+                    label=m,
+                    s = 40,
+                    facecolor=marker_colors[mode_counter],
+                    edgecolor='k',
+                    linewidth=0.5,
+                    clip_on=False,
+                )
+        
+            ax.plot([ax.get_xlim()[0], 1], [ax.get_ylim()[0], 1], color='k', alpha=0.2)
+        
+            # Axis limits and scales
+            ax.set_xscale('log')
+            ax.set_yscale('log')
+            ax.set_xlim(1e-9, 1)
+            ax.set_ylim(1e-7, 1)
+            ax.set_aspect('equal')
+        
+            # Move spines to x=1 and y=1
+            ax.spines['bottom'].set_position(('data', 1.0))
+            ax.spines['left'].set_position(('data', 1.0))
+            ax.spines[['right','top']].set_visible(False)
+        
+            if (ridx == 0 or ridx == 1 or ridx == 2):
+                ax.xaxis.set_label_position('top')
+                ax.tick_params(
+                    axis='x',
+                    which='both',
+                    top=True,
+                    labeltop=True,
+                    bottom=False,
+                    labelbottom=False,
+                    length=0
+                )
+            else:
+                ax.tick_params(
+                    axis='x',
+                    which='both',
+                    top=False,
+                    labeltop=False,
+                    bottom=False,
+                    labelbottom=False,
+                    length=0
+                )
+        
+            if (ridx == 2 or ridx == 5):
+                ax.yaxis.set_label_position('right')
+                ax.tick_params(
+                    axis='y',
+                    which='both',
+                    right=True,
+                    labelright=True,
+                    left=False,
+                    labelleft=False,
+                    length=0
+                )
+            else:
+                ax.tick_params(
+                    axis='y',
+                    which='both',
+                    right=False,
+                    labelright=False,
+                    left=False,
+                    labelleft=False,
+                    length=0
+                )
+            
+            if (ridx == 0 or ridx == 1 or ridx == 2):
+                ax.set_title(titles[ridx], pad=20, y=-0.3)
+            elif (ridx == 3 or ridx == 4 or ridx == 5):
+                ax.set_title(titles[ridx], pad=20)
+            
+        legend_ax = fig.add_axes([0.8, 0.0, 0.2, 1.0])
+        legend_ax.spines[['left', 'right', 'top', 'bottom']].set_visible(False)
+        legend_ax.tick_params(
+            axis='both',
+            which='both',
+            right=False,
+            labelright=False,
+            left=False,
+            labelleft=False,
+            length=0
+        )
+        legend_ax.set_xticks([])
+        legend_ax.set_yticks([])
+        legend_elements = [
+            Line2D([], [], marker='o', markerfacecolor=colors[0], markeredgecolor='k', linestyle='', markeredgewidth=0.5, label='Short period'),
+            Line2D([], [], marker='s', markerfacecolor=colors[0], markeredgecolor='k', linestyle='', markeredgewidth=0.5, label='Phugoid'),
+            Line2D([], [], marker='o', markerfacecolor=colors[1], markeredgecolor='k', linestyle='', markeredgewidth=0.5, label='Roll subsidence'),
+            Line2D([], [], marker='s', markerfacecolor=colors[1], markeredgecolor='k', linestyle='', markeredgewidth=0.5, label='Spiral'),
+            Line2D([], [], marker='d', markerfacecolor=colors[1], markeredgecolor='k', linestyle='', markeredgewidth=0.5, label='Dutch roll'),
+        ]
+        legend_ax.legend(
+            handles=legend_elements, loc='center right', bbox_to_anchor=(1.0, 0.5), ncol=1, labelspacing=3.0, frameon=False
+        )
+        
+        fig.text(0.45, 0.05, 'Longitudinal weighting (-)', ha='center', va='bottom')
+        fig.text(0.05, 0.5, 'Lateral weighting (-)', ha='right', va='center', rotation='vertical')
+        
+        plt.savefig('long_lat_weightings_log.png', format='png', dpi=600)
+        plt.show()
+        
+        # NILS: damped frequency or damping ratio for
+        # different FCS integration options (nacelle,
+        # fuselage, wing) on grid of design parameters
+        # (sigma_fcs vs fcs_loc for fuselage, sima_fcs
+        # vs span_loc for wing, 1D line for nacelle
+        
+        # User input
+        y_var_plot = 'freq'
+        # y_var_plot = 'zeta'
+
+        fig = plt.figure(figsize=(15,9))
+        gs = gridspec.GridSpec(
+            2, 3,
+            figure=fig,
+            left=0.125,
+            right=0.85,
+            bottom=0.075,
+            top=0.9,
+            hspace=0.3,
+            wspace=0.3,
+        )
+        axes = [fig.add_subplot(gs[_i,_j]) for _i in range(2) for _j in range(3)]
+        
+        for ridx, ax in enumerate(axes[:6]):
+            row, col = divmod(ridx, 3)
+            
+            gs_inner = gridspec.GridSpecFromSubplotSpec(
+                1, 3,
+                subplot_spec=gs[row, col],
+                hspace=0.1,
+            )
+            ax_fuse = fig.add_subplot(gs_inner[0])
+            ax_wing = fig.add_subplot(gs_inner[1], sharey=ax_fuse)
+            ax_nacelle = fig.add_subplot(gs_inner[2], sharey=ax_fuse)
+            
+            for _ax in [ax_wing, ax_nacelle]:
+                _ax.spines[['left', 'right', 'bottom', 'top']].set_visible(False)
+                _ax.tick_params(
+                    axis='x',
+                    which='both',
+                    right=False,
+                    labelright=False,
+                    left=False,
+                    labelleft=False,
+                    length=0
+                )
+                _ax.tick_params(
+                    axis='y',
+                    which='both',
+                    right=False,
+                    labelright=False,
+                    left=False,
+                    labelleft=False,
+                    length=0
+                )
+                _ax.set_xticks([])
+                _ax.set_yticks([])
+            
+            ax_fuse.spines[['right', 'bottom', 'top']].set_visible(False)
+            ax_fuse.tick_params(
+                axis='x',
+                which='both',
+                right=False,
+                labelright=False,
+                left=False,
+                labelleft=False,
+                length=0
+            )
+            ax_fuse.tick_params(
+                axis='y',
+                which='both',
+                right=False,
+                labelright=False,
+                left=False,
+                labelleft=False,
+                length=0
+            )
+            ax_fuse.set_xticks([])
+            
+            for m in modes:
+                
+                x_fuse = np.arange(len(plot_data[ridx][m][y_var_plot]))[:100].reshape(10, 10)
+                y_fuse = np.array(plot_data[ridx][m][y_var_plot][:100]).reshape(10, 10)
+                
+                for i in range(10):
+                    ax_fuse.plot(x_fuse[i, :], y_fuse[i, :], color=colors[0], lw=0.6, alpha=0.6)
+                    ax_fuse.plot(x_fuse[:, i], y_fuse[:, i], color=colors[0], lw=0.6, alpha=0.6)
+                
+                
+                x_wing = np.arange(len(plot_data[ridx][m][y_var_plot]))[100:200].reshape(10, 10)
+                y_wing = np.array(plot_data[ridx][m][y_var_plot][100:200]).reshape(10, 10)
+                
+                for i in range(10):
+                    ax_wing.plot(x_wing[i, :], y_wing[i, :], color=colors[1], lw=0.6, alpha=0.6)
+                    ax_wing.plot(x_wing[:, i], y_wing[:, i], color=colors[1], lw=0.6, alpha=0.6)
+                
+                ax_nacelle.plot(
+                    np.arange(len(plot_data[ridx][m][y_var_plot]))[200:],
+                    plot_data[ridx][m][y_var_plot][200:],
+                    color=colors[2],
+                    lw=0.6,
+                )
+            
+            ax.spines[['right', 'bottom', 'top']].set_visible(False)
+            ax.tick_params(
+                axis='x',
+                which='both',
+                right=False,
+                labelright=False,
+                left=False,
+                labelleft=False,
+                length=0
+            )
+            ax.tick_params(
+                axis='y',
+                which='both',
+                right=False,
+                labelright=False,
+                left=True,
+                labelleft=True,
+                length=0
+            )
+            ax.set_xticks([])
+            ax.set_title(titles[ridx], pad=20)
+            
+        legend_ax = fig.add_axes([0.9, 0.0, 0.1, 1.0])
+        legend_ax.spines[['left', 'right', 'top', 'bottom']].set_visible(False)
+        legend_ax.tick_params(
+            axis='both',
+            which='both',
+            right=False,
+            labelright=False,
+            left=False,
+            labelleft=False,
+            length=0
+        )
+        legend_ax.set_xticks([])
+        legend_ax.set_yticks([])
+        legend_elements = [
+            Line2D([], [], color=colors[0], linestyle='-', label='Fuselage'),
+            Line2D([], [], color=colors[1], linestyle='-', label='Wing'),
+            Line2D([], [], color=colors[2], linestyle='-', label='Nacelle'),
+        ]
+        legend_ax.legend(
+            handles=legend_elements, loc='center right', bbox_to_anchor=(1.0, 0.5), ncol=1, labelspacing=3.0, frameon=False
+        )
+        
+        if y_var_plot == 'freq':
+            fig.text(0.05, 0.5, 'Damped frequency, $\omega_d$ (1/s)', ha='left', va='center', rotation='vertical')
+            plt.savefig('damped_frequency.png', format='png', dpi=600)
+        elif y_var_plot == 'zeta':
+            fig.text(0.05, 0.5, 'Damping ratio, $\zeta$  (-)', ha='left', va='center', rotation='vertical')
+            plt.savefig('damping_ratio.png', format='png', dpi=600)
+        
+        plt.show()
+    
+    return result
+
+#%%
+
+if __name__ == "__main__":
+
+    # If run as script, small demonstration
+
+    matfile = r"C:/Users/nmb48/suave_dynamic_stability_matrix_combined.txt"
+    eigfile = r"C:/Users/nmb48/suave_dynamic_stability_outputs_combined.txt"
+    res = match_evals_to_emodes(matfile, eigfile, plot_matching=True)
