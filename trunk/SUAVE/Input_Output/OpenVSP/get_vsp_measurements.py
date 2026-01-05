@@ -12,6 +12,7 @@
 #  IMPORT
 # ----------------------------------------------------------------------------------------------------------------------  
 # RCAIDE imports 
+
 try:
     import vsp as vsp
 except ImportError:
@@ -67,9 +68,9 @@ def get_vsp_measurements(filename = 'Unnamed_CompGeom.csv', measurement_type = '
         print('VSP import failed')
         return -1
 
-    # Get the last path from sys.path
+    # NILS: get the last path from sys.path
     system_path = sys.path[0]
-    # Append the system path to the filename
+    # NILS: append the system path to the filename
     filename = os.path.join(system_path, filename)
     vsp.SetComputationFileName(file_type, filename)
     vsp.ComputeCompGeom(vsp.SET_ALL, half_mesh, file_type)

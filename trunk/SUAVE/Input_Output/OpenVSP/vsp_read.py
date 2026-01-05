@@ -21,11 +21,15 @@ from SUAVE.Components.Energy.Networks.Lift_Cruise              import Lift_Cruis
 from SUAVE.Components.Energy.Networks.Battery_Propeller        import Battery_Propeller
 
 from SUAVE.Core import Units, Data
+# NILS: copied from RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 try:
-    # import vsp as vsp
-    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
+    import vsp as vsp
 except ImportError:
-    pass # This allows SUAVE to build without OpenVSP
+    try:
+        import openvsp as vsp
+    except ImportError:
+        # This allows RCAIDE to build without OpenVSP
+        pass
 
 
 # ----------------------------------------------------------------------

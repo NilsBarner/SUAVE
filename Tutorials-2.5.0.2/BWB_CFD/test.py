@@ -3,6 +3,7 @@
 # NILS: add OpenVSP python binding to path (add to system path long-term)
 import sys
 sys.path.insert(0, r"C:\Users\nmb48\Documents\GitHub\SUAVE\OpenVSP-3.46.0-win64-Python3.9\OpenVSP-3.46.0-win64\python\openvsp")
+# sys.path.insert(0, r"C:\Users\nmb48\Documents\GitHub\SUAVE\OpenVSP-3.19.0-win64\python\openvsp")
 
 import openvsp as vsp
 
@@ -11,8 +12,8 @@ vsp.ReadVSPFile("base.vsp3")
 
 # NILS: fails silently when below lines are uncommented
 # Requires further debugging!
-# vsp.SetCFDMeshVal(vsp.CFD_HALF_MESH_FLAG,1)
-# vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,1)
+vsp.SetCFDMeshVal(vsp.CFD_HALF_MESH_FLAG,1)
+vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,1)
 
 vsp.SetComputationFileName(vsp.CFD_STL_TYPE, "test.stl")
 
@@ -24,7 +25,7 @@ vsp.ComputeCFDMesh(
 
 print("DONE")
 
-"""
+r"""
 # NILS: with two lines commented
 (suave) C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\BWB_CFD>python "C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\BWB_CFD\test.py"
 Invalid reason 17

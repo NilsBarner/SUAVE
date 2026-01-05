@@ -138,6 +138,11 @@ class SU2_inviscid(Aerodynamics):
         drag_model = surrogates.drag_coefficient
         AR         = geometry.wings['main_wing'].aspect_ratio
         
+        ### NILS
+        print('AoA =', AoA)
+        print('mach =', mach)
+        ###
+        
         # Inviscid lift
         data_len = len(AoA)
         inviscid_lift = np.zeros([data_len,1])
@@ -267,6 +272,12 @@ class SU2_inviscid(Aerodynamics):
         CD_data   = training.coefficients[:,1]
         xy        = training.grid_points 
         
+        ### NILS
+        print('AoA_data =', AoA_data)
+        print('mach_data =', mach_data)
+        print('CL_data =', CL_data)
+        print('CD_data =', CD_data)
+        ###
               
         # Gaussian Process New
         gp_kernel_ES = ExpSineSquared(length_scale=1.0, periodicity=1.0, length_scale_bounds=(1e-5,1e5), periodicity_bounds=(1e-5,1e5))

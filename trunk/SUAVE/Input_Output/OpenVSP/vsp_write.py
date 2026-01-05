@@ -24,11 +24,16 @@ from SUAVE.Input_Output.OpenVSP.vsp_propeller import write_vsp_propeller_bem
 from SUAVE.Input_Output.OpenVSP.vsp_fuselage  import write_vsp_fuselage
 from SUAVE.Input_Output.OpenVSP.vsp_wing      import write_vsp_wing
 from SUAVE.Input_Output.OpenVSP.vsp_nacelle   import write_vsp_nacelle 
+
+# NILS: copied from RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 try:
-    # import vsp as vsp
-    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
+    import vsp as vsp
 except ImportError:
-    pass # This allows SUAVE to build without OpenVSP
+    try:
+        import openvsp as vsp
+    except ImportError:
+        # This allows RCAIDE to build without OpenVSP
+        pass
 import numpy as np
 import os
 

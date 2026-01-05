@@ -17,11 +17,15 @@ from SUAVE.Components.Airfoils.Airfoil import Airfoil
 from SUAVE.Methods.Geometry.Two_Dimensional.Planform import wing_planform, wing_segmented_planform 
 import numpy as np
 import string
+# NILS: copied from RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 try:
-    # import vsp as vsp
-    import openvsp as vsp  # NILS: based on RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
+    import vsp as vsp
 except ImportError:
-    pass # This allows SUAVE to build without OpenVSP
+    try:
+        import openvsp as vsp
+    except ImportError:
+        # This allows RCAIDE to build without OpenVSP
+        pass
 # This enforces lowercase names
 chars = string.punctuation + string.whitespace
 t_table = str.maketrans( chars          + string.ascii_uppercase , 

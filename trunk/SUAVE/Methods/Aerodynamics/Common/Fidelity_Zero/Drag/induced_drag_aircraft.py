@@ -93,6 +93,7 @@ def induced_drag_aircraft(state,settings,geometry):
             tag        = wing.tag
             ar         = wing.aspect_ratio
             s_wing     = conditions.aerodynamics.drag_breakdown.parasite[wing.tag].reference_area
+            print('NILS: ', conditions.aerodynamics.lift_breakdown.inviscid_wings)
             cl_wing    = conditions.aerodynamics.lift_breakdown.inviscid_wings[tag]
             cdi_i_wing = conditions.aerodynamics.drag_breakdown.induced.inviscid_wings[tag]
             cdp_wing   = conditions.aerodynamics.drag_breakdown.parasite[tag].parasite_drag_coefficient

@@ -40,11 +40,25 @@ def call_SU2_CFD(tag,parallel=False,processors=1):
         pass
     else:
         subprocess.call(['SU2_CFD',tag+'.cfg'])
-        
-    f = open(tag + '_history.dat')
+    
+    # f = open(tag + '_history.dat')
+    
+    ### NILS
+    import os
+
+    hist_csv = tag + '_history.csv'
+    hist_dat = tag + '_history.dat'
+
+    if os.path.exists(hist_csv):
+        f = open(hist_csv)
+    elif os.path.exists(hist_dat):
+        f = open(hist_dat)
+    else:
+        raise FileNotFoundError("No SU2 history file found")
+    ###
         
     SU2_results = Data()    
-    
+    '''
     lines = f.readlines()
     final_state = lines[-1].split(',')
     
@@ -52,6 +66,21 @@ def call_SU2_CFD(tag,parallel=False,processors=1):
     
     CL  = float(final_state[9])
     CD  = float(final_state[8])
+    '''
+    ### NILS
+    lines = [l.strip() for l in f.readlines() if l.strip() and not l.startswith('#')]
+
+    # Split header and last data line by comma
+    header = [h.strip().strip('"') for h in lines[0].split(',')]
+    data   = [d.strip()            for d in lines[-1].split(',')]
+
+    # Build dictionary safely
+    row = dict(zip(header, data))
+
+    # Extract coefficients
+    CL = float(row['CL'])
+    CD = float(row['CD'])
+    ###
     
     SU2_results.coefficient_of_lift  = CL
     SU2_results.coefficient_of_drag  = CD
@@ -78,4 +107,5 @@ def call_SU2_CFD(tag,parallel=False,processors=1):
     return CL,CD
 
 if __name__ == '__main__':
-    call_SU2_CFD('cruise',parallel=True)
+    # call_SU2_CFD('cruise',parallel=True)
+    call_SU2_CFD('base',parallel=True)  # NILS
