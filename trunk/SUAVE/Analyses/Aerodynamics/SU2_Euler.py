@@ -135,7 +135,9 @@ class SU2_Euler(Markup):
         super(SU2_Euler, self).initialize()
         self.process.compute.lift.inviscid.geometry = self.geometry
         
+        # print(id(self.geometry))  # NILS: compare with `print(id(aerodynamics.geometry))` in tasopt_su2_nils.py (should match)
         tag = self.geometry.tag
+        # print('tag =', tag)  # NILS: this will print 'base', no matter what
         # Mesh the geometry in prepartion for CFD if no training file exists
         if self.process.compute.lift.inviscid.training_file is None:
             write_vsp_mesh(self.geometry,tag,self.settings.half_mesh_flag,self.settings.vsp_mesh_growth_ratio,self.settings.vsp_mesh_growth_limiting_flag)
@@ -144,5 +146,8 @@ class SU2_Euler(Markup):
         
         # Generate the surrogate
         self.process.compute.lift.inviscid.initialize()
+        
+        import sys
+        sys.exit('Stop at end of SU2_Euler.py')
         
     finalize = initialize

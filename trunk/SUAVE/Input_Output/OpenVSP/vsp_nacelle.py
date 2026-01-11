@@ -67,6 +67,7 @@ def write_vsp_nacelle(nacelle, OML_set_ind):
     height         = nacelle.diameter - nacelle.inlet_diameter  
     diameter       = nacelle.diameter  - height/2 
     nac_tag        = nacelle.tag 
+    print('nacelle.origin =', nacelle.origin)
     nac_x          = nacelle.origin[0][0]
     nac_y          = nacelle.origin[0][1]
     nac_z          = nacelle.origin[0][2]

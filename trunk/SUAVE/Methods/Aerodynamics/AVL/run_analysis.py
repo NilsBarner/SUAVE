@@ -24,7 +24,7 @@ from SUAVE.Methods.Aerodynamics.AVL.purge_files  import purge_files
 from SUAVE.Core                                  import redirect
 
 ## @ingroup Methods-Aerodynamics-AVL
-def run_analysis(avl_object,print_output):
+def run_analysis(avl_object,print_output, backend='AVL'):  # NILS: skip read_results() when JVL backend is used (else encounter read error in surface forces result file)
     """ This calls the AVL executable and runs an analysis
 
     Assumptions:
@@ -43,7 +43,13 @@ def run_analysis(avl_object,print_output):
         N/A
     """    
     call_avl(avl_object,print_output)
-    results = read_results(avl_object)
+    if backend == 'AVL':
+        results = read_results(avl_object)
+    elif backend == 'JVL':
+        import sys
+        sys.exit('call_avl() ran successfully.')
+    else:
+        raise Exception
 
     return results
 

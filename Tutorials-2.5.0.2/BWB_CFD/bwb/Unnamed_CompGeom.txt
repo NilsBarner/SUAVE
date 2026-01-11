@@ -1,0 +1,20 @@
+...Comp Geom...
+4 Num Comps
+5 Total Num Meshes
+16240 Total Num Tris
+
+Theo_Area   Wet_Area   Theo_Vol    Wet_Vol  Name
+ 3141.709   3130.924   4145.937   4145.937  main_wing      
+  114.125    108.012     33.096     31.587  nacelle        
+  114.125    114.125     33.096     33.096  nacelle_2      
+  114.125    108.012     33.096     31.587  nacelle_3      
+-------------------------------------------------
+ 3484.085   3461.073   4245.224   4243.112  Totals         
+
+Tag_Theo_Area   Tag_Wet_Area    Tag_Name
+     1570.855       1565.462    main_wing_Surf0
+     1570.855       1565.462    main_wing_Surf1
+      114.125        108.012    nacelle_Surf0  
+      114.125        114.125    nacelle_2_Surf0
+      114.125        108.012    nacelle_3_Surf0
+WARNING: 1 open meshes merged

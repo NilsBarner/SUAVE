@@ -6,6 +6,8 @@ def write_SU2_cfg(tag, SU2_settings):
     mach     = SU2_settings.mach_number
     AOA      = SU2_settings.angle_of_attack
     iters    = SU2_settings.maximum_iterations
+    p0 = SU2_settings.freestream_pressure  # NILS: added to support analysis at different altitudes
+    T0 = SU2_settings.freestream_temperature  # NILS: added to support analysis at different altitudes
 
     filename = tag + '.cfg'
     f = open(filename, mode='w')
@@ -27,8 +29,8 @@ def write_SU2_cfg(tag, SU2_settings):
     f.write(f'MACH_NUMBER = {float(mach)}\n\n')
     f.write(f'AOA = {float(AOA)}\n\n')
     f.write('SIDESLIP_ANGLE = 0.0\n\n')
-    f.write('FREESTREAM_PRESSURE = 101325.0\n\n')
-    f.write('FREESTREAM_TEMPERATURE = 288.15\n\n')
+    f.write(f'FREESTREAM_PRESSURE = {float(p0)}\n\n')  # NILS: previously fixed at 101325.0
+    f.write(f'FREESTREAM_TEMPERATURE = {float(T0)}\n\n')  # NILS: previously fixed at 288.15
 
     # ------------------------------------------------------------------
     # Reference definition
@@ -39,7 +41,7 @@ def write_SU2_cfg(tag, SU2_settings):
     f.write('REF_LENGTH = 1.0\n\n')
     f.write(f'REF_AREA = {float(ref_area)}\n\n')
     f.write('REF_DIMENSIONALIZATION = FREESTREAM_VEL_EQ_ONE\n\n')
-
+    
     # ------------------------------------------------------------------
     # Boundary conditions
     # ------------------------------------------------------------------
@@ -49,6 +51,7 @@ def write_SU2_cfg(tag, SU2_settings):
 
     f.write('MARKER_PLOTTING = ( VEHICLE )\n\n')
     f.write('MARKER_MONITORING = ( VEHICLE )\n\n')
+    f.write('MARKER_DESIGNING = ( VEHICLE )\n\n')  # NILS
 
     # ------------------------------------------------------------------
     # Numerical methods
@@ -57,7 +60,10 @@ def write_SU2_cfg(tag, SU2_settings):
     f.write('OBJECTIVE_FUNCTION = DRAG\n\n')
 
     f.write('CFL_NUMBER = 5.0\n\n')
-    f.write('CFL_ADAPT = NO\n\n')
+    #f.write('CFL_ADAPT = NO\n\n')
+    f.write('CFL_ADAPT = YES\n\n')
+    f.write('CFL_ADAPT_PARAM = ( 0.5, 1.5, 1.0, 100.0 )\n\n')  # NILS: string format has changed from `f.write('CFL_ADAPT_PARAM = ( 1.5, 0.5, 1.0, 100.0 )\n\n')`
+    f.write('RK_ALPHA_COEFF = ( 0.66667, 0.66667, 1.000000 )\n\n')  # NILS
 
     f.write(f'INNER_ITER = {int(iters)}\n\n')
 
@@ -80,6 +86,7 @@ def write_SU2_cfg(tag, SU2_settings):
     # ------------------------------------------------------------------
     f.write('CONV_NUM_METHOD_FLOW = JST\n\n')
     f.write('MUSCL_FLOW = NO\n\n')
+    # f.write('MUSCL_FLOW = YES\n\n')  # NILS: cannot use MUSCL with JST (Error Exit: "Centered schemes do not use MUSCL reconstruction (use MUSCL_FLOW= NO).")
     f.write('SLOPE_LIMITER_FLOW = VENKATAKRISHNAN\n\n')
     f.write('JST_SENSOR_COEFF = ( 0.5, 0.02 )\n\n')
     f.write('TIME_DISCRE_FLOW = EULER_IMPLICIT\n\n')

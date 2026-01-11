@@ -72,6 +72,8 @@ class SU2_inviscid(Aerodynamics):
         self.training = Data()        
         self.training.angle_of_attack  = np.array([-2.,3.,8.]) * Units.deg
         self.training.Mach             = np.array([0.3,0.7,0.85])
+        self.training.freestream_pressure = np.array([101325.0])  # NILS: added to support analysis at different altitudes
+        self.training.freestream_temperature = np.array([288.15])  # NILS: added to support analysis at different altitudes
         self.training.lift_coefficient = None
         self.training.drag_coefficient = None
         self.training_file             = None
@@ -134,14 +136,11 @@ class SU2_inviscid(Aerodynamics):
         
         mach       = conditions.freestream.mach_number
         AoA        = conditions.aerodynamics.angle_of_attack
+        # p0 = conditions.freestream.pressure  # NILS: evaluate() not used, so commented out
+        # T0 = conditions.freestream.temperature  # NILS: evaluate() not used, so commented out
         lift_model = surrogates.lift_coefficient
         drag_model = surrogates.drag_coefficient
         AR         = geometry.wings['main_wing'].aspect_ratio
-        
-        ### NILS
-        print('AoA =', AoA)
-        print('mach =', mach)
-        ###
         
         # Inviscid lift
         data_len = len(AoA)
@@ -198,7 +197,9 @@ class SU2_inviscid(Aerodynamics):
         training = self.training
         
         AoA  = training.angle_of_attack
-        mach = training.Mach 
+        mach = training.Mach
+        p0 = training.freestream_pressure  # NILS: added to support analysis at different altitudes
+        T0 = training.freestream_temperature  # NILS: added to support analysis at different altitudes
         CL   = np.zeros([len(AoA)*len(mach),1])
         CD   = np.zeros([len(AoA)*len(mach),1])
 
@@ -219,6 +220,8 @@ class SU2_inviscid(Aerodynamics):
                     # Set training conditions
                     konditions.aerodynamics.angle_of_attack = AoA[i]
                     konditions.aerodynamics.mach            = mach[j]
+                    konditions.aerodynamics.freestream_pressure = p0[j]  # NILS: added to support analysis at different altitudes
+                    konditions.aerodynamics.freestream_temperature = T0[j]  # NILS: added to support analysis at different altitudes
                     
                     CL[count],CD[count] = call_SU2(konditions, settings, geometry)
                     count += 1
@@ -268,17 +271,12 @@ class SU2_inviscid(Aerodynamics):
         training  = self.training
         AoA_data  = training.angle_of_attack
         mach_data = training.Mach
+        # p0_data = training.pressure  # NILS: evaluate() not used, so commented out
+        # T0_data = training.temperature  # NILS: evaluate() not used, so commented out
         CL_data   = training.coefficients[:,0]
         CD_data   = training.coefficients[:,1]
         xy        = training.grid_points 
         
-        ### NILS
-        print('AoA_data =', AoA_data)
-        print('mach_data =', mach_data)
-        print('CL_data =', CL_data)
-        print('CD_data =', CD_data)
-        ###
-              
         # Gaussian Process New
         gp_kernel_ES = ExpSineSquared(length_scale=1.0, periodicity=1.0, length_scale_bounds=(1e-5,1e5), periodicity_bounds=(1e-5,1e5))
         regr_cl = gaussian_process.GaussianProcessRegressor(kernel=gp_kernel_ES)
@@ -385,6 +383,8 @@ def call_SU2(conditions,settings,geometry):
         SU2_settings.reference_area  = geometry.reference_area/2.
     SU2_settings.mach_number     = conditions.aerodynamics.mach
     SU2_settings.angle_of_attack = conditions.aerodynamics.angle_of_attack / Units.deg
+    SU2_settings.freestream_pressure = conditions.aerodynamics.freestream_pressure  # NILS: added to support analysis at different altitudes
+    SU2_settings.freestream_temperature = conditions.aerodynamics.freestream_temperature  # NILS: added to support analysis at different altitudes
     SU2_settings.maximum_iterations = iters
     
     # Build SU2 configuration file

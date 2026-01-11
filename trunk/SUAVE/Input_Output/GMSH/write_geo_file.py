@@ -27,7 +27,7 @@ def write_geo_file(tag):
     Properties Used:
     N/A
     """      
-    """  TEMPORARILY COMMENTED BY NILS
+    
     # Create .geo file
     # This is essentially a list of commands used to build a volume for meshing
     
@@ -71,9 +71,8 @@ def write_geo_file(tag):
     
     f.write('Volume(' + str(total_count) + ') = {' + surface_num_str + '};\n')
     f.close
-    """
     
-'''
+
 ## @ingroup Input_Output-GMSH
 def read_keys(tag):
     """This reads the corresponding OpenVSP .key file to check which surfaces
@@ -128,55 +127,6 @@ def read_keys(tag):
     f.close()
     
     return vehicle_nums, farfield_num, symmetry_num       
-'''
-
-def read_keys(tag):
-
-    import os
-
-    if os.path.exists(tag + '.key'):
-        filename = tag + '.key'
-    elif os.path.exists(tag + '.tkey'):
-        filename = tag + '.tkey'
-    else:
-        raise FileNotFoundError(f"No .key or .tkey file found for {tag}")
-
-    vehicle_nums = []
-    farfield_num = -1
-    symmetry_num = -1
-
-    farfield_val = 'FarField'
-    symmetry_val = 'SymPlane'
-
-    with open(filename, 'r') as f:
-        for line in f:
-            line = line.strip()
-
-            # Skip blank lines or comments
-            if not line or line.startswith('#'):
-                continue
-
-            vals = line.split()
-
-            # Must have at least ID + name
-            if len(vals) < 2:
-                continue
-
-            try:
-                surf_id = float(vals[0])
-            except ValueError:
-                continue
-
-            surf_name = vals[1]
-
-            if surf_name == farfield_val:
-                farfield_num = surf_id
-            elif surf_name == symmetry_val:
-                symmetry_num = surf_id
-            else:
-                vehicle_nums.append(surf_id)
-
-    return vehicle_nums, farfield_num, symmetry_num
 
 if __name__ == '__main__':
     

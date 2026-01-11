@@ -87,7 +87,7 @@ class AVL(Stability):
         self.settings.filenames.err_filename        = sys.stderr        
         self.settings.number_spanwise_vortices      = 20
         self.settings.number_chordwise_vortices     = 10
-        self.settings.trim_aircraft                 = True  # NILS: toggle to trim or not
+        self.settings.trim_aircraft                 = False  # TEMP  # True  # NILS: toggle to trim or not
         self.settings.print_output                  = True  # NILS: added to match SUAVE 2.5.2 (toggle to print or not AVL console output)
         
         # Regression Status      
@@ -117,13 +117,20 @@ class AVL(Stability):
         # NOTE: training inputs always have to be at least 1D, otherwise get
         # `TypeError: object of type 'float' has no len()` in
         # Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\translate_data.py
-        self.training.Mach = np.array([0.2, 0.5, 0.7, 0.7, 0.5, 0.2])
-        self.training.altitude = np.array([0.0, 10e3, 35e3, 35e3, 10e3, 0.0]) * 0.3048
+        # self.training.Mach = np.array([0.2, 0.5, 0.7, 0.7, 0.5, 0.2])
+        # self.training.altitude = np.array([0.0, 10e3, 35e3, 35e3, 10e3, 0.0]) * 0.3048
+        self.training.Mach = np.array([0.7])  # TEMP
+        self.training.altitude = np.array([35e3]) * 0.3048  # TEMP
         self.training.mass = None
         self.training.side_slip_angle = np.zeros_like(self.training.Mach) * Units.degrees
         # NILS: 6x faster if use `np.array([0])` instead of `np.zeros_like(self.training.Mach)` (6x duplication)
         self.training.angle_of_attack = np.array([0]) * Units.degrees  #  np.zeros_like(self.training.Mach) * Units.degrees  # to be trimmed
-        self.training.load_factor = np.array([1.0, 2.5, 1.0, 1.0, 2.5, 1.0])
+        # self.training.load_factor = np.array([1.0, 2.5, 1.0, 1.0, 2.5, 1.0])
+        self.training.load_factor = np.array([1.0])  # TEMP
+        
+        self.backend = 'JVL'  # NILS: 'AVL' or 'JVL'
+        self.run_modal = False  # NILS: do not run modal analysis with JVL (only intended for verification of Flydrogen/TASOPT.jl blown-wing surrogate modal)
+        self.settings.Nspanwise_main_wing = 10  # NILS: reduce number of spanwise vortices to avoid SPUPL error
         
         self.settings.side_slip_angle               = 0.0  # NILS: added to match SUAVE 2.5.2 (can remain set to 0 as vary self.training.side_slip_angle in sample_training() below)
         self.settings.roll_rate_coefficient         = 0.0  # NILS: added to match SUAVE 2.5.2
@@ -831,7 +838,10 @@ class AVL(Stability):
         
         # rename defaul avl aircraft tag
         self.tag                         = 'avl_analysis_of_{}'.format(self.geometry.tag) 
-        self.settings.filenames.features = self.geometry._base.tag + '.avl'
+        if self.backend == 'AVL':  # NILS
+            self.settings.filenames.features = self.geometry._base.tag + '.avl'
+        elif self.backend == 'JVL':  # NILS
+            self.settings.filenames.features = self.geometry._base.tag + '.jvl'
         self.settings.filenames.mass_file= self.geometry._base.tag + '.mass'
         
         # update current status
@@ -891,10 +901,10 @@ class AVL(Stability):
             write_geometry(self,run_script_path)
             write_mass_file(self,run_conditions)
             write_run_cases(self,trim_aircraft)
-            write_input_deck(self, trim_aircraft, control_surfaces, run_modal=True)  # NILS: added last argument to match SUAVE 2.5.2
+            write_input_deck(self, trim_aircraft, control_surfaces, run_modal=self.run_modal)  # NILS: added last argument to match SUAVE 2.5.2
 
             # RUN AVL!
-            results_avl = run_analysis(self, print_output)  # NILS: added last argument to match SUAVE 2.5.2
+            results_avl = run_analysis(self, print_output, self.backend)  # NILS: added last argument to match SUAVE 2.5.2
     
         # translate results
         results = translate_results_to_conditions(cases,results_avl)

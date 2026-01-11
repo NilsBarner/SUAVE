@@ -11,20 +11,18 @@ from optvl import OVLSolver
 
 from matplotlib_custom_settings import *
 
-# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\aircraft.avl", debug=False)
-# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl_files\Boeing_737-800.avl", debug=False)
-# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\AVL3.52rel09032025\runs\b737.avl", debug=False)
-ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.avl", debug=False)
-# ovl_solver.plot_geom()
-# ovl_solver.plot_geom_nils(colors=['k', 'k'])
+# Load .avl file
+# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\AVL3.52rel09032025\runs\b737.avl", debug=False)  # test case
+ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.avl", debug=False)  # my designs
 
-# # =============================================================================
-# ovl_solver.set_variable("alpha", 5.0)
-# ovl_solver.set_variable("beta", 0.0)
-# ovl_solver.execute_run()
-# # =============================================================================
+# Uncomment if want to plot lift distribution
+# ovl_solver.set_variable("alpha", 5.0)  # set AOA
+# ovl_solver.set_variable("beta", 0.0)  # set AOS
+ovl_solver.execute_run()
 
+# Produce figure
 ovl_solver.plot_geom_nils(colors=[colors[0], colors[1]])
+# ovl_solver.plot_geom()  # original version
 
 ovl_solver.set_variable("alpha", 5.00)
 ovl_solver.execute_run()
@@ -112,20 +110,10 @@ for surf_key in strip_data:
     # plt.plot(span_distance, strip_data[surf_key]["Cl"], color="green")
     # plt.plot(span_distance, strip_data[surf_key]["Cn"], color="green")
     
-
+# plt.legend(["roll distribution", "yaw distribution"])
 plt.legend(["lift dist", "CL", "CL perp."])
+# plt.title("roll and yaw spanwise data")
 plt.title("lift spanwise data")
 plt.xlabel("spanwise position")
 plt.show()
 
-
-# strip_data = ovl.get_strip_forces()
-# for surf_key in strip_data:
-#     span_distance = strip_data[surf_key]["Y LE"]
-#     plt.plot(span_distance, strip_data[surf_key]["Cn"], color="C0")
-#     plt.plot(span_distance, strip_data[surf_key]["Cl"], color="C1")
-
-# plt.legend(["roll distribution", "yaw distribution"])
-# plt.title("roll and yaw spanwise data")
-# plt.xlabel("spanwise position")
-# plt.show()

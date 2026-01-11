@@ -206,8 +206,17 @@ def write_vsp_propeller_bem(vsp_bem_filename,propeller):
         make_airfoil_text(vsp_bem,propeller)  
 
     # Now import this prop
-    vsp.ImportFile(vsp_bem_filename,vsp.IMPORT_BEM,'')
-
+    # vsp.ImportFile(vsp_bem_filename,vsp.IMPORT_BEM,'')
+    # NILS: comment as introduced
+    # broken .bem object into .vsp3 file, although above syntax should be fine based on
+    # https://openvsp.org/api_docs/latest/group___file_i_o.html. To visualise the props
+    # in the OpenVSP GUI, I can open the .vsp3 file without them and manually do File ->
+    # Import -> Balde Element (.bem) and import propeller_1.bem and propeller_2.bem, which
+    # are in the cwd(). In the Geom Browser, these are displayed as dependents (propeller_2
+    # is one level below propeller_1), whereas with vsp.ImportFile(vsp_bem_filename,vsp.IMPORT_BEM,'')
+    # they are at the same level. Perhaps this is the reason for the incorrect displayal.
+    # TO BE INVESTIGATED FURTHER!
+    
     return
 
 

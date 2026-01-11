@@ -1,0 +1,37 @@
+...Comp Geom...
+12 Num Comps
+14 Total Num Meshes
+33648 Total Num Tris
+
+Theo_Area   Wet_Area   Theo_Vol    Wet_Vol  Name
+  139.869    137.579     13.057     13.057  main_wing      
+   48.367     47.553      3.850      3.850  horizontal_stabilizer
+   36.907     33.968      4.627      4.332  vertical_stabilizer
+    0.699      0.699      0.047      0.047  nacelle        
+    0.699      0.699      0.047      0.047  nacelle_2      
+    0.699      0.699      0.047      0.047  nacelle_3      
+    0.699      0.699      0.047      0.047  nacelle_4      
+    0.699      0.699      0.047      0.047  nacelle_5      
+    0.699      0.699      0.047      0.047  nacelle_6      
+    0.699      0.699      0.047      0.047  nacelle_7      
+    0.699      0.699      0.047      0.047  nacelle_8      
+  211.315    207.627    134.247    134.177  fuselage       
+-------------------------------------------------
+  442.049    432.318    156.155    155.790  Totals         
+
+Tag_Theo_Area   Tag_Wet_Area    Tag_Name
+       69.935         68.789    main_wing_Surf0
+       69.935         68.789    main_wing_Surf1
+       24.183         23.776    horizontal_stabilizer_Surf0
+       24.183         23.776    horizontal_stabilizer_Surf1
+       36.907         33.968    vertical_stabilizer_Surf0
+        0.699          0.699    nacelle_Surf0  
+        0.699          0.699    nacelle_2_Surf0
+        0.699          0.699    nacelle_3_Surf0
+        0.699          0.699    nacelle_4_Surf0
+        0.699          0.699    nacelle_5_Surf0
+        0.699          0.699    nacelle_6_Surf0
+        0.699          0.699    nacelle_7_Surf0
+        0.699          0.699    nacelle_8_Surf0
+      211.315        207.627    fuselage_Surf0 
+WARNING: 2 open meshes merged
