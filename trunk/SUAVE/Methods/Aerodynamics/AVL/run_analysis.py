@@ -46,8 +46,9 @@ def run_analysis(avl_object,print_output, backend='AVL'):  # NILS: skip read_res
     if backend == 'AVL':
         results = read_results(avl_object)
     elif backend == 'JVL':
-        import sys
-        sys.exit('call_avl() ran successfully.')
+        # import sys
+        # sys.exit('call_avl() ran successfully.')
+        results = read_results(avl_object, backend=backend)
     else:
         raise Exception
 

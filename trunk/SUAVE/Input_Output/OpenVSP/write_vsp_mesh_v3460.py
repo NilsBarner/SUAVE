@@ -7,7 +7,8 @@
 #           Jan 2019, T. MacDonald
 #           Jan 2020, T. MacDonald
 
-# NILS: copied from RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
+# NILS: this file is not in use (use write_vsp_mesh.py, which is compatible with OpenVSP v3.19.0, instead)
+# Copied from RCAIDE/Framework/External_Interfaces/OpenVSP/write_vsp_mesh.py
 try:
     import vsp as vsp
 except ImportError:

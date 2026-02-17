@@ -18,7 +18,7 @@ from SUAVE.Core import Units
 from .purge_files import purge_files
 
 ## @ingroup Methods-Aerodynamics-AVL
-def write_input_deck(avl_object,trim_aircraft,control_surfaces, run_modal=False):
+def write_input_deck(avl_object,trim_aircraft,control_surfaces, run_modal=False, backend='AVL'):  # NILS: new arguments in v2.5.2 vs v2.5.0 and backend toggle
     """ This function writes the execution steps used in the AVL call
     Assumptions:
         None
@@ -39,7 +39,7 @@ def write_input_deck(avl_object,trim_aircraft,control_surfaces, run_modal=False)
 mset
 0
 PLOP
-G
+{1}
 
 '''   
     open_runs = \
@@ -52,11 +52,15 @@ G
     batch         = avl_object.current_status.batch_file
     deck_filename = avl_object.current_status.deck_file 
     mass_filename = avl_object.settings.filenames.mass_file
+    if backend == 'AVL':
+        plot_command = 'G'  # NILS: Graphics-enable flag?
+    elif backend == 'JVL':
+        plot_command = 'I'  # NILS: Individual ps file output?
 
     # purge old versions and write the new input deck
     purge_files([deck_filename]) 
     with open(deck_filename,'w') as input_deck:
-        input_deck.write(mass_file_input.format(mass_filename))
+        input_deck.write(mass_file_input.format(mass_filename, plot_command))  # NILS: added last argument to allow saving hardcopy plots as .ps files
         input_deck.write(open_runs.format(batch))
         input_deck.write(base_input)
         for case in avl_object.current_status.cases:
@@ -91,7 +95,7 @@ G
 
     return
 
-
+# NILS: function different in v2.5.2 vs v2.5.0
 def make_case_command(avl_object,case,trim_aircraft,control_surfaces):
     """ Makes commands for case execution in AVL
     Assumptions:
@@ -122,7 +126,13 @@ x
 {10}
 {11}
 {12}
-'''  
+{13}
+{14}
+{15}
+{16}
+{17}
+{18}
+'''  # NILS: added arguments {13}-{18}
     
     # if trim analysis is specified, this function writes the trim commands else it 
     # uses the defined deflection of the control surfaces of the aircraft
@@ -154,6 +164,11 @@ x
     aero_file_2    = case.aero_result_filename_2 
     aero_file_3    = case.aero_result_filename_3 
     aero_file_4    = case.aero_result_filename_4
+
+    # NILS: produce 3D geometry and 2D Trefftz plane plots and save hardcopy .ps files
+    geometry_plot_command = 'g'
+    hardcopy_plot_command = 'h'
+    trefftz_plane_plot_command = 't'
     
     # purge files 
     if not avl_object.settings.keep_files:
@@ -163,7 +178,8 @@ x
     
     # write input deck for avl executable 
     case_command = base_case_command.format(index,trim_command,roll_rate_command,pitch_rate_command ,beta_command,aero_command_1 , aero_file_1 ,aero_command_2  \
-                                            , aero_file_2 , aero_command_3 , aero_file_3, aero_command_4 , aero_file_4) 
+                                            , aero_file_2 , aero_command_3 , aero_file_3, aero_command_4 , aero_file_4,
+                                            geometry_plot_command, hardcopy_plot_command, '', trefftz_plane_plot_command, hardcopy_plot_command, '')  # NILS: new arguments in v2.5.2 vs v2.5.0, and added hardcopy plot commands
         
     return case_command
 
@@ -207,6 +223,7 @@ c1
     
     return trim_command
 
+# NILS: function non-existent in v2.5.0 vs v2.5.2
 def make_roll_rate_text_command(case):
     """ Writes the roll rate command currently for a specified flight  condition
     Assumptions:

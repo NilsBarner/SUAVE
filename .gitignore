@@ -83,7 +83,7 @@ ide/Wing/SUAVE.wpr
 # NILS: application folders
 /OpenVSP-3.46.0-win64-Python3.9
 /gmsh-3.0.6-Windows64
-/SU2-6.0.0
+/SU2-v8.3.0-win64
 /jvl2.16
 /avl3.52
 /OpenVSP-3.19.0-win64

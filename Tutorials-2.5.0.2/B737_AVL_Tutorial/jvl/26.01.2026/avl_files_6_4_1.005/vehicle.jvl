@@ -1,0 +1,705 @@
+ATR_72-600
+
+#Mach
+ 0.0
+ 
+#Iysym   IZsym   Zsym
+  0      0     0.0
+  
+#Sref    Cref    Bref 	<meters>
+66.58746025653025      2.4292913124737643     28.26746403691642
+
+#Xref    Yref    Zref   <meters>
+11.818836925293022      0.0     1.385
+
+#---------------------------------------------------------
+SURFACE
+main_wing_1
+#Nchordwise  Cspace   Nspanwise  Sspace  Njet
+10         1.0         100      1.0       12
+
+COMPONENT
+2
+
+YDUPLICATE
+0.0
+
+SECTION
+# center
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.6261  0.0    1.385    2.8224    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+
+SECTION
+# prop_1_in
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.6261  0.636    1.385    2.8224    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.1259   -0.2616
+
+SECTION
+# inboard
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.6261  1.6123    1.385    2.8224    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.1259   -0.2616
+
+SECTION
+# outboard
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.6388  4.2323    1.385    2.7715    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.1259   -0.2616
+
+SECTION
+# prop_1_out
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.6526  4.6817    1.385    2.7162    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.1259   -0.2616
+
+SECTION
+# mid_pitch_1_2
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.7125  6.6296    1.385    2.4768    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+#---------------------------------------------------------
+SURFACE
+main_wing_2
+#Nchordwise  Cspace   Nspanwise  Sspace  Njet
+10         1.0         100      1.0       12
+
+COMPONENT
+2
+
+YDUPLICATE
+-0.0
+
+SECTION
+# mid_pitch_1_2
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.7125  6.6296    1.385    2.4768    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+
+SECTION
+# prop_2_in
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.7724  8.5774    1.385    2.2373    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.0039   -0.2616
+
+SECTION
+# prop_2_out
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.8967  12.6231    1.385    1.7399    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+JETCONTROL
+#Jname   Jgain    SgnDup
+DVjet    1.0131      1.0
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+3.1775    1.0     0.0    0.0   0.0    -2.0039   -0.2616
+
+SECTION
+# tip
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+12.9431  14.1337    1.385    1.5542    0.0     
+AFILE
+C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Airfoils\B737a.dat
+
+#---------------------------------------------------------
+SURFACE
+horizontal_stabilizer
+#Nchordwise  Cspace   Nspanwise  Sspace
+10         1.0         30      1.0
+
+COMPONENT
+1
+
+
+YDUPLICATE
+0.0
+  
+
+SECTION
+# root_segment
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+23.9427  0.0    6.1485    2.4377    0.0     
+
+SECTION
+# tip_segment
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+24.8014  5.8505    6.1485    1.4626    0.0     
+
+
+#---------------------------------------------------------
+SURFACE
+vertical_stabilizer
+#Nchordwise  Cspace   Nspanwise  Sspace
+10         1.0         30      -1.1
+
+COMPONENT
+1
+   
+
+SECTION
+# root_section
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+20.7616  0.0    1.0388    3.992    0.0     
+
+SECTION
+# tip_section
+#Xle    Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+23.9427  0.0    6.1485    2.3952    0.0     
+
+
+#---------------------------------------------------------
+SURFACE
+fuselage_horizontal
+#Nchordwise  Cspace   Nspanwise  Sspace
+10           1.0        30      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+3.3751    -1.385     0.0     14.5449     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.9153    -1.108     0.0     20.9223     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.1502    -0.831     0.0     23.7244     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.5964    -0.554     0.0     25.8411     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.2044    -0.277     0.0     26.9156     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.0    0.0     0.0     27.12     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.2044    0.277     0.0     26.9156     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.5964    0.554     0.0     25.8411     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.1502    0.831     0.0     23.7244     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.9153    1.108     0.0     20.9223     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+3.3751    1.385     0.0     14.5449     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+fuselage_vertical
+#Nchordwise  Cspace   Nspanwise  Sspace
+10           1.0        30      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+3.3751    0.0     -1.385     14.5449     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.263    0.0     -1.108     21.1981     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.0091    0.0     -0.831     22.9188     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.0388    0.0     -0.554     24.0145     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.2044    0.0     -0.277     24.7978     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.4483    0.0     0.0     25.3898     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+0.7621    0.0     0.277     25.8317     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.1502    0.0     0.554     25.9698     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+1.6293    0.0     0.831     25.4907     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+2.2473    0.0     1.108     24.8727     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+3.3751    0.0     1.385     14.5449     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_horizontal
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0
+
+YDUPLICATE
+0.0
+
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    2.3972     1.1234     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    2.4495     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    2.5019     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    2.5542     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    2.6065     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5052    2.6588     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    2.7112     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    2.7635     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    2.8158     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    2.8682     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    2.9205     1.1234     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_vertical
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0
+
+YDUPLICATE
+0.0
+
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    2.6588     0.8617     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    2.6588     0.914     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    2.6588     0.9664     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    2.6588     1.0187     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    2.6588     1.071     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5052    2.6588     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    2.6588     1.1757     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    2.6588     1.228     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    2.6588     1.2803     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    2.6588     1.3327     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    2.6588     1.385     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_2_horizontal
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    10.3387     1.1234     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    10.391     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    10.4433     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    10.4956     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    10.548     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8305    10.6003     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    10.6526     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    10.705     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    10.7573     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    10.8096     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    10.8619     1.1234     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_2_vertical
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    10.6003     0.8617     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    10.6003     0.914     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    10.6003     0.9664     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    10.6003     1.0187     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    10.6003     1.071     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8305    10.6003     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    10.6003     1.1757     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    10.6003     1.228     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    10.6003     1.2803     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    10.6003     1.3327     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    10.6003     1.385     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_3_horizontal
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    -2.9205     1.1234     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    -2.8682     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    -2.8158     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    -2.7635     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    -2.7112     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5052    -2.6588     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    -2.6065     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    -2.5542     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    -2.5019     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    -2.4495     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    -2.3972     1.1234     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_3_vertical
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    -2.6588     0.8617     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    -2.6588     0.914     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    -2.6588     0.9664     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    -2.6588     1.0187     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    -2.6588     1.071     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5052    -2.6588     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5221    -2.6588     1.1757     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.5664    -2.6588     1.228     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.6294    -2.6588     1.2803     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.7161    -2.6588     1.3327     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9228    -2.6588     1.385     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_4_horizontal
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    -10.8619     1.1234     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    -10.8096     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    -10.7573     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    -10.705     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    -10.6526     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8305    -10.6003     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    -10.548     1.1234     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    -10.4956     1.1234     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    -10.4433     1.1234     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    -10.391     1.1234     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    -10.3387     1.1234     0.0211     0.0      1        0
+
+
+#---------------------------------------------------------
+SURFACE
+nacelle_4_vertical
+#Nchordwise  Cspace   Nspanwise  Sspace
+6           1.0        11      0.0 
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    -10.6003     0.8617     0.0211     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    -10.6003     0.914     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    -10.6003     0.9664     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    -10.6003     1.0187     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    -10.6003     1.071     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8305    -10.6003     1.1234     1.256     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8475    -10.6003     1.1757     1.1435     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.8918    -10.6003     1.228     0.9913     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+10.9548    -10.6003     1.2803     0.802     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.0415    -10.6003     1.3327     0.5557     0.0      1        0
+
+SECTION
+#Xle     Yle      Zle      Chord     Ainc  Nspanwise  Sspace
+11.2482    -10.6003     1.385     0.0211     0.0      1        0

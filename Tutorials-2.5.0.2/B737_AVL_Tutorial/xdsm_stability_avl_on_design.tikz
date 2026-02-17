@@ -1,0 +1,199 @@
+
+%%% Preamble Requirements %%%
+% \usepackage{geometry}
+% \usepackage{amsfonts}
+% \usepackage{amsmath}
+% \usepackage{amssymb}
+% \usepackage{tikz}
+
+% Optional packages such as sfmath set through python interface
+% \usepackage{}
+
+% \usetikzlibrary{arrows,chains,positioning,scopes,shapes.geometric,shapes.misc,shadows}
+
+%%% End Preamble Requirements %%%
+
+\input{"C:/Users/nmb48/AppData/Local/miniconda3/envs/py311b/Lib/site-packages/pyxdsm/diagram_styles"}
+\begin{tikzpicture}
+
+\matrix[MatrixSetup]{
+%Row 0
+&
+\node [DataIO] (output_doe) {$\begin{array}{c}\mathrm{Conceivable}\\\mathrm{FCS\,locations}\end{array}$};&
+\node [DataIO] (output_tasopt_sizing) {$R_\mathrm{des},\,\sigma_\mathrm{FCS}$};&
+&
+&
+&
+&
+\node [DataIO] (output_python_static_stability) {$\mathrm{MIL-STD-1797}$};&
+\node [DataIO] (output_python_dynamic_stability) {$\mathrm{MIL-STD-1797}$};&
+&
+\\
+%Row 1
+\node [DataIO] (left_output_doe) {$\begin{array}{c}\mathrm{Feasible}\\\mathrm{FCS\,locations}\end{array}$};&
+\node [DOE] (doe) {$\mathrm{DOE}$};&
+&
+\node [DataInter] (doe-mass_analysis) {$\mathrm{FCS\,location}$};&
+&
+&
+&
+&
+&
+&
+\\
+%Row 2
+&
+&
+\node [Function] (tasopt_sizing) {$\mathrm{Aircraft\,sizing}$};&
+\node [DataInter] (tasopt_sizing-mass_analysis) {$W_\mathrm{PL,des}\,\mathrm{c.g.\,no\,FCS}$};&
+\node [DataInter] (tasopt_sizing-suave_wrapper) {$\mathrm{Solid\,geometry}$};&
+\node [DataInter] (tasopt_sizing-avl_trimming) {$M,\,h,\,n,\,W$};&
+\node [DataInter] (tasopt_sizing-avl_modal) {$M,\,h,\,n,\,W$};&
+&
+&
+\node [DataInter] (tasopt_sizing-python_surrogate) {$M,\,h,\,n,\,W$};&
+\\
+%Row 3
+&
+&
+&
+\node [Function] (mass_analysis) {$\mathrm{Mass\,analysis}$};&
+\node [DataInter] (mass_analysis-suave_wrapper) {$\mathrm{c.g.,\,MMOIs}$};&
+&
+&
+&
+&
+&
+\\
+%Row 4
+&
+&
+&
+&
+\node [Function] (suave_wrapper) {$\mathrm{VLM\,wrapper}$};&
+\node [DataInter] (suave_wrapper-avl_trimming) {$\mathrm{VLM\,geometry}$};&
+\node [DataInter] (suave_wrapper-avl_modal) {$\mathrm{VLM\,geometry}$};&
+&
+&
+&
+\\
+%Row 5
+&
+&
+&
+&
+&
+\node [Function] (avl_trimming) {$\mathrm{Trim\,analysis}$};&
+\node [DataInter] (avl_trimming-avl_modal) {$\alpha,\,\delta_\mathrm{flap},\,\delta_\mathrm{elevator}$};&
+\node [DataInter] (avl_trimming-python_static_stability) {$\begin{array}{c}\mathrm{Stability\,and}\\\mathrm{aero\,coefficients}\end{array}$};&
+&
+\node [DataInter] (avl_trimming-python_surrogate) {$\begin{array}{c}\mathrm{Stability\,and}\\\mathrm{aero\,coefficients}\end{array}$};&
+\\
+%Row 6
+&
+&
+&
+&
+&
+&
+\node [Function] (avl_modal) {$\mathrm{Modal\,analysis}$};&
+&
+\node [DataInter] (avl_modal-python_dynamic_stability) {$\begin{array}{c}\mathrm{Eigenvalues\,and}\\\mathrm{system\,matrix}\end{array}$};&
+&
+\\
+%Row 7
+&
+\node [DataInter] (python_static_stability-doe) {$\mathrm{Yes/no}$};&
+&
+&
+&
+&
+&
+\node [Function] (python_static_stability) {$\mathrm{Static\,stability\,test}$};&
+&
+&
+\\
+%Row 8
+&
+\node [DataInter] (python_dynamic_stability-doe) {$\mathrm{Yes/no}$};&
+&
+&
+&
+&
+&
+&
+\node [Function] (python_dynamic_stability) {$\mathrm{Dynamic\,stability\,test}$};&
+&
+\\
+%Row 9
+\node [DataIO] (left_output_python_surrogate) {$\mathrm{Stability\,surrogate}$};&
+&
+&
+&
+&
+&
+&
+&
+&
+\node [Function] (python_surrogate) {$\mathrm{Surrogate\,model}$};&
+\\
+%Row 10
+&
+&
+&
+&
+&
+&
+&
+&
+&
+&
+\\
+};
+
+% XDSM process chains
+
+
+\begin{pgfonlayer}{data}
+\path
+% Horizontal edges
+(doe) edge [DataLine] (doe-mass_analysis)
+(tasopt_sizing) edge [DataLine] (tasopt_sizing-suave_wrapper)
+(tasopt_sizing) edge [DataLine] (tasopt_sizing-mass_analysis)
+(mass_analysis) edge [DataLine] (mass_analysis-suave_wrapper)
+(tasopt_sizing) edge [DataLine] (tasopt_sizing-avl_trimming)
+(tasopt_sizing) edge [DataLine] (tasopt_sizing-avl_modal)
+(tasopt_sizing) edge [DataLine] (tasopt_sizing-python_surrogate)
+(suave_wrapper) edge [DataLine] (suave_wrapper-avl_trimming)
+(suave_wrapper) edge [DataLine] (suave_wrapper-avl_modal)
+(avl_trimming) edge [DataLine] (avl_trimming-avl_modal)
+(avl_trimming) edge [DataLine] (avl_trimming-python_static_stability)
+(avl_trimming) edge [DataLine] (avl_trimming-python_surrogate)
+(avl_modal) edge [DataLine] (avl_modal-python_dynamic_stability)
+(python_static_stability) edge [DataLine] (python_static_stability-doe)
+(python_dynamic_stability) edge [DataLine] (python_dynamic_stability-doe)
+(doe) edge [DataLine] (left_output_doe)
+(python_surrogate) edge [DataLine] (left_output_python_surrogate)
+% Vertical edges
+(doe-mass_analysis) edge [DataLine] (mass_analysis)
+(tasopt_sizing-suave_wrapper) edge [DataLine] (suave_wrapper)
+(tasopt_sizing-mass_analysis) edge [DataLine] (mass_analysis)
+(mass_analysis-suave_wrapper) edge [DataLine] (suave_wrapper)
+(tasopt_sizing-avl_trimming) edge [DataLine] (avl_trimming)
+(tasopt_sizing-avl_modal) edge [DataLine] (avl_modal)
+(tasopt_sizing-python_surrogate) edge [DataLine] (python_surrogate)
+(suave_wrapper-avl_trimming) edge [DataLine] (avl_trimming)
+(suave_wrapper-avl_modal) edge [DataLine] (avl_modal)
+(avl_trimming-avl_modal) edge [DataLine] (avl_modal)
+(avl_trimming-python_static_stability) edge [DataLine] (python_static_stability)
+(avl_trimming-python_surrogate) edge [DataLine] (python_surrogate)
+(avl_modal-python_dynamic_stability) edge [DataLine] (python_dynamic_stability)
+(python_static_stability-doe) edge [DataLine] (doe)
+(python_dynamic_stability-doe) edge [DataLine] (doe)
+(tasopt_sizing) edge [DataLine] (output_tasopt_sizing)
+(python_static_stability) edge [DataLine] (output_python_static_stability)
+(python_dynamic_stability) edge [DataLine] (output_python_dynamic_stability)
+(doe) edge [DataLine] (output_doe);
+\end{pgfonlayer}
+
+\end{tikzpicture}

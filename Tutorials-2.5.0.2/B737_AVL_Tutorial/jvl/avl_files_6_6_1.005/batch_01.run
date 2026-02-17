@@ -1,0 +1,53 @@
+
+
+ ---------------------------------------------
+ Run case  1:   case_01_01
+
+ alpha        ->  alpha       =   3.0        
+ beta         ->  beta        =   0.0
+ pb/2V        ->  pb/2V       =   0.0
+ qc/2V        ->  qc/2V       =   0.0
+ rb/2V        ->  rb/2V       =   0.00000
+
+ DVjet        ->  DVjet       =   1.00000
+
+ alpha     =   0.00000     deg
+ beta      =   0.00000     deg
+ pb/2V     =   0.0
+ qc/2V     =   0.0
+ rb/2V     =   0.00000
+ CL        =   0.00000                        
+ CDo       =   0.0
+ bank      =   0.00000     deg
+ elevation =   0.00000     deg
+ heading   =   0.00000     deg
+ Mach      =   0.15
+ velocity  =   0.0     m/s               
+ density   =   1.225     kg/m^3
+ grav.acc. =   9.81     m/s^2
+ turn_rad. =   0.00000     m
+ load_fac. =   1.0
+ X_cg      =   11.811377418860904     m
+ Y_cg      =   0.0     m
+ Z_cg      =   1.385     m
+ mass      =   25978.13950814793     kg
+ Ixx       =   48620.90895036369     kg-m^2
+ Iyy       =   209743.16738557903     kg-m^2
+ Izz       =   209456.14098755145     kg-m^2
+ Ixy       =   6713.039243380015     kg-m^2
+ Iyz       =   16765.60129401158     kg-m^2
+ Izx       =   10052.562050631572     kg-m^2
+        hx        =   0.00000     kg-m^2/s
+        hy        =   0.00000     kg-m^2/s
+        hz        =   0.00000     kg-m^2/s
+        DVj exp.  =   0.00000
+        add. CL_a =   0.00000
+        add. CL_u =   0.00000
+        CL_adot   =   0.00000
+        add. CD_a =   0.00000
+        add. CD_u =   0.00000
+        CD_adot   =   0.00000
+        add. CM_a =   0.00000
+        add. CM_u =   0.00000
+        CM_adot   =   0.00000
+        

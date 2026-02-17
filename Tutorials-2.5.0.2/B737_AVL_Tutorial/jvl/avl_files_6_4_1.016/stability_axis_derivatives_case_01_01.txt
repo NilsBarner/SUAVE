@@ -1,0 +1,78 @@
+ ---------------------------------------------------------------
+ Jet Vortex Lattice Output -- Total Forces
+
+ Configuration: ATR_72-600                                                  
+     # Surfaces =  19
+     # Strips   = 660
+     # Vortices =8052
+
+  Sref =   65.411       Cref =   2.4077       Bref =   28.017    
+  Xref =   11.774       Yref =   0.0000       Zref =   1.3850    
+  Xmom =   11.774       Ymom =   0.0000       Zmom =   1.3850    
+
+ Standard axis orientation,  X fwd, Z down         
+
+ Run case: case_01_01                              
+
+  alpha =   3.00000     pb/2V =  -0.00000     p'b/2V =  -0.00000
+  beta  =  -0.00000     qc/2V =   0.00000
+  Mach  =     0.150     rb/2V =   0.00000     r'b/2V =   0.00000
+
+  CXtot =   0.76997     Cltot =   0.00000     Cl'tot =   0.00000
+  CYtot =   0.00001     Cmtot =  -0.39551
+  CZtot =  -0.42471     Cntot =   0.00000     Cn'tot =   0.00000
+
+  CLtot =   0.46442     CLff  =   0.42449
+  CYtot =   0.00001     CYff  =   0.00008
+  CDtot =  -0.74669     CDff  =  -0.75456        e =   0.85071
+
+  CLcir =   0.32643     CLffc =   0.37616
+  CLjet =   0.09822     CLffj =   0.04833
+
+  CDind =   0.00434     CDffi =   0.00422    e_vec =   0.90175
+  CDjet =   0.00779     CDffj =  -0.75878
+  CDvis =   0.00000     CDffv =   0.00000
+
+ DCQtot = 0.18549       DCJtot =  1.1309       DCEtot = 0.67180    
+                         CTtot = 0.75986        CPtot = 0.48631    
+
+
+ DVjet            j1  =  1.0000    
+ ---------------------------------------------------------------
+
+ Stability-axis derivatives...
+
+                             alpha                beta
+                  ----------------    ----------------
+ z' force CL |    CLa =   8.837221    CLb =  -0.000030
+ y  force CY |    CYa =   0.000328    CYb =  -1.076361
+ x' force CD |    CDa =   0.502028    CDb =   0.000029
+ x' mom.  Cl'|    Cla =   0.000071    Clb =  -0.093734
+ y  mom.  Cm |    Cma =  -9.173267    Cmb =  -0.000789
+ z' mom.  Cn'|    Cna =   0.000083    Cnb =   0.255076
+
+                     roll rate  p'      pitch rate  q'        yaw rate  r'
+                  ----------------    ----------------    ----------------
+ z' force CL |    CLp =  -0.000086    CLq =  34.319240    CLr =  -0.000002
+ y  force CY |    CYp =   0.034551    CYq =   0.000127    CYr =   0.954821
+ x' force CD |    CDp =   0.000060    CDq =   0.390516    CDr =   0.000003
+ x' mom.  Cl'|    Clp =  -0.813522    Clq =   0.000008    Clr =   0.151278
+ y  mom.  Cm |    Cmp =  -0.000486    Cmq =-106.696243    Cmr =   0.000085
+ z' mom.  Cn'|    Cnp =   0.007480    Cnq =  -0.000041    Cnr =  -0.378186
+
+                  DVjet        j1 
+                  ----------------
+ z' force CL |   CLj1 =   0.168946
+ y  force CY |   CYj1 =  -0.000000
+ x' force CD |   CDj1 =  -1.010594
+ x' mom.  Cl'|   Clj1 =  -0.000011
+ y  mom.  Cm |   Cmj1 =   0.066513
+ z' mom.  Cn'|   Cnj1 =   0.000000
+ Trefftz drag| CDffj1 =  -1.019889
+ span eff.   |    ej1 =  -0.032634
+
+
+
+ Neutral point  Xnp =   14.2736    
+
+ Clb Cnr / Clr Cnb  =   0.918667    (  > 1 if spirally stable )

@@ -85,10 +85,10 @@ class AVL(Stability):
         self.settings                               = Settings()
         self.settings.filenames.log_filename        = sys.stdout
         self.settings.filenames.err_filename        = sys.stderr        
-        self.settings.number_spanwise_vortices      = 20
+        self.settings.number_spanwise_vortices      = 30  # 20
         self.settings.number_chordwise_vortices     = 10
         self.settings.trim_aircraft                 = False  # TEMP  # True  # NILS: toggle to trim or not
-        self.settings.print_output                  = True  # NILS: added to match SUAVE 2.5.2 (toggle to print or not AVL console output)
+        self.settings.print_output                  = False  # NILS: added to match SUAVE 2.5.2 (toggle to print or not AVL console output)
         
         # Regression Status      
         self.settings.keep_files                    = True  # NILS: added to match SUAVE 2.5.2
@@ -119,18 +119,18 @@ class AVL(Stability):
         # Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\translate_data.py
         # self.training.Mach = np.array([0.2, 0.5, 0.7, 0.7, 0.5, 0.2])
         # self.training.altitude = np.array([0.0, 10e3, 35e3, 35e3, 10e3, 0.0]) * 0.3048
-        self.training.Mach = np.array([0.7])  # TEMP
-        self.training.altitude = np.array([35e3]) * 0.3048  # TEMP
+        self.training.Mach = np.array([0.15])  # np.array([0.7])  # TEMP
+        self.training.altitude = np.array([0.0])  # np.array([35e3]) * 0.3048  # TEMP
         self.training.mass = None
         self.training.side_slip_angle = np.zeros_like(self.training.Mach) * Units.degrees
         # NILS: 6x faster if use `np.array([0])` instead of `np.zeros_like(self.training.Mach)` (6x duplication)
-        self.training.angle_of_attack = np.array([0]) * Units.degrees  #  np.zeros_like(self.training.Mach) * Units.degrees  # to be trimmed
+        self.training.angle_of_attack = np.array([3.0]) * Units.degrees  #  np.zeros_like(self.training.Mach) * Units.degrees  # to be trimmed
         # self.training.load_factor = np.array([1.0, 2.5, 1.0, 1.0, 2.5, 1.0])
         self.training.load_factor = np.array([1.0])  # TEMP
         
         self.backend = 'JVL'  # NILS: 'AVL' or 'JVL'
         self.run_modal = False  # NILS: do not run modal analysis with JVL (only intended for verification of Flydrogen/TASOPT.jl blown-wing surrogate modal)
-        self.settings.Nspanwise_main_wing = 10  # NILS: reduce number of spanwise vortices to avoid SPUPL error
+        self.settings.Nspanwise_main_wing = self.settings.number_spanwise_vortices  # 30  # 10  # NILS: reduce number of spanwise vortices to avoid SPUPL error
         
         self.settings.side_slip_angle               = 0.0  # NILS: added to match SUAVE 2.5.2 (can remain set to 0 as vary self.training.side_slip_angle in sample_training() below)
         self.settings.roll_rate_coefficient         = 0.0  # NILS: added to match SUAVE 2.5.2
@@ -266,6 +266,8 @@ class AVL(Stability):
         fcs_loc=None,
         wing_frac=None,
         nacelle_frac=None,
+        N_eng=None,
+        Prop_PR_des=None,
     ):  # NILS: added 2nd and 3rd argument to allow running in parallel for different mass study cases and runs within
         """Call methods to run AVL for sample point evaluation.
 
@@ -292,9 +294,12 @@ class AVL(Stability):
         self.training_file (optional - file containing previous AVL data)
         """
         # =============================================================================
-        # NILS: set different run folder for each study_idx to
-        # prevent parallel processes from overwriting each other
-        run_folder = 'avl_files_' + str(study_idx)
+        if self.backend == 'AVL':  # NILS
+            # NILS: set different run folder for each study_idx to
+            # prevent parallel processes from overwriting each other
+            run_folder = 'avl_files_' + str(study_idx)
+        elif self.backend == 'JVL':  # NILS
+            run_folder = f"avl_files_{str(study_idx)}_{str(N_eng)}_{float(Prop_PR_des):.4g}"
         os.makedirs(run_folder, exist_ok=True)
         self.settings.filenames.run_folder = run_folder
         # =============================================================================
@@ -363,7 +368,7 @@ class AVL(Stability):
             
         for i, (_Mach, _Beta, _h, _n, _W) in enumerate(zip(Mach, Beta, h, n, W)):
             
-            print('_Mach, _Beta, _h, _n, _W =', _Mach, _Beta, _h, _n, _W)
+            # print('_Mach, _Beta, _h, _n, _W =', _Mach, _Beta, _h, _n, _W)
                     
             # atmo_data = atmosphere.compute_values(altitude = h[k])  # NILS: moved here to account for differences in altitude
             atmo_data = atmosphere.compute_values(altitude = _h)  # NILS: moved here to account for differences in altitude
@@ -390,11 +395,26 @@ class AVL(Stability):
             run_conditions.aerodynamics.load_factor = _n
             # Calculate required lift coefficient
             CL = 2 * _n * _W / (run_conditions.freestream.density * run_conditions.freestream.velocity**2 * geometry.wings.main_wing.areas.reference)
-            run_conditions.aerodynamics.lift_coefficient = CL  # NILS: added to match SUAVE 2.5.2
+            # NILS: added on 23.01.2026 for running JVL untrimmed to sweep blown-wing design space
+            if trim_aircraft == True:
+                run_conditions.aerodynamics.lift_coefficient = CL  # NILS: added to match SUAVE 2.5.2
+            elif trim_aircraft == False:
+                run_conditions.aerodynamics.lift_coefficient = None  # NILS: added to match SUAVE 2.5.2
             
             #Run Analysis at AoA[i] and Mach[i]
             results =  self.evaluate_conditions(run_conditions, trim_aircraft)
             results_list.append(results)  # NILS: added to store dynamic stability analysis results
+
+            if self.backend == 'JVL':  # NILS
+                
+                # =============================================================================
+                import sys
+                print('CTtot =', results_list[0]['case_01_01'].aerodynamics.CTtot)
+                print('CLtot =', results_list[0]['case_01_01'].aerodynamics.total_lift_coefficient)
+                # sys.exit('WAIT HERE')
+                # =============================================================================
+            
+                return results_list  # NILS: skip stability post-processing for JVL backend
 
             # Obtain CM Cm_alpha, Cn_beta and the Neutral Point 
             # CM[:,i,j,k]       = results.aerodynamics.Cmtot[:,0]
@@ -875,10 +895,11 @@ class AVL(Stability):
                         ctrl_surf_function = 'rudder'                      
                     cs_functions.append(ctrl_surf_function)
         
-        # NILS: raise Exception if control surfaces have not been defined
-        # I am only considering trimmed cases, for which these are always needed
-        if not control_surfaces:
-            raise Exception("No control surfaces have been defined.")
+        if self.backend == 'AVL':  # NILS
+            # NILS: raise Exception if control surfaces have not been defined
+            # I am only considering trimmed cases, for which these are always needed
+            if not control_surfaces:
+                raise Exception("No control surfaces have been defined.")
         
         # translate conditions
         cases                            = translate_conditions_to_cases(self, run_conditions)    
@@ -900,12 +921,15 @@ class AVL(Stability):
         with redirect.folder(run_folder,force=False):
             write_geometry(self,run_script_path)
             write_mass_file(self,run_conditions)
-            write_run_cases(self,trim_aircraft)
-            write_input_deck(self, trim_aircraft, control_surfaces, run_modal=self.run_modal)  # NILS: added last argument to match SUAVE 2.5.2
+            write_run_cases(self,trim_aircraft, self.backend)
+            write_input_deck(self, trim_aircraft, control_surfaces, run_modal=self.run_modal, backend=self.backend)  # NILS: added last argument to match SUAVE 2.5.2
 
             # RUN AVL!
             results_avl = run_analysis(self, print_output, self.backend)  # NILS: added last argument to match SUAVE 2.5.2
     
+        if self.backend == 'JVL':  # NILS
+            return results_avl  # NILS: skip translating results for JVL backend
+
         # translate results
         results = translate_results_to_conditions(cases,results_avl)
         

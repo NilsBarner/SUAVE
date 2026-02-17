@@ -72,6 +72,8 @@ class AVL(Markup):
         # ------
         settings.number_spanwise_vortices           = 20
         settings.number_chordwise_vortices          = 10    
+        
+        ### NILS: section new in v2.5.2 vs v2.5.0
         settings.keep_files                         = False
         settings.save_regression_results            = False          
         settings.regression_flag                    = False   
@@ -84,6 +86,7 @@ class AVL(Markup):
         settings.pitch_rate_coefficient             = 0.0
         settings.lift_coefficient                   = None
         settings.load_factor                        = None  # NILS: added for variability in Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\write_run_cases.py
+        ###
                 
         # Build the evaluation process
         compute = self.process.compute
@@ -137,6 +140,8 @@ class AVL(Markup):
         # unpack
         sv  = self.settings.number_spanwise_vortices
         cv  = self.settings.number_chordwise_vortices 
+        
+        ### NILS: section new in v2.5.2 vs v2.5.0
         kf  = self.settings.keep_files
         srr = self.settings.save_regression_results
         rf  = self.settings.regression_flag
@@ -145,12 +150,13 @@ class AVL(Markup):
         ssa = self.settings.side_slip_angle
         rrc = self.settings.roll_rate_coefficient
         pra = self.settings.pitch_rate_coefficient
-        lc  = self.settings.lift_coefficient              
+        lc  = self.settings.lift_coefficient     
+        ###
         
         self.process.compute.lift.inviscid.geometry = self.geometry
         
         # Generate the surrogate
-        self.process.compute.lift.inviscid.initialize(sv,cv,kf,srr,rf,po,ta,ssa,rrc,pra,lc)
+        self.process.compute.lift.inviscid.initialize(sv,cv,kf,srr,rf,po,ta,ssa,rrc,pra,lc)  # NILS: `kf,srr,rf,po,ta,ssa,rrc,pra,lc` new in v2.5.2 vs 2.5.0
         
     finalize = initialize
     

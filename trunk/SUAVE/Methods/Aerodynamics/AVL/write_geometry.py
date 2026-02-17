@@ -10,7 +10,9 @@
 # ----------------------------------------------------------------------
 #  Imports
 # ----------------------------------------------------------------------
-import re  # NILS: added
+import re  # NILS: added line
+from textwrap import dedent  # NILS: added line
+from scipy import interpolate  # NILS: added line
 from .purge_files import purge_files
 from SUAVE.Methods.Aerodynamics.AVL.Data.Settings    import Settings
 import numpy as np
@@ -57,7 +59,7 @@ def write_geometry(avl_object,run_script_path):
             ### NILS
             Nspanwise_main_wing = avl_object.settings.Nspanwise_main_wing  # NILS: reduce number of spanwise vortices to avoid SPUPL error
             if avl_wing.tag == 'main_wing':
-                wing_text = adjust_wing_text_for_jvl(avl_wing, wing_text, Nspanwise_main_wing)
+                wing_text = adjust_wing_text_for_jvl(aircraft, avl_wing, wing_text, Nspanwise_main_wing)
             ###
             geometry.write(wing_text)
             
@@ -180,7 +182,8 @@ SURFACE
         yscale = f'\n\nSCALE\n{avl_wing.x_scale}  {avl_wing.y_scale}  {avl_wing.z_scale}\n'
         ytransl = f'\n\nTRANSLATE\n{avl_wing.x_transl}  {avl_wing.y_transl}  {avl_wing.z_transl}\n'
     else:
-        ycomp     = ' ' 
+        # ycomp     = ' ' 
+        ycomp = '\n\nCOMPONENT\n1\n'
         yscale     = ' ' 
         ytransl     = ' ' 
 
@@ -510,29 +513,27 @@ def make_controls_text(avl_control_surface):
     return control_text
 
 
-### NILS
-def adjust_wing_text_for_jvl(avl_wing, wing_text, Nspanwise_main_wing):
-    
-    import re
-    from textwrap import dedent
-    
+# =============================================================================
+def adjust_wing_text_for_jvl(aircraft, avl_wing, wing_text, Nspanwise_main_wing):
+
     def parse_sections(text):
         blocks = re.split(r"\n(?=SECTION\n)", text)
         out = []
         for b in blocks:
             if b.startswith("SECTION"):
-                name = re.search(r"#\s*(\S+)", b).group(1)
+                m = re.search(r"#\s*(\S+)", b)
+                name = m.group(1) if m else ""
                 out.append((name, b.strip()))
         return out
-
 
     def is_prop_in(name):
         return re.fullmatch(r"prop_\d+_in", name)
 
-
     def is_prop_out(name):
         return re.fullmatch(r"prop_\d+_out", name)
 
+    def is_mid_pitch(name):
+        return re.fullmatch(r"mid_pitch_\d+_\d+", name)
 
     def surface_header(idx, first):
         return dedent(f"""
@@ -542,10 +543,12 @@ def adjust_wing_text_for_jvl(avl_wing, wing_text, Nspanwise_main_wing):
         #Nchordwise  Cspace   Nspanwise  Sspace
         10         1.0         {Nspanwise_main_wing}      1.0 
 
+        COMPONENT
+        2
+
         YDUPLICATE
         {"0.0" if first else "-0.0"}
         """).strip()
-
 
     def transform(source):
         sections = parse_sections(source)
@@ -553,113 +556,333 @@ def adjust_wing_text_for_jvl(avl_wing, wing_text, Nspanwise_main_wing):
         current = []
 
         for name, block in sections:
+            # Always append the block to the current surface
             current.append(block)
 
-            if is_prop_in(name):
+            # If we encounter a mid_pitch section, we must split here:
+            # - close the current surface (which includes the mid_pitch),
+            # - start a new surface that begins with the same mid_pitch (duplicate).
+            if is_mid_pitch(name):
                 surfaces.append(current)
+                # start the new current with the same mid_pitch block (duplicate)
                 current = [block]
 
-            elif is_prop_out(name):
-                surfaces.append(current)
-                current = [block]
-
+        # append any remaining blocks as final surface
         if current:
             surfaces.append(current)
 
         out = []
         for i, surf in enumerate(surfaces, 1):
-            out.append(surface_header(i, first=(i == 1)))
+            
+            surf_text = "\n\n".join(surf)
+            
+            # 1) Add Njet to header and value line
+            
+            hdr = surface_header(i, first=(i == 1))
+            
+            hdr = re.sub(
+                r'#Nchordwise\s+Cspace\s+Nspanwise\s+Sspace',
+                '#Nchordwise  Cspace   Nspanwise  Sspace  Njet',
+                hdr,
+                count=1
+            )
+            
+            hdr = re.sub(
+                r'(#Nchordwise[^\n]*\n)([^\n]+)',
+                r'\1\2      {}'.format(Njet),
+                hdr,
+                count=1
+            )
+            
+            out.append(hdr)
             out.append("")
-            out.append("\n\n".join(surf))
-            out.append("")
+            out.append(surf_text)
 
         return "\n".join(out).strip()
-    
-    wing_text = transform(wing_text)
-    
-    # print('wing_text =', wing_text)
-    # import sys
-    # sys.exit('Stop here.')
+
     
     jet_base = \
-'''
-JETCONTROL
-#Jname   Jgain    SgnDup
-DVjet    {0}      1.0
-JETPARAM
-#hdisk   fh      djet0   djet1   djet3
-{1}    {2}     {3}    {4}   {5}
-'''
-    
+    '''
+    JETCONTROL
+    #Jname   Jgain    SgnDup
+    DVjet    {0}      1.0
+    JETPARAM
+    #hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+    {1}    {2}     {3}    {4}   {5}    {6}   {7}
+    '''
+
     # Unpack inputs
     Njet = avl_wing.Njet
-    # Jgain = avl_wing.Jgain
-    # hdisk = avl_wing.hdisk
     fh = avl_wing.fh
     djet0 = avl_wing.djet0
     djet1 = avl_wing.djet1
     djet3 = avl_wing.djet3
     
-    surfaces = wing_text.split("#---------------------------------------------------------")
-    new_surfaces = [surfaces[0]]  # keep header part untouched
+    # Get x-y-z coordinates of LE of all wing sections
+    main_wing_section_y_locs = np.array([main_wing_section.origin[0][1] for main_wing_section in avl_wing.sections])
+    main_wing_section_LE_x_locs = np.array([main_wing_section.origin[0][0] for main_wing_section in avl_wing.sections])
+    main_wing_section_LE_z_locs = np.array([main_wing_section.origin[0][2] for main_wing_section in avl_wing.sections])
     
-    for surf in surfaces[1:]:
-        # Check whether this is a prop-SURFACE:
-        # exactly two SECTIONs, both with 'prop' in the tag line
-        section_tags = re.findall(r'SECTION\s*\n#\s*(.*)', surf)
-        
-        # Check whether current surf is a "prop-surf"
-        
-        section_tags = re.findall(r'SECTION\s*\n#\s*(.*)', surf)
+    # Get x-y-z coordinates of LE of all nacelles
+    nacelle_y_locs = np.array([nacelle.origin[1] for nacelle in aircraft.nacelles])
+    nacelle_x_locs = np.array([nacelle.origin[0] for nacelle in aircraft.nacelles])
+    nacelle_z_locs = np.array([nacelle.origin[2] for nacelle in aircraft.nacelles])
+    nacelle_x_locs = nacelle_x_locs[nacelle_y_locs >= 0]
+    nacelle_z_locs = nacelle_z_locs[nacelle_y_locs >= 0]
+    nacelle_y_locs = nacelle_y_locs[nacelle_y_locs >= 0]
+    
+    # Interpolate x- and z-coordinates of LE of all wing sections as a function of spanwise coordinate
+    main_wing_section_LE_x_interp = interpolate.interp1d(
+        main_wing_section_y_locs, main_wing_section_LE_x_locs,
+    )
+    main_wing_section_LE_z_interp = interpolate.interp1d(
+        main_wing_section_y_locs, main_wing_section_LE_z_locs,
+    )
+    
+    # Calculate x- and z-coordinates of LE of wing sections at nacelle spanwise coordinates
+    nacelle_y_locs_main_wing_LE_x_locs = main_wing_section_LE_x_interp(nacelle_y_locs)
+    nacelle_y_locs_main_wing_LE_z_locs = main_wing_section_LE_z_interp(nacelle_y_locs)
+    
+    # Calculate  dxdisk_array and dndisk_array for .jvl file input
+    dxdisk_array = nacelle_x_locs - nacelle_y_locs_main_wing_LE_x_locs
+    dndisk_array = nacelle_z_locs - nacelle_y_locs_main_wing_LE_z_locs
+    
+    # apply grouping transform (splits at every mid_pitch and duplicates it)
+    wing_text = transform(wing_text)
 
-        # Require that `id` be the same in subsequent prop_{id}_in and prop_{id}_out section
-        prop_ids = []
-        for tag in section_tags:
-            m = re.match(r'prop_(\d+)_', tag)
-            if m:
-                prop_ids.append(m.group(1))
-        
-        is_prop_surface = (
-            len(section_tags) == 2 and
-            len(prop_ids) == 2 and
-            prop_ids[0] == prop_ids[1]
-        )
+    # Now detect prop-surfaces and insert JETCONTROL blocks (keeps your original behavior)
+    surfaces = wing_text.split("#---------------------------------------------------------")
+    new_surfaces = [surfaces[0]]
+
+    for i, surf in enumerate(surfaces[1:]):
     
-        if is_prop_surface:
-            # 1) Add Njet to header and value line
-            surf = surf.replace(
-                "#Nchordwise  Cspace   Nspanwise  Sspace",
-                "#Nchordwise  Cspace   Nspanwise  Sspace  Njet"
+        def add_jet(match):
+            section_text = match.group(0)
+    
+            Jgain = aircraft.networks.battery_propeller.propellers.propeller_1.Jgain
+            Dprop = aircraft.networks.battery_propeller.propellers.propeller_1.tip_radius * 2
+            hdisk = np.pi / 4 * Dprop
+    
+            jet_text = dedent(jet_base).strip().format(
+                round(Jgain, 4),
+                round(hdisk, 4),
+                round(fh, 4),
+                round(djet0, 4),
+                round(djet1, 4),
+                round(djet3, 4),
+                round(dxdisk_array[i], 4),  # insert x-location for that nacelle relative to wing LE at that y-location
+                round(dndisk_array[i], 4),  # insert z-location for that nacelle relative to wing LE at that y-location
             )
     
-            surf = re.sub(
-                r'(\n\d+[^\n]*)',
-                r'\1      {}'.format(Njet),
-                surf,
-                count=1
-            )
-    
-            # 2) Insert jet_text after EACH *.dat line
-            Jgain = avl_wing.Jgain
-            hdisk = avl_wing.hdisk
-            jet_text = jet_base.format(
-                round(Jgain,4),round(hdisk,4), round(fh,4),round(djet0,4),round(djet1,4),round(djet3,4)
-            )
-            surf = re.sub(
+            # Insert JETCONTROL immediately after the AFILE *.dat line
+            return re.sub(
                 r'(AFILE\s*\n.*\.dat)',
                 r'\1\n' + jet_text,
-                surf
+                section_text
             )
+    
+        # # Apply ONLY to prop_(i)_in and prop_(i)_out sections
+        # surf = re.sub(
+        #     r'SECTION\s*\n#\s*prop_\d+_(?:in|out)[\s\S]*?(?=\nSECTION|\Z)',
+        #     add_jet,
+        #     surf
+        # )
+        
+        # =============================================================================
+        # Apply to prop_i_in, all intermediate sections, and prop_i_out
+        sections = re.findall(
+            r'SECTION\s*\n#[\s\S]*?(?=\nSECTION|\Z)',
+            surf
+        )
+        
+        new_sections = []
+        inside_prop_block = False
+        
+        for sec in sections:
+            m = re.search(r'#\s*prop_(\d+)_(in|out)', sec)
+            if m and m.group(2) == 'in':
+                inside_prop_block = True
+        
+            if inside_prop_block:
+                sec = add_jet(re.match(r'[\s\S]*', sec))
+        
+            if m and m.group(2) == 'out':
+                inside_prop_block = False
+        
+            new_sections.append(sec)
+        
+        # Reassemble surface
+        surf = re.sub(
+            r'SECTION\s*\n#[\s\S]*?(?=\nSECTION|\Z)',
+            lambda _: new_sections.pop(0),
+            surf
+        )
+        # =============================================================================
     
         new_surfaces.append("#---------------------------------------------------------" + surf)
     
     wing_text = "".join(new_surfaces)
     
-    # print('wing_text =', wing_text)
+    # print(wing_text)
     # import sys
-    # sys.exit('Stop here.')
-    
+    # sys.exit()
+
     return wing_text
-###
+# =============================================================================
+
+
+# ### NILS
+# def adjust_wing_text_for_jvl(aircraft, avl_wing, wing_text, Nspanwise_main_wing):
+    
+#     import re
+#     from textwrap import dedent
+    
+#     def parse_sections(text):
+#         blocks = re.split(r"\n(?=SECTION\n)", text)
+#         out = []
+#         for b in blocks:
+#             if b.startswith("SECTION"):
+#                 name = re.search(r"#\s*(\S+)", b).group(1)
+#                 out.append((name, b.strip()))
+#         return out
+
+
+#     def is_prop_in(name):
+#         return re.fullmatch(r"prop_\d+_in", name)
+
+
+#     def is_prop_out(name):
+#         return re.fullmatch(r"prop_\d+_out", name)
+
+
+#     def surface_header(idx, first):
+#         return dedent(f"""
+#         #---------------------------------------------------------
+#         SURFACE
+#         main_wing_{idx}
+#         #Nchordwise  Cspace   Nspanwise  Sspace
+#         10         1.0         {Nspanwise_main_wing}      1.0 
+
+#         COMPONENT
+#         2
+
+#         YDUPLICATE
+#         {"0.0" if first else "-0.0"}
+#         """).strip()  # NILS: COMPONENT index must be different from that of other airframe components (e.g. empennage (v-tail + h-tail) might get 1, fuselage (h- and v-part) might get 3, each nacelle (h- and v-part) gets its own)
+
+
+#     def transform(source):
+#         sections = parse_sections(source)
+#         surfaces = []
+#         current = []
+
+#         for name, block in sections:
+#             current.append(block)
+
+#             if is_prop_in(name):
+#                 surfaces.append(current)
+#                 current = [block]
+
+#             elif is_prop_out(name):
+#                 surfaces.append(current)
+#                 current = [block]
+
+#         if current:
+#             surfaces.append(current)
+
+#         out = []
+#         for i, surf in enumerate(surfaces, 1):
+#             out.append(surface_header(i, first=(i == 1)))
+#             out.append("")
+#             out.append("\n\n".join(surf))
+#             out.append("")
+
+#         return "\n".join(out).strip()
+    
+#     wing_text = transform(wing_text)
+    
+#     jet_base = \
+# '''
+# JETCONTROL
+# #Jname   Jgain    SgnDup
+# DVjet    {0}      1.0
+# JETPARAM
+# #hdisk   fh      djet0   djet1   djet3       dxdisk  dndisk
+# {1}    {2}     {3}    {4}   {5}    {6}   {7}
+# '''
+    
+#     # Unpack inputs
+#     Njet = avl_wing.Njet
+#     fh = avl_wing.fh
+#     djet0 = avl_wing.djet0
+#     djet1 = avl_wing.djet1
+#     djet3 = avl_wing.djet3
+#     dxdisk = avl_wing.dxdisk
+#     dndisk = avl_wing.dndisk
+    
+#     # print(wing_text)
+#     # import sys
+#     # sys.exit()
+    
+#     surfaces = wing_text.split("#---------------------------------------------------------")
+#     new_surfaces = [surfaces[0]]  # keep header part untouched
+    
+#     for surf in surfaces[1:]:
+#         # Check whether this is a prop-SURFACE:
+#         # exactly two SECTIONs, both with 'prop' in the tag line
+#         section_tags = re.findall(r'SECTION\s*\n#\s*(.*)', surf)
+        
+#         # Check whether current surf is a "prop-surf"
+        
+#         section_tags = re.findall(r'SECTION\s*\n#\s*(.*)', surf)
+
+#         # Require that `id` be the same in subsequent prop_{id}_in and prop_{id}_out section
+#         prop_ids = []
+#         for tag in section_tags:
+#             m = re.match(r'prop_(\d+)_', tag)
+#             if m:
+#                 prop_ids.append(m.group(1))
+        
+#         is_prop_surface = (
+#             len(section_tags) == 2 and
+#             len(prop_ids) == 2 and
+#             prop_ids[0] == prop_ids[1]
+#         )
+    
+#         if is_prop_surface:
+#             # 1) Add Njet to header and value line
+#             surf = surf.replace(
+#                 "#Nchordwise  Cspace   Nspanwise  Sspace",
+#                 "#Nchordwise  Cspace   Nspanwise  Sspace  Njet"
+#             )
+    
+#             surf = re.sub(
+#                 r'(\n\d+[^\n]*)',
+#                 r'\1      {}'.format(Njet),
+#                 surf,
+#                 count=1
+#             )
+    
+#             # 2) Insert jet_text after EACH *.dat line
+#             # Jgain = avl_wing.Jgain
+#             # hdisk = avl_wing.hdisk
+#             Jgain = aircraft.networks.battery_propeller.propellers.propeller_1.Jgain
+#             Dprop = aircraft.networks.battery_propeller.propellers.propeller_1.tip_radius * 2
+#             hdisk = np.pi / 4 * Dprop  # NILS: see (F.3) in Appendix F of medium_PhDthesis_2024_inflproppossizeaeroblownwings_hawkswell
+#             jet_text = jet_base.format(
+#                 round(Jgain,4),round(hdisk,4), round(fh,4),round(djet0,4),round(djet1,4),round(djet3,4),round(dxdisk,4),round(dndisk,4),
+#             )
+#             surf = re.sub(
+#                 r'(AFILE\s*\n.*\.dat)',
+#                 r'\1\n' + jet_text,
+#                 surf
+#             )
+    
+#         new_surfaces.append("#---------------------------------------------------------" + surf)
+    
+#     wing_text = "".join(new_surfaces)
+    
+#     return wing_text
+# ###
 
 

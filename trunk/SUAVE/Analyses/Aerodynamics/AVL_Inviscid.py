@@ -88,6 +88,8 @@ class AVL_Inviscid(Aerodynamics):
         self.settings.number_spanwise_vortices  = 20
         self.settings.number_chordwise_vortices = 10
         self.settings.trim_aircraft             = False 
+        
+        ### NILS: section new in v2.5.2 vs v2.5.0
         self.settings.side_slip_angle           = 0.0
         self.settings.roll_rate_coefficient     = 0.0
         self.settings.pitch_rate_coefficient    = 0.0
@@ -99,6 +101,7 @@ class AVL_Inviscid(Aerodynamics):
         self.settings.keep_files                = False
         self.settings.save_regression_results   = False          
         self.settings.regression_flag           = False 
+        ###
         
         # Conditions table, used for surrogate model training
         self.training                           = Data()   
@@ -116,7 +119,7 @@ class AVL_Inviscid(Aerodynamics):
         self.surrogates                         = Data()
 
     def initialize(self,number_spanwise_vortices,number_chordwise_vortices,keep_files,save_regression_results,regression_flag,
-                   print_output,trim_aircraft,side_slip_angle,roll_rate_coefficient,pitch_rate_coefficient,lift_coefficient):
+                   print_output,trim_aircraft,side_slip_angle,roll_rate_coefficient,pitch_rate_coefficient,lift_coefficient):  # NILS: more inputs in v2.5.2 vs v2.5.0
         """Drives functions to get training samples and build a surrogate.
 
         Assumptions:
@@ -136,6 +139,7 @@ class AVL_Inviscid(Aerodynamics):
         """  
         geometry     = self.geometry
 
+        ### NILS: section new in v2.5.2 vs v2.5.0
         self.settings.keep_files                = keep_files
         self.settings.save_regression_results   = save_regression_results
         self.settings.regression_flag           = regression_flag       
@@ -147,6 +151,7 @@ class AVL_Inviscid(Aerodynamics):
         self.settings.roll_rate_coefficient     = roll_rate_coefficient 
         self.settings.pitch_rate_coefficient    = pitch_rate_coefficient
         self.settings.lift_coefficient          =  lift_coefficient
+        ###
         
         self.tag     = 'avl_analysis_of_{}'.format(geometry.tag)  
         
@@ -252,10 +257,14 @@ class AVL_Inviscid(Aerodynamics):
         trim_aircraft          = self.settings.trim_aircraft 
         AoA                    = training.angle_of_attack
         Mach                   = training.Mach   
+        
+        ### NILS: section new in v2.5.2 vs v2.5.0
         side_slip_angle        = self.settings.side_slip_angle
         roll_rate_coefficient  = self.settings.roll_rate_coefficient
         pitch_rate_coefficient = self.settings.pitch_rate_coefficient
         lift_coefficient       = self.settings.lift_coefficient
+        ###
+        
         atmosphere             = SUAVE.Analyses.Atmospheric.US_Standard_1976()
         atmo_data              = atmosphere.compute_values(altitude = 0.0) 
         
@@ -279,12 +288,14 @@ class AVL_Inviscid(Aerodynamics):
             run_conditions.freestream.speed_of_sound           = atmo_data.speed_of_sound[0,0] 
             run_conditions.freestream.mach_number              = Mach[i]
             run_conditions.freestream.velocity                 = Mach[i] * run_conditions.freestream.speed_of_sound
+            
+            ### NILS: section new in v2.5.2 vs v2.5.0
             run_conditions.aerodynamics.side_slip_angle        = side_slip_angle
             run_conditions.aerodynamics.angle_of_attack        = AoA 
             run_conditions.aerodynamics.roll_rate_coefficient  = roll_rate_coefficient
             run_conditions.aerodynamics.lift_coefficient       = lift_coefficient
             run_conditions.aerodynamics.pitch_rate_coefficient = pitch_rate_coefficient
-            
+            ###            
             
             #Run Analysis at AoA[i] and Mach[j]
             results =  self.evaluate_conditions(run_conditions, trim_aircraft)
@@ -424,11 +435,11 @@ class AVL_Inviscid(Aerodynamics):
         num_cs       = 0
         cs_names     = []
         cs_functions = [] 
-        control_surfaces = False
+        control_surfaces = False  # NILS: line new in v2.5.2 vs v2.5.0
         
         for wing in self.geometry.wings: # this parses through the wings to determine how many control surfaces does the vehicle have 
             if wing.control_surfaces:
-                control_surfaces = True 
+                control_surfaces = True  # NILS: line new in v2.5.2 vs v2.5.0
                 wing = populate_control_sections(wing)     
                 num_cs_on_wing = len(wing.control_surfaces)
                 num_cs +=  num_cs_on_wing
@@ -468,10 +479,10 @@ class AVL_Inviscid(Aerodynamics):
             write_geometry(self,run_script_path)
             write_mass_file(self,run_conditions)
             write_run_cases(self,trim_aircraft)
-            write_input_deck(self, trim_aircraft,control_surfaces)
+            write_input_deck(self, trim_aircraft,control_surfaces)  # NILS: `control_surfaces` new in v2.5.2 vs v2.5.0
 
             # RUN AVL!
-            results_avl = run_analysis(self,print_output)
+            results_avl = run_analysis(self,print_output)  # NILS: `print_output` new in v2.5.2 vs v2.5.0
     
         # translate results
         results = translate_results_to_conditions(cases,results_avl)

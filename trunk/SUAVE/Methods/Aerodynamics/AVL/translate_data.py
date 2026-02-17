@@ -55,10 +55,13 @@ def translate_conditions_to_cases(avl ,conditions):
         case.conditions.freestream.gravitational_acceleration = conditions.freestream.gravity      
         case.conditions.aerodynamics.angle_of_attack          = conditions.aerodynamics.angle_of_attack[i]/Units.deg
         case.conditions.aerodynamics.side_slip_angle          = conditions.aerodynamics.side_slip_angle  
+        
+        ### NILS: section new in v2.5.2 vs v2.5.0
         case.conditions.aerodynamics.lift_coefficient         = conditions.aerodynamics.lift_coefficient
         case.conditions.aerodynamics.roll_rate_coefficient    = conditions.aerodynamics.roll_rate_coefficient
         case.conditions.aerodynamics.pitch_rate_coefficient   = conditions.aerodynamics.pitch_rate_coefficient
         case.conditions.aerodynamics.load_factor = conditions.aerodynamics.load_factor  # NILS: added for variability in Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\write_run_cases.py
+        ###
         
         # determine the number of wings 
         n_wings = 0 
@@ -191,12 +194,15 @@ def translate_results_to_conditions(cases,results):
     res.stability.static.Cn_r                                = np.zeros_like(res.S_ref)      
  
     res.stability.static.neutral_point                       = np.zeros_like(res.S_ref)    
+    
+    ### NILS: section new in v2.5.2 vs v2.5.0
     res.stability.static.spiral_criteria                     = np.zeros_like(res.S_ref)
     
     # NILS: add eigenvalues and system matrices from modal analysis in AVL
     res.stability.dynamic.eigenvalues_real = []
     res.stability.dynamic.eigenvalues_imag = []
     res.stability.dynamic.system_matrix = []
+    ###
  
     # aero results 1: total surface forces and coefficeints 
     res.aerodynamics.wing_areas                    = np.zeros((dim,num_wings)) 

@@ -39,9 +39,10 @@ def write_avl_airfoil_file(suave_airfoil_filename):
     purge_files([avl_airfoil_filename]) 
     
     # read airfoil file header 
-    origin  = os.getcwd()
-    os_path = os.path.split(origin)[0]
-    f_path  = os_path + '/' + suave_airfoil_filename
+    # origin  = os.getcwd()  # NILS: commented line
+    # os_path = os.path.split(origin)[0]  # NILS: commented line
+    # f_path  = os_path + '/' + suave_airfoil_filename  # NILS: commented line
+    f_path = suave_airfoil_filename  # NILS: by specifying the airfoil file by its absolute path, I can run the SUAVE-AVL/JVL/SU2 wrapper from any directory
     f = open(f_path)  
     data_block = f.readlines() 
     f.close()   

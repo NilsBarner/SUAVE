@@ -15,11 +15,13 @@ NILS: THIS FILE CORRESPONDS TO SUAVE 2.5.2!
 # ----------------------------------------------------------------------
 #  Imports
 # ----------------------------------------------------------------------
+import os  # NILS: added line
 from SUAVE.Methods.Aerodynamics.AVL.purge_files       import purge_files
-from SUAVE.Components.Wings.Control_Surfaces import Aileron , Elevator , Slat , Flap , Rudder 
+from SUAVE.Components.Wings.Control_Surfaces import Aileron , Elevator , Slat , Flap , Rudder   # NILS: line added in v2.5.2 vs 2.5.0
 
 ## @ingroup Analyses-AVL
-def write_run_cases(avl_object,trim_aircraft):
+# NILS: this function is different in v2.5.2 vs v2.5.0
+def write_run_cases(avl_object,trim_aircraft, backend='AVL'):
     """ This function writes the run cases used in the AVL batch analysis
 
     Assumptions:
@@ -42,7 +44,16 @@ def write_run_cases(avl_object,trim_aircraft):
 
     # unpack avl_inputs
     aircraft       = avl_object.geometry
-    batch_filename = avl_object.current_status.batch_file
+    batch_filename = avl_object.current_status.batch_file  # NILS: original line
+    # # =============================================================================
+    # if backend == 'AVL':
+    #     batch_filename = avl_object.current_status.batch_file  # NILS: original line
+    # elif backend == 'JVL':
+    #     geometry_file = avl_object.settings.filenames.features  # NILS: line from top of write_geometry() in trunk\SUAVE\Methods\Aerodynamics\AVL\write_geometry.py
+    #     batch_filename = os.path.splitext(geometry_file)[0] + '.run'   # NILS: e.g. 'vehicle.run' instead of 'vehicle.avl' or 'vehicle.jvl'
+    # else:
+    #     raise Exception
+    # # =============================================================================
 
     base_case_text = \
 '''
@@ -52,36 +63,37 @@ def write_run_cases(avl_object,trim_aircraft):
 
  alpha        ->  {2}       =   {3}        
  beta         ->  beta        =   {4}
- pb/2V        ->  pb/2V       =   {23}
- qc/2V        ->  qc/2V       =   {24}
+ pb/2V        ->  pb/2V       =   {24}
+ qc/2V        ->  qc/2V       =   {25}
  rb/2V        ->  rb/2V       =   0.00000
 {5}
- alpha     =   {6}
+{6}
+ alpha     =   {7}
  beta      =   0.00000     deg
- pb/2V     =   {25}
- qc/2V     =   {26}
+ pb/2V     =   {26}
+ qc/2V     =   {27}
  rb/2V     =   0.00000
- CL        =   {7}                        
- CDo       =   {8}
+ CL        =   {8}                        
+ CDo       =   {9}
  bank      =   0.00000     deg
  elevation =   0.00000     deg
  heading   =   0.00000     deg
- Mach      =   {9}
- velocity  =   {10}     m/s               
- density   =   {11}     kg/m^3
- grav.acc. =   {12}     m/s^2
+ Mach      =   {10}
+ velocity  =   {11}     m/s               
+ density   =   {12}     kg/m^3
+ grav.acc. =   {13}     m/s^2
  turn_rad. =   0.00000     m
- load_fac. =   {27}
- X_cg      =   {13}     m
- Y_cg      =   {14}     m
- Z_cg      =   {15}     m
- mass      =   {16}     kg
- Ixx       =   {17}     kg-m^2
- Iyy       =   {18}     kg-m^2
- Izz       =   {19}     kg-m^2
- Ixy       =   {20}     kg-m^2
- Iyz       =   {21}     kg-m^2
- Izx       =   {22}     kg-m^2
+ load_fac. =   {28}
+ X_cg      =   {14}     m
+ Y_cg      =   {15}     m
+ Z_cg      =   {16}     m
+ mass      =   {17}     kg
+ Ixx       =   {18}     kg-m^2
+ Iyy       =   {19}     kg-m^2
+ Izz       =   {20}     kg-m^2
+ Ixy       =   {21}     kg-m^2
+ Iyz       =   {22}     kg-m^2
+ Izx       =   {23}     kg-m^2
  visc CL_a =   0.00000
  visc CL_u =   0.00000
  visc CM_a =   0.00000
@@ -89,7 +101,35 @@ def write_run_cases(avl_object,trim_aircraft):
 
 '''#{4} is a set of control surface inputs that will vary depending on the control surface configuration
 
-# NOTE: {27} has been added by NILS
+    # NOTE: {6} and {28} have been added by NILS (the other indeces have been adjusted accordingly)
+
+    if backend == 'JVL':
+        """Avoid the following console output/error in JVL by removing viscosity parameters:
+        Trying to read file: vehicle.run  ...
+        Parameter  in .run file is not defined in this JVL version: visc CL
+        Parameter  in .run file is not defined in this JVL version: visc CL
+        Parameter  in .run file is not defined in this JVL version: visc CM
+        Parameter  in .run file is not defined in this JVL version: visc CM
+        """
+        base_case_text = '\n'.join(l for l in base_case_text.splitlines(keepends=False)
+                 if not l.lstrip().startswith('visc')) + '\n'
+        
+        # Add JVL-specific lines (not modified as of 23.01.2026, merely copied from C:\Users\nmb48\Documents\GitHub\SUAVE\jvl2.16\JVL2.16\runs\es.run)
+        base_case_text = base_case_text.rstrip("\n") + """
+        hx        =   0.00000     kg-m^2/s
+        hy        =   0.00000     kg-m^2/s
+        hz        =   0.00000     kg-m^2/s
+        DVj exp.  =   0.00000
+        add. CL_a =   0.00000
+        add. CL_u =   0.00000
+        CL_adot   =   0.00000
+        add. CD_a =   0.00000
+        add. CD_u =   0.00000
+        CD_adot   =   0.00000
+        add. CM_a =   0.00000
+        add. CM_u =   0.00000
+        CM_adot   =   0.00000
+        """
 
     # Open the geometry file after purging if it already exists
     purge_files([batch_filename]) 
@@ -124,6 +164,10 @@ def write_run_cases(avl_object,trim_aircraft):
             g     = case.conditions.freestream.gravitational_acceleration
             n = round(case.conditions.aerodynamics.load_factor, 4)  # NILS: added load factor to `case.conditions.aerodynamics.load_factor`
             
+            # import sys  # NILS
+            # print("trim_aircraft =", trim_aircraft)  # NILS
+            # sys.exit("Stop here.")  # NILS
+
             if trim_aircraft == False: # this flag sets up a trim analysis if one is declared by the boolean "trim_aircraft"
                 controls_text = ''  
                 if CL is not None: # if flight lift coefficient is specified without trim, the appropriate fields are filled 
@@ -159,14 +203,19 @@ def write_run_cases(avl_object,trim_aircraft):
                     controls = make_controls_case_text(case.stability_and_control.control_surface_names,avl_object.geometry)
                 controls_text = ''.join(controls)  # NILS: these are the contents of {5} in base_case_text
                 
+            # =============================================================================
+            DVjet_text = " DVjet        ->  DVjet       =   1.00000\n"  # NILS: set DV_jet to unity, modified per-wing-segment in .jvl file with `gain` command
+            # =============================================================================
+                
             # write the .run file using template and the extracted vehicle properties and flight condition
-            case_text = base_case_text.format(index,name,toggle_idx,toggle_val,beta,controls_text,alpha_val, CL_val,CDp,
+            case_text = base_case_text.format(index,name,toggle_idx,toggle_val,beta,controls_text,DVjet_text,alpha_val, CL_val,CDp,
                                               mach,vel,rho,g,x_cg,y_cg,z_cg,mass,Ixx,Iyy,Izz,Ixy,Iyz,Izx,pb_2V,qc_2V,pb_2V,qc_2V,
                                               n)  # NILS: added load factor `n`
             runcases.write(case_text)
             
     return
 
+# NILS: this function is different in v2.5.2 vs v2.5.0
 def make_controls_case_text(cs_names,avl_aircraft):
     """ This function writes the text of the control surfaces in the AVL batch analysis.
     This tells AVL what control surface you want use to control a particular response.

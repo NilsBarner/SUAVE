@@ -1,0 +1,84 @@
+ ---------------------------------------------------------------
+ Jet Vortex Lattice Output -- Total Forces
+
+ Configuration: ATR_72-600                                                  
+     # Surfaces =  33
+     # Strips   = 390
+     # Vortices =4260
+
+  Sref =   68.294       Cref =   2.4602       Bref =   28.627    
+  Xref =   11.897       Yref =   0.0000       Zref =   1.3850    
+  Xmom =   11.897       Ymom =   0.0000       Zmom =   1.3850    
+
+ Standard axis orientation,  X fwd, Z down         
+
+ Run case: case_01_01                              
+
+  alpha =   6.33305     pb/2V =  -0.00000     p'b/2V =  -0.00000
+  beta  =  -0.00000     qc/2V =   0.00000
+  Mach  =     0.700     rb/2V =   0.00000     r'b/2V =   0.00000
+
+  CXtot =   0.02812     Cltot =   0.00001     Cl'tot =   0.00001
+  CYtot =  -0.00000     Cmtot =  -1.04139
+  CZtot =  -0.45840     Cntot =   0.00001     Cn'tot =   0.00001
+
+  CLtot =   0.45870     CLff  =   0.46132
+  CYtot =  -0.00000     CYff  =   0.00001
+  CDtot =   0.02262     CDff  =       NaN        e =       NaN
+
+  CLcir =   0.45870     CLffc =   0.46132
+  CLjet =  -0.00000     CLffj =   0.00000
+
+  CDind =   0.02262     CDffi =       NaN    e_vec =       NaN
+  CDjet =   0.00000     CDffj =   0.00000
+  CDvis =   0.00000     CDffv =   0.00000
+
+ DCQtot =  0.0000       DCJtot =  0.0000       DCEtot =  0.0000    
+                         CTtot =  0.0000        CPtot =  0.0000    
+
+ elevator         d1  =  0.0000    
+
+ DVjet            j1  =  0.0000    
+ ---------------------------------------------------------------
+
+ geometry-axis derivatives...
+
+                    axial   vel. u     sideslip vel. v      normal  vel. w
+                  ----------------    ----------------    ----------------
+ x force CX  |    CXu =  -0.000601    CXv =   0.000005    CXw =   0.515232
+ y force CY  |    CYu =   0.000011    CYv =  -0.929960    CYw =  -0.000119
+ z force CZ  |    CZu =  -0.504099    CZv =   0.000188    CZw =  -3.769170
+ x mom.  Cl  |    Clu =   0.000005    Clv =  -0.080163    Clw =   0.000049
+ y mom.  Cm  |    Cmu =  -1.037126    Cmv =  -0.000678    Cmw =  -9.536755
+ z mom.  Cn  |    Cnu =   0.000010    Cnv =   0.197170    Cnw =   0.000086
+
+                      roll rate  p       pitch rate  q         yaw rate  r
+                  ----------------    ----------------    ----------------
+ x force CX  |    CXp =  -0.000013    CXq =   2.844753    CXr =  -0.000023
+ y force CY  |    CYp =  -0.026938    CYq =   0.000194    CYr =   0.756595
+ z force CZ  |    CZp = -66.288562    CZq = -25.762744    CZr =  -0.000006
+ x mom.  Cl  |    Clp =  -0.124736    Clq =   0.000022    Clr =   0.116059
+ y mom.  Cm  |    Cmp = -85.943126    Cmq =-118.576699    Cmr =   0.000028
+ z mom.  Cn  |    Cnp =  -0.008825    Cnq =  -0.000101    Cnr =  -0.290792
+
+                  elevator     d01 
+                  ----------------
+ x force CX  |   CXd01 =   0.000773
+ y force CY  |   CYd01 =   0.000000
+ z force CZ  |   CZd01 =  -0.017709
+ x mom.  Cl  |   Cld01 =   0.000000
+ y mom.  Cm  |   Cmd01 =  -0.097876
+ z mom.  Cn  |   Cnd01 =  -0.000000
+
+
+
+                  DVjet        j1 
+                  ----------------
+ x force CX  |   CXj1 =   0.208114
+ y force CY  |   CYj1 =  -0.000000
+ z force CZ  |   CZj1 =   0.040603
+ x mom.  Cl  |   Clj1 =  -0.000000
+ y mom.  Cm  |   Cmj1 =   0.025779
+ z mom.  Cn  |   Cnj1 =  -0.000000
+
+

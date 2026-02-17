@@ -53,10 +53,12 @@ class Wing(Data):
         self.Njet = 12
         self.Jgain = 1.0
         self.hdisk = 1.0
-        self.fh = 1.0
-        self.djet0 = -3.0
-        self.djet1 = -0.2
-        self.djet3 = -0.0001
+        self.fh = 1.0  # NILS: indicates type of propulsor (fh=0 for long duct, fh=1 for no duct; see https://web.mit.edu/drela/Public/web/jvl/jvl_doc.txt)
+        self.djet0 = 0.0
+        self.djet1 = 0.0
+        self.djet3 = 0.0
+        self.dxdisk = 0.0
+        self.dndisk = 0.0
 
     def append_section(self, section):
         """ Adds a segment to the wing """

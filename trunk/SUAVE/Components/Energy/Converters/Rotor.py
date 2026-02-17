@@ -62,6 +62,7 @@ class Rotor(Energy_Component):
         self.tag                          = 'rotor'
         self.number_of_blades             = 0.0
         self.tip_radius                   = 0.0
+        self.Jgain = 1.0  # NILS: see definition of Jgain in https://web.mit.edu/drela/Public/web/jvl/jvl_doc.txt
         self.hub_radius                   = 0.0
         self.twist_distribution           = 0.0
         self.sweep_distribution           = 0.0         # quarter chord offset from quarter chord of root airfoil
