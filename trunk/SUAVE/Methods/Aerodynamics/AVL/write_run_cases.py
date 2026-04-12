@@ -114,7 +114,7 @@ def write_run_cases(avl_object,trim_aircraft, backend='AVL'):
         base_case_text = '\n'.join(l for l in base_case_text.splitlines(keepends=False)
                  if not l.lstrip().startswith('visc')) + '\n'
         
-        # Add JVL-specific lines (not modified as of 23.01.2026, merely copied from C:\Users\nmb48\Documents\GitHub\SUAVE\jvl2.16\JVL2.16\runs\es.run)
+        # Add JVL-specific lines (not modified as of 23.01.2026, merely copied from C:\Users\nmb48\Documents\GitHub\SUAVE\nils\jvl\jvl2.16\JVL2.16\runs\es.run)
         base_case_text = base_case_text.rstrip("\n") + """
         hx        =   0.00000     kg-m^2/s
         hy        =   0.00000     kg-m^2/s

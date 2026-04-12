@@ -1,0 +1,35 @@
+ ---------------------------------------------------------------
+ Surface Forces (referred to Sref,Cref,Bref about Xref,Yref,Zref)
+ Standard axis orientation,  X fwd, Z down         
+
+     Sref =   65.65       Cref =    2.4122   Bref =   28.0684
+     Xref =     11.8507   Yref =    0.0000   Zref =    1.3850
+
+ n      Area      CL      CD      Cm      CY      Cn      Cl     CDi     CDv
+ 1    32.823  1.5046  0.1158  0.0512  0.0149 -0.1784 -0.2796  0.1158  0.0000   main_wing_1
+ 2    32.823  1.5046  0.1158  0.0512 -0.0149  0.1784  0.2796  0.1158  0.0000   main_wing_1 (YDUP)
+ 3     7.357  0.0471  0.0089 -0.2583  0.0053 -0.0039 -0.0018  0.0089  0.0000   horizontal_stabilizer
+ 4     7.357  0.0471  0.0089 -0.2583 -0.0053  0.0039  0.0018  0.0089  0.0000   horizontal_stabilizer (YDUP)
+ 5    17.906  0.0000 -0.0000 -0.0000 -0.0000  0.0000 -0.0000 -0.0000  0.0000   vertical_stabilizer
+ 6    68.216  0.0855  0.0276  0.3947 -0.0000  0.0000  0.0000  0.0276  0.0000   fuselage_horizontal
+ 7    67.950 -0.0000 -0.0000  0.0000  0.0000 -0.0000  0.0000 -0.0000  0.0000   fuselage_vertical
+ 8     1.882  0.0151 -0.0015  0.0097 -0.0004 -0.0016 -0.0017 -0.0015  0.0000   nacelle_horizontal
+ 9     1.882  0.0151 -0.0015  0.0097  0.0004  0.0016  0.0017 -0.0015  0.0000   nacelle_horizontal (YDUP)
+10     1.882  0.0000 -0.0000  0.0000  0.0002  0.0000 -0.0000 -0.0000  0.0000   nacelle_vertical
+11     1.882  0.0000 -0.0000  0.0000 -0.0002 -0.0000  0.0000 -0.0000  0.0000   nacelle_vertical (YDUP)
+
+ Surface Forces (referred to Ssurf, Cave about root LE on hinge axis)
+
+   n     Ssurf      Cave       cl       cd      cdv
+   1    32.823     2.339   3.0094   0.2317   0.0000  main_wing_1
+   2    32.823     2.339   3.0094   0.2317   0.0000  main_wing_1 (YDUP)
+   3     7.357     1.566   0.4199   0.0796   0.0000  horizontal_stabilizer
+   4     7.357     1.566   0.4199   0.0796   0.0000  horizontal_stabilizer (YDUP)
+   5    17.906     3.345   0.0000  -0.0000   0.0000  vertical_stabilizer
+   6    68.216    24.627   0.0823   0.0265   0.0000  fuselage_horizontal
+   7    67.950    24.531  -0.0000  -0.0000   0.0000  fuselage_vertical
+   8     1.882     1.724   0.5269  -0.0538   0.0000  nacelle_horizontal
+   9     1.882     1.724   0.5269  -0.0538   0.0000  nacelle_horizontal (YDUP)
+  10     1.882     1.724  -0.0056  -0.0002   0.0000  nacelle_vertical
+  11     1.882     1.724  -0.0056  -0.0002   0.0000  nacelle_vertical (YDUP)
+ ---------------------------------------------------------------

@@ -1,0 +1,21 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: pywin32
+DocumentNamespace: https://paraview.org/spdx/pywin32
+Creator: Tool: CMake
+Created: 2025-09-25T16:07:51Z
+
+##### Package: pywin32
+
+PackageName: pywin32
+SPDXID: SPDXRef-Package-pywin32
+PackageDownloadLocation: https://www.paraview.org/files/dependencies/pywin32-308-cp312-cp312-win_amd64.whl
+FilesAnalyzed: False
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseDeclared: BSD-3-Clause
+PackageCopyrightText: <text>
+Copyright (c) 1994-2008, Mark Hammond REMOVE_MODULE adodbapi.examples adodbapi.test win32.Demos win32.test win32comext.bits.test win32comext.taskscheduler.test
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-pywin32

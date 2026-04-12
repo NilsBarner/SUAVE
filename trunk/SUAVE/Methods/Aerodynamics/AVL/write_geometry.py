@@ -627,6 +627,7 @@ def adjust_wing_text_for_jvl(aircraft, avl_wing, wing_text, Nspanwise_main_wing)
     nacelle_y_locs = np.array([nacelle.origin[1] for nacelle in aircraft.nacelles])
     nacelle_x_locs = np.array([nacelle.origin[0] for nacelle in aircraft.nacelles])
     nacelle_z_locs = np.array([nacelle.origin[2] for nacelle in aircraft.nacelles])
+    print('nacelle_y_locs =', nacelle_y_locs)
     nacelle_x_locs = nacelle_x_locs[nacelle_y_locs >= 0]
     nacelle_z_locs = nacelle_z_locs[nacelle_y_locs >= 0]
     nacelle_y_locs = nacelle_y_locs[nacelle_y_locs >= 0]

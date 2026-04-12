@@ -1,0 +1,400 @@
+MIT SSTOL 30% model
+
+#Mach
+ 0.0    
+
+#IYsym   IZsym   Zsym
+ 0       1      -2.0
+
+#Sref    Cref    Bref
+19.5     1.5     13.0
+
+#Xref    Yref    Zref
+1.1      0.0    -1.0
+
+#====================================================================
+SURFACE 
+Wing Center
+#Nchordwise  Cspace    Nspanwise   Sspace
+10           1.0        3          -2.0
+
+COMPONENT
+1
+
+YDUPLICATE
+0.0
+
+ANGLE
+0.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.      0.0    0.       1.5    2.0  
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.      0.333  0.       1.5    2.0  
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+#====================================================================
+SURFACE 
+Wing Flapped 1
+#Nchordwise  Cspace    Nspanwise   Sspace    Njet
+10           1.0       11          1.0       12
+
+COMPONENT
+1
+
+YDUPLICATE
+0.0
+
+ANGLE
+0.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.      0.     0.      1.5     2.0 
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+flap     1.0    0.65    0.0 0.0 0.0   1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -0.2   0.65    0.0 0.0 0.0  -1.0
+
+JETCONTROL
+#Jname   Jgain    SgnDup 
+DVjet    1.0      1.0   
+
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3
+ 0.45    1.0     -3.0    -0.2   -0.0001
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     2.4167  0.0      1.5    2.0  
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+flap     1.0    0.65    0.0 0.0 0.0   1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -0.001  0.65    0.0 0.0 0.0  -1.0
+
+JETCONTROL
+#Jname  Jgain    SgnDup 
+DVjet   1.0      1.0   
+
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3
+ 0.45    1.0     -3.0    -0.2   -0.0001
+
+#
+#====================================================================
+SURFACE 
+Wing Flapped 2
+#Nchordwise  Cspace   Nspanwise   Sspace    Njet
+10           1.0      11          1.0       12
+
+COMPONENT
+1
+#
+YDUPLICATE
+0.0
+#
+ANGLE
+0.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     2.4167  0.      1.5    2.0 
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+flap     1.0    0.65    0.0 0.0 0.0   1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -0.001  0.65    0.0 0.0 0.0  -1.0
+
+JETCONTROL
+#Jname  Jgain    SgnDup 
+DVjet   1.0      1.0   
+
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3
+ 0.45    1.0     -3.0    -0.2   -0.0001
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     4.9     0.      1.5     2.0 
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+flap     1.0    0.65    0.0 0.0 0.0   1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -0.001  0.65   0.0 0.0 0.0   -1.0
+
+JETCONTROL
+#Jname  Jgain    SgnDup 
+DVjet   1.0      1.0   
+
+JETPARAM
+#hdisk   fh      djet0   djet1   djet3
+ 0.45    1.0     -3.0    -0.2   -0.0001438
+
+#
+#====================================================================
+SURFACE 
+Wing Tip
+#Nchordwise  Cspace   Nspanwise   Sspace
+10           1.0      9           1.0
+
+COMPONENT
+1
+
+DENS
+1.0
+
+YDUPLICATE
+0.0
+
+ANGLE
+0.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     4.90    0.      1.5    2.0 
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -1.0    0.65    0.0 0.0 0.0   -1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.42    6.5     0.      0.9     2.0 
+
+AFILE
+bw02.dat
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+aileron  -1.0   0.7     0.0 0.0 0.0  -1.0
+
+
+#====================================================================
+SURFACE 
+H Tail
+#Nchordwise  Cspace   Nspanwise   Sspace
+6            1.0      8            1.0
+
+COMPONENT
+2
+
+
+YDUPLICATE
+0.0
+
+SCALE 
+1.1 1.1 1.1
+
+TRANSLATE
+6.792  0.0   0.5
+
+ANGLE
+2.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     0.0    0.      1.25    0.0 
+
+NACA
+2300
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+elevator  1.0   0.40   0.0 1.0 0.0   1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.3667  2.0417   0.      0.5833  0.0   0          0
+
+NACA
+2300
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+elevator  1.0   0.40   0.0 1.0 0.0   1.0
+
+#====================================================================
+SURFACE 
+V Tail
+#Nchordwise  Cspace   Nspanwise   Sspace
+6            1.0       9          1.0
+
+COMPONENT
+2
+
+TRANSLATE
+6.0833 0.0   0.5
+
+ANGLE
+0.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     0.0    0.      2.0833  0.0 
+
+NACA
+0000
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+rudder    1.0   0.50    14. 0.  29.    1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle    Zle     Chord    Ainc  Nspanwise  Sspace
+1.8333   0.     2.4167   0.6667  0.0
+
+NACA
+0000
+
+CLAF
+1.0
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+rudder    1.0   0.50    14. 0.  29.    1.0
+
+
+#====================================================================
+BODY
+Fuselage
+24 1.0
+
+SCALE
+1.0 1.0 1.0
+
+TRANSATE
+-2.0 0.0 -1.2
+
+BFIL
+body2.dat
+
+#====================================================================
+SURFACE 
+Hydrofoil
+#Nchordwise  Cspace   Nspanwise   Sspace
+6            1.0      10          -2.0
+
+DENSITY
+100.0         816.0
+
+ZIMAGE
+-1
+
+YDUPLICATE
+0.0
+
+SCALE 
+1. 1. 1.
+
+TRANSLATE
+0.5  0.0  -3.0
+
+ANGLE
+2.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     0.0    0.      0.125     0.0 
+
+NACA
+2400
+
+CONTROL
+#Cname    Cgain  Xhinge  HingeVec     SgnDup
+hydroflap 1.0    0.40   0.0 1.0 0.0   1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.0      1.0      0.      0.125   0.0 
+
+NACA
+2400
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+hydroflap 1.0    0.40   0.0 1.0 0.0   1.0
+

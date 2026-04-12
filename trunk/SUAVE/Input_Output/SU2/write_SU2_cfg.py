@@ -19,7 +19,10 @@ def write_SU2_cfg(tag, SU2_settings):
     f.write('KIND_TURB_MODEL = NONE\n\n')
     f.write('MATH_PROBLEM = DIRECT\n\n')
     f.write('AXISYMMETRIC = NO\n\n')
+    ### NILS: changed on 27.03.2026 to have the option to restart from a previous solution
     f.write('RESTART_SOL = NO\n\n')
+    # f.write('RESTART_SOL = YES\n\n')  # NILS: reads `RESTART_FILENAME` defined further down
+    ###
     f.write('DISCARD_INFILES = NO\n\n')
     f.write('SYSTEM_MEASUREMENTS = SI\n\n')
 

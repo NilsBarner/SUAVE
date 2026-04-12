@@ -84,6 +84,8 @@ def call_avl(avl_object,print_output):
         avl_call = avl_object.settings.filenames.avl_bin_name
         geometry = avl_object.settings.filenames.features
         in_deck  = avl_object.current_status.deck_file  
+        
+        print('avl_call =', avl_call)
     
         with redirect.output(log_file,err_file):
     

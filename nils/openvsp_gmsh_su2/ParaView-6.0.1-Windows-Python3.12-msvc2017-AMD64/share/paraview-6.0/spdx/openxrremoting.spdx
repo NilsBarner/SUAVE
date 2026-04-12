@@ -1,0 +1,21 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: openxrremoting
+DocumentNamespace: https://paraview.org/spdx/openxrremoting
+Creator: Tool: CMake
+Created: 2025-09-25T16:06:25Z
+
+##### Package: openxrremoting
+
+PackageName: openxrremoting
+SPDXID: SPDXRef-Package-openxrremoting
+PackageDownloadLocation: https://www.paraview.org/files/dependencies/microsoft.holographic.remoting.openxr.2.9.2.nupkg
+FilesAnalyzed: False
+PackageLicenseConcluded: LicenseRef-openxrremoting AND BSL-1.0 AND BSD-2-Clause AND BSD-3-Clause AND LZMA-SDK-9.22 AND MIT AND JSON
+PackageLicenseDeclared: LicenseRef-openxrremoting AND BSL-1.0 AND BSD-2-Clause AND BSD-3-Clause AND LZMA-SDK-9.22 AND MIT AND JSON
+PackageCopyrightText: <text>
+Copyright (C) Microsoft Corporation Copyright Beman Dawes, David Abrahams, 1998-2005 Copyright Rene Rivera 2004-2007 Copyright (c) 2010-2011 Xiph.Org Foundation, Skype Limited Copyright 2008 Google Inc. Copyright (c) 2013-2020 The CivetWeb developers Copyright (c) 2004-2013 Sergey Lyubka Copyright (c) 2013 No Face Press, LLC (Thomas Davis) Copyright (c) 2013 F-Secure Corporation Copyright (C) 2015 THL A29 Limited, a Tencent company, and Milo Yip Copyright (c) 2006-2013 Alexander Chemeris Copyright (c) 2002 JSON.org
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-openxrremoting

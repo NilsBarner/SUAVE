@@ -1,0 +1,166 @@
+821 uSTOL
+#Mach
+0
+#IYsym   IZsym   Zsym
+0       0   0.0
+#Sref    Cref    Bref
+1.0999978 0.3644887585532747 3.048
+#Xref    Yref    Zref
+0.1 0 0
+# CDp
+0.055
+#===============================================================================
+SURFACE
+Main Wing
+#Nchord  Cspace  [ Nspan Sspace  Nujet Cusp  Nwjet Cwsp ]
+18       1.0       25     -2.0   0.2   0.0   30    -2.0
+
+YDUPLICATE
+0
+
+JETPARAM
+#hdisk   fh    djet0   djet1   djet3       dxdisk  dndisk
+0.188    0.5  -3.000   0.000   0.000000    0.10   -0.188
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+0 0 0 0.381 0 10 -2.0
+
+AFIL
+bw02.dat
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Flap1 1 0.66 0 0 0 1
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet1 1.000 1.000
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet2 1.000 -1.0
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+0 0.5842 0 0.381 0 10 1.0
+
+AFIL
+bw02.dat
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Flap1 1 0.66 0 0 0 1
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Flap2 1 0.66 0 0 0 1
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet1 1.000 1.000
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet2 1.000 -1.0
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+0 1.0414 0 0.381 0 10 1.0
+
+AFIL
+bw02.dat
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Flap2 1 0.66 0 0 0 1
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Aileron 1 0.66 0 0 0 -1
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet1 1.000 1.000
+
+JETCONTROL
+#Djet  1.0   1.0  ! name, gain, SgnDup
+FlapJet2 1.000 -1.0
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+0.1016 1.524 0 0.254 0 10 1.0
+
+AFIL
+bw02.dat
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Aileron 1 0.66 0 0 0 -1
+
+#===============================================================================
+SURFACE
+Vertical Tail
+#Nchord  Cspace  [ Nspan Sspace  Nujet Cusp  Nwjet Cwsp ]
+8        1.0       8     1.0     
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+1.3335 0 0 0.381 0 10 1
+
+NACA
+0012
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Rudder 1 0.66 0 0 0 1
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+1.651 0 0.381 0.2794 0 10 1
+
+NACA
+0012
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Rudder 1 0.66 0 0 0 1
+
+#===============================================================================
+SURFACE
+Horizontal Tail
+#Nchord  Cspace  [ Nspan Sspace  Nujet Cusp  Nwjet Cwsp ]
+10       1.0       12    1.0    
+
+YDUPLICATE
+0
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+1.651 0 0.381 0.3048 0 10 1
+
+NACA
+0012
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Elevator 1 0.65 0 0 0 1
+
+#--------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  [Nspanwise   Sspace]
+1.7272 0.635 0.381 0.1778 0 10 1
+
+NACA
+0012
+
+CONTROL
+#name, gain, Xhinge, XYZhvec, SgnDup
+Elevator 1 0.65 0 0 0 1
+

@@ -73,7 +73,7 @@ class AVL(Stability):
         N/A
         
         """
-        self.tag                                    = 'avl' 
+        self.tag                                    = 'jvl' 
         
         self.current_status                         = Data()        
         self.current_status.batch_index             = 0
@@ -85,9 +85,9 @@ class AVL(Stability):
         self.settings                               = Settings()
         self.settings.filenames.log_filename        = sys.stdout
         self.settings.filenames.err_filename        = sys.stderr        
-        self.settings.number_spanwise_vortices      = 30  # 20
+        self.settings.number_spanwise_vortices      = 30  # NILS: reduce number of spanwise vortices to avoid SPUPL error
         self.settings.number_chordwise_vortices     = 10
-        self.settings.trim_aircraft                 = False  # TEMP  # True  # NILS: toggle to trim or not
+        self.settings.trim_aircraft                 = False  # NILS: toggle to trim or not
         self.settings.print_output                  = False  # NILS: added to match SUAVE 2.5.2 (toggle to print or not AVL console output)
         
         # Regression Status      
@@ -98,44 +98,30 @@ class AVL(Stability):
         # Conditions table, used for surrogate model training
         self.training                               = Data()   
         
-        # # Standard subsonic/transonic aircarft
-        # # self.training.angle_of_attack               = np.array([-2.,0., 2.,5., 7., 10.])*Units.degrees  # NILS: default
-        # # self.training.angle_of_attack = np.array([-2.0, 0.0, 5.0]) * Units.degrees  # NILS
-        # self.training.angle_of_attack = np.linspace(-2.0, 10.0, 4) * Units.degrees  # NILS
-        # # self.training.Mach                          = np.array([0.05,0.15,0.25, 0.45,0.65,0.85])   # NILS: default
-        # # self.training.Mach = np.array([0.05, 0.45, 0.85])  # NILS
+        # Standard subsonic/transonic aircarft
+        
+        self.training.angle_of_attack = np.linspace(-2.0, 10.0, 4) * Units.degrees  # NILS
+        self.training.Mach = np.array([0.05,0.15,0.25, 0.45,0.65,0.85])  # NILS: default
+        
+        # NILS: added training parameters
+        # self.training.angle_of_attack = np.array([-2.,0., 2.,5., 7., 10.]) * Units.degrees  # NILS: default
         # self.training.Mach = np.linspace(0.05, 0.85, 4)  # NILS
+        # self.training.side_slip_angle = np.linspace(-10.0, 10.0, 4) * Units.degrees  # NILS
+        # self.training.altitude = np.linspace(0, 11e3, 4)  # NILS
         
-        # # NILS: added training parameters
-        # # self.training.side_slip_angle = np.array([-10.0, -5.0, 0.0, 5.0, 10.0]) * Units.degrees
-        # # self.training.side_slip_angle = np.array([-5.0, 0.0, 10.0]) * Units.degrees
-        # self.training.side_slip_angle = np.linspace(-10.0, 10.0, 4) * Units.degrees
-        # # self.training.altitude = np.linspace(0, 11e3, 5)
-        # self.training.altitude = np.linspace(0, 11e3, 4)
-        
-        # NILS: longitudinal test cases from Table 6.2 in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris
-        # NOTE: training inputs always have to be at least 1D, otherwise get
-        # `TypeError: object of type 'float' has no len()` in
-        # Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\translate_data.py
-        # self.training.Mach = np.array([0.2, 0.5, 0.7, 0.7, 0.5, 0.2])
-        # self.training.altitude = np.array([0.0, 10e3, 35e3, 35e3, 10e3, 0.0]) * 0.3048
-        self.training.Mach = np.array([0.15])  # np.array([0.7])  # TEMP
-        self.training.altitude = np.array([0.0])  # np.array([35e3]) * 0.3048  # TEMP
+        self.training.altitude = np.array([0.0])
         self.training.mass = None
-        self.training.side_slip_angle = np.zeros_like(self.training.Mach) * Units.degrees
-        # NILS: 6x faster if use `np.array([0])` instead of `np.zeros_like(self.training.Mach)` (6x duplication)
-        self.training.angle_of_attack = np.array([3.0]) * Units.degrees  #  np.zeros_like(self.training.Mach) * Units.degrees  # to be trimmed
-        # self.training.load_factor = np.array([1.0, 2.5, 1.0, 1.0, 2.5, 1.0])
-        self.training.load_factor = np.array([1.0])  # TEMP
+        self.training.side_slip_angle = np.array([0.0])
+        self.training.load_factor = None
         
         self.backend = 'JVL'  # NILS: 'AVL' or 'JVL'
         self.run_modal = False  # NILS: do not run modal analysis with JVL (only intended for verification of Flydrogen/TASOPT.jl blown-wing surrogate modal)
-        self.settings.Nspanwise_main_wing = self.settings.number_spanwise_vortices  # 30  # 10  # NILS: reduce number of spanwise vortices to avoid SPUPL error
+        self.settings.Nspanwise_main_wing = self.settings.number_spanwise_vortices  # NILS: reduce number of spanwise vortices to avoid SPUPL error
         
-        self.settings.side_slip_angle               = 0.0  # NILS: added to match SUAVE 2.5.2 (can remain set to 0 as vary self.training.side_slip_angle in sample_training() below)
-        self.settings.roll_rate_coefficient         = 0.0  # NILS: added to match SUAVE 2.5.2
-        self.settings.pitch_rate_coefficient        = 0.0  # NILS: added to match SUAVE 2.5.2
-        self.settings.lift_coefficient              = None  # NILS: added to match SUAVE 2.5.2 (computed in sample_training)
+        self.settings.side_slip_angle = 0.0  # NILS: added to match SUAVE 2.5.2 (can remain set to 0 as vary self.training.side_slip_angle in sample_training() below)
+        self.settings.roll_rate_coefficient = 0.0  # NILS: added to match SUAVE 2.5.2
+        self.settings.pitch_rate_coefficient = 0.0  # NILS: added to match SUAVE 2.5.2
+        self.settings.lift_coefficient = None  # NILS: added to match SUAVE 2.5.2 (computed in sample_training)
         self.settings.load_factor = None  # NILS: added for variability in Documents\GitHub\SUAVE\trunk\SUAVE\Methods\Aerodynamics\AVL\write_run_cases.py
         
         self.training.moment_coefficient            = None
@@ -268,6 +254,20 @@ class AVL(Stability):
         nacelle_frac=None,
         N_eng=None,
         Prop_PR_des=None,
+        # NILS: inputs added on 17.03.2026 to distinguish AVL from JVL calls
+        tag=None,
+        settings_trim_aircraft=None,
+        training_angle_of_attack=None,
+        training_Mach=None,
+        training_side_slip_angle=None,
+        training_altitude=None,
+        training_load_factor=None,
+        training_mass=None,
+        backend=None,
+        run_modal=None,
+        settings_number_spanwise_vortices=None,
+        aircraft_tag='',
+        
     ):  # NILS: added 2nd and 3rd argument to allow running in parallel for different mass study cases and runs within
         """Call methods to run AVL for sample point evaluation.
 
@@ -293,16 +293,28 @@ class AVL(Stability):
           Mach             [-]
         self.training_file (optional - file containing previous AVL data)
         """
-        # =============================================================================
+        
+        # NILS: inputs added on 17.03.2026 to distinguish AVL from JVL calls
+        self.tag = tag
+        self.settings.trim_aircraft = settings_trim_aircraft
+        self.training.angle_of_attack = training_angle_of_attack
+        self.training.Mach = training_Mach
+        self.training.side_slip_angle = training_side_slip_angle
+        self.training.altitude = training_altitude
+        self.training.load_factor = training_load_factor
+        self.training.mass = training_mass
+        self.backend = backend
+        self.run_modal = run_modal
+        self.settings.number_spanwise_vortices = settings_number_spanwise_vortices
+        
         if self.backend == 'AVL':  # NILS
             # NILS: set different run folder for each study_idx to
             # prevent parallel processes from overwriting each other
-            run_folder = 'avl_files_' + str(study_idx)
+            run_folder = 'avl_files_' + str(study_idx) + '_' + aircraft_tag  # NILS: added aircraft_tag on 26.03.2026 to be able to run regional and narrowbody in parallel
         elif self.backend == 'JVL':  # NILS
             run_folder = f"avl_files_{str(study_idx)}_{str(N_eng)}_{float(Prop_PR_des):.4g}"
         os.makedirs(run_folder, exist_ok=True)
         self.settings.filenames.run_folder = run_folder
-        # =============================================================================
         
         # Unpack
         run_folder    = os.path.abspath(self.settings.filenames.run_folder)
@@ -316,10 +328,10 @@ class AVL(Stability):
         Beta = training.side_slip_angle
         h = training.altitude
         n = training.load_factor
-        training.mass = np.array([
-            geometry.mass_properties.takeoff, geometry.mass_properties.takeoff, geometry.mass_properties.takeoff,
-            geometry.mass_properties.max_zero_fuel, geometry.mass_properties.max_zero_fuel, geometry.mass_properties.max_zero_fuel
-        ])
+        # training.mass = np.array([
+        #     geometry.mass_properties.takeoff, geometry.mass_properties.takeoff, geometry.mass_properties.takeoff,
+        #     geometry.mass_properties.max_zero_fuel, geometry.mass_properties.max_zero_fuel, geometry.mass_properties.max_zero_fuel
+        # ])
         W = training.mass * 9.81
         
         side_slip_angle        = self.settings.side_slip_angle  # NILS: added to match SUAVE 2.5.2
@@ -331,6 +343,7 @@ class AVL(Stability):
         cg            = geometry.mass_properties.center_of_gravity[0][0]  # NILS: added to match SUAVE 2.5.2
         MAC           = geometry.wings.main_wing.chords.mean_aerodynamic  # NILS: added to match SUAVE 2.5.2
                       
+        # NILS: old for stability analysis on grid
         # # CM            = np.zeros((len(AoA),len(Mach)))  # NILS: default
         # CM            = np.zeros((len(AoA),len(Mach), len(Beta), len(h)))  # NILS
         # Cm_alpha      = np.zeros_like(CM)
@@ -340,17 +353,17 @@ class AVL(Stability):
         # Cl_beta = np.zeros_like(CM)  # NILS: added independently
         # Cn_r = np.zeros_like(CM)  # NILS: added independently
         # Cl_r = np.zeros_like(CM)  # NILS: added independently
-        CM            = []  # NILS
-        Cm_alpha      = []
-        Cn_beta       = []
-        NP            = []
+        # NILS: new for stability analysis in specific mission points
+        CM = []
+        Cm_alpha = []
+        Cn_beta = []
+        NP = []
         static_margin = []  # NILS: added to match SUAVE 2.5.2
         Cl_beta = []  # NILS: added independently
         Cn_r = []  # NILS: added independently
         Cl_r = []  # NILS: added independently
         
         # remove old files in run directory  
-        # if os.path.exists('avl_files'):
         if os.path.exists(run_folder):  # NILS: use run_folder name to allow parallelisation
             if not self.regression_flag:
                 rmtree(run_folder)
@@ -362,13 +375,16 @@ class AVL(Stability):
         h_list = []
         n_list = []
         W_list = []
+        # NILS: old for stability analysis on grid
         # for i, _Mach in enumerate(Mach):
         #     for j, _Beta in enumerate(Beta):
         #         for k, _h in enumerate(h):
-            
+        # NILS: new for stability analysis in specific mission points
+        print(len(Mach),  len(Beta),  len(h),  len(n),  len(W))
+        assert len(Mach) == len(Beta) == len(h) == len(n) == len(W)
         for i, (_Mach, _Beta, _h, _n, _W) in enumerate(zip(Mach, Beta, h, n, W)):
             
-            # print('_Mach, _Beta, _h, _n, _W =', _Mach, _Beta, _h, _n, _W)
+            print('_Mach, _Beta, _h, _n, _W =', _Mach, _Beta, _h, _n, _W)
                     
             # atmo_data = atmosphere.compute_values(altitude = h[k])  # NILS: moved here to account for differences in altitude
             atmo_data = atmosphere.compute_values(altitude = _h)  # NILS: moved here to account for differences in altitude
@@ -402,18 +418,12 @@ class AVL(Stability):
                 run_conditions.aerodynamics.lift_coefficient = None  # NILS: added to match SUAVE 2.5.2
             
             #Run Analysis at AoA[i] and Mach[i]
-            results =  self.evaluate_conditions(run_conditions, trim_aircraft)
+            results = self.evaluate_conditions(run_conditions, trim_aircraft)
             results_list.append(results)  # NILS: added to store dynamic stability analysis results
 
             if self.backend == 'JVL':  # NILS
-                
-                # =============================================================================
-                import sys
                 print('CTtot =', results_list[0]['case_01_01'].aerodynamics.CTtot)
                 print('CLtot =', results_list[0]['case_01_01'].aerodynamics.total_lift_coefficient)
-                # sys.exit('WAIT HERE')
-                # =============================================================================
-            
                 return results_list  # NILS: skip stability post-processing for JVL backend
 
             # Obtain CM Cm_alpha, Cn_beta and the Neutral Point 
@@ -445,11 +455,7 @@ class AVL(Stability):
             h_list.append(_h)
             n_list.append(_n)
             W_list.append(_W)
-                    
-            #         break
-            #     break
-            # break
-        # sys.exit('Done.')
+        
         
         # NILS: convert lists of row arrays into stacked column arrays
         # AoA_col = np.concatenate(AoA_list)[:, None]
@@ -458,13 +464,11 @@ class AVL(Stability):
         # h_col = np.concatenate(h_list)[:, None]
         # n_col = np.concatenate(n_list)[:, None]
         # W_col = np.concatenate(W_list)[:, None]
-        # =============================================================================
         sigma_fcs_col = np.ones_like(np.array(AoA_list)[:, None]) * sigma_fcs
         span_loc_col = np.ones_like(np.array(AoA_list)[:, None]) * span_loc
         fcs_loc_col = np.ones_like(np.array(AoA_list)[:, None]) * fcs_loc
         wing_frac_col = np.ones_like(np.array(AoA_list)[:, None]) * wing_frac
         nacelle_frac_col = np.ones_like(np.array(AoA_list)[:, None]) * nacelle_frac
-        # =============================================================================
         AoA_col = np.array(AoA_list)[:, None]
         Mach_col = np.array(Mach_list)[:, None]
         Beta_col = np.array(Beta_list)[:, None]
@@ -501,22 +505,21 @@ class AVL(Stability):
             # Cl_beta_1D = Cl_beta.reshape([len(AoA)*len(Mach)*len(Beta)*len(h),1])  # NILS: added independently
             # Cn_r_1D = Cn_r.reshape([len(AoA)*len(Mach)*len(Beta)*len(h),1])  # NILS: added independently
             # Cl_r_1D = Cl_r.reshape([len(AoA)*len(Mach)*len(Beta)*len(h),1])  # NILS: added independently
-            CM_1D       = np.array(CM)[:, None] 
+            CM_1D = np.array(CM)[:, None] 
             Cm_alpha_1D = np.array(Cm_alpha)[:, None]  
-            Cn_beta_1D  = np.array(Cn_beta)[:, None]         
-            NP_1D       = np.array(NP)[:, None]  # NILS: TYPO - said `Cn_beta` like in line above
+            Cn_beta_1D = np.array(Cn_beta)[:, None]         
+            NP_1D = np.array(NP)[:, None]  # NILS: TYPO - said `Cn_beta` like in line above
             static_margin_1D = np.array(static_margin)[:, None]  # NILS: added to match SUAVE 2.5.2
             Cl_beta_1D = np.array(Cl_beta)[:, None]  # NILS: added independently
             Cn_r_1D = np.array(Cn_r)[:, None]  # NILS: added independently
             Cl_r_1D = np.array(Cl_r)[:, None]  # NILS: added independently
             
             static_stability_file_name = (
-                'suave_static_stability_outputs_' + str(study_idx) + '_' + str(counter) + '.txt'
+                'suave_static_stability_outputs_' + str(study_idx) + '_' + str(counter) + '_' + aircraft_tag + '.txt'
                 if (study_idx != None and counter != None)
                 else 'suave_static_stability_outputs.txt'
             )  # NILS: added for better logging control
             np.savetxt(
-                # geometry.tag+'_stability_data.txt',
                 static_stability_file_name,  # NILS: replaces line above
                 np.hstack([
                     inputs_stack,
@@ -545,7 +548,8 @@ class AVL(Stability):
             sm_list = []  # system matrix
             for results in results_list:
                 
-                ''' NILS: uncomment this to perform modal analysis with trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
+                # NILS: uncomment this to perform modal analysis with trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
+                '''
                 # Extract SUAVE dynamic stability results
                 dyn = results.dynamic_stability
                 long = dyn.LongModes
@@ -664,22 +668,19 @@ class AVL(Stability):
                 ev_list.append(final_out)
                 sm_list.append(results.stability.dynamic.system_matrix)
                 
-            ''' NILS: uncomment this to perform modal analysis with trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
+            # NILS: uncomment this to perform modal analysis with trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
+            '''
             # Stack dynamic stability analysis results across all Mach numbers
             ev_list_stacked = np.hstack((inputs_stack, np.vstack(ev_list)))
             '''
-            
+            print('ev_list =', ev_list)
             # NILS: use this to perform modal analysis with AVL
             header = (
                 'sigma_fcs  span_loc  fcs_loc  wing_frac  nacelle_frac  '
                 'AoA  Mach  Beta  h  n  W  '
                 'Re1  Re2  Re3  Re4  Re5  Re6  Re7  Re8  Im1  Im2  Im3  Im4  Im5  Im6  Im7  Im8'
             )
-            # ev_list_stacked = np.vstack(ev_list)
-            print('ev_list =', ev_list)
-            # ev_list_stacked = np.hstack((inputs_stack, np.vstack(ev_list)))
             
-            # =============================================================================
             try:
                 ev_stacked = np.vstack(ev_list)
             
@@ -700,14 +701,12 @@ class AVL(Stability):
             
             # Finally:
             ev_list_stacked = np.hstack((inputs_stack, ev_stacked))
-            # =============================================================================
                 
             dynamic_stability_file_name = (
-                'suave_dynamic_stability_outputs_' + str(study_idx) + '_' + str(counter) + '.txt'
+                'suave_dynamic_stability_outputs_' + str(study_idx) + '_' + str(counter) + '_' + aircraft_tag + '.txt'
                 if (study_idx != None and counter != None) else 'suave_dynamic_stability_outputs.txt'
             )  # added for better logging control
             np.savetxt(
-                # geometry.tag + "_dynamic_stability_data.txt",
                 dynamic_stability_file_name,  # replaces line above
                 ev_list_stacked,  # data_out,
                 fmt="%12.6f",
@@ -715,30 +714,16 @@ class AVL(Stability):
                 comments="",  # prevents '#' from being added
             )
             
-            # =============================================================================
             # NILS: use this to perform modal analysis with AVL
             header = (
                 'u  w  q  the  v  p  r  phi  x  y  z  psi  |  slat  flap  aileron  elevator'
             )
             sm_list_stacked = np.vstack(sm_list)
-            # print()
-            # print('sm_list_stacked =', sm_list_stacked)
-            # print()
-            # print('np.shape(sm_list_stacked) =', np.shape(sm_list_stacked))
-            # sys.exit()
                 
             dynamic_stability_file_name = (
-                'suave_dynamic_stability_matrix_' + str(study_idx) + '_' + str(counter) + '.txt'
+                'suave_dynamic_stability_matrix_' + str(study_idx) + '_' + str(counter) + '_' + aircraft_tag + '.txt'
                 if (study_idx != None and counter != None) else 'suave_dynamic_stability_outputs.txt'
             )  # added for better logging control
-            # np.savetxt(
-            #     # geometry.tag + "_dynamic_stability_data.txt",
-            #     dynamic_stability_file_name,  # replaces line above
-            #     sm_list_stacked,  # data_out,
-            #     fmt="%12.6f",
-            #     header=header,
-            #     comments="",  # prevents '#' from being added
-            # )
             with open(dynamic_stability_file_name, "w") as fh:
                 fh.write(header + "\n")
                 for k in range(sm_list_stacked.shape[0]):
@@ -750,9 +735,6 @@ class AVL(Stability):
                         fmt="%12.6f"
                     )
 
-            # =============================================================================
-            
-        # >>>
         
         # Store training data
         # Save the data for regression
@@ -844,7 +826,6 @@ class AVL(Stability):
         """
         # unpack
         run_folder                       = os.path.abspath(self.settings.filenames.run_folder)
-        # run_script_path                  = run_folder.rstrip('avl_files').rstrip('/')
         run_script_path = run_folder.rstrip(self.settings.filenames.run_folder).rstrip('/')
         aero_results_template_1          = self.settings.filenames.aero_output_template_1       # 'stability_axis_derivatives_{}.dat' 
         aero_results_template_2          = self.settings.filenames.aero_output_template_2       # 'surface_forces_{}.dat'
@@ -926,6 +907,14 @@ class AVL(Stability):
 
             # RUN AVL!
             results_avl = run_analysis(self, print_output, self.backend)  # NILS: added last argument to match SUAVE 2.5.2
+            print('results_avl.aerodynamics.wing_section_cls =', results_avl['case_01_01'].aerodynamics.wing_section_cls)
+            print('results_avl.aerodynamics.wing_section_chords =', results_avl['case_01_01'].aerodynamics.wing_section_chords)
+            print('results_avl.aerodynamics.wing_local_spans =', results_avl['case_01_01'].aerodynamics.wing_local_spans)
+            
+            np.savetxt("wing_section_cls.txt", results_avl['case_01_01'].aerodynamics.wing_section_cls)
+            np.savetxt("wing_section_chords.txt", results_avl['case_01_01'].aerodynamics.wing_section_chords)
+            np.savetxt("wing_local_spans.txt", results_avl['case_01_01'].aerodynamics.wing_local_spans)
+            
     
         if self.backend == 'JVL':  # NILS
             return results_avl  # NILS: skip translating results for JVL backend

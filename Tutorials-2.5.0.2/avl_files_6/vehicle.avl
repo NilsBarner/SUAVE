@@ -1,0 +1,14 @@
+Airbus_A220-100
+
+#Mach
+ 0.0
+ 
+#Iysym   IZsym   Zsym
+  0      0     0.0
+  
+#Sref    Cref    Bref 	<meters>
+111.191916403584      3.848134218396565     34.92640181067327
+
+#Xref    Yref    Zref   <meters>
+15.895748781724624      0.0     -0.93234881359062
+

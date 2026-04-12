@@ -1,0 +1,21 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: openvr
+DocumentNamespace: https://paraview.org/spdx/openvr
+Creator: Tool: CMake
+Created: 2025-09-25T16:06:44Z
+
+##### Package: openvr
+
+PackageName: openvr
+SPDXID: SPDXRef-Package-openvr
+PackageDownloadLocation: https://www.paraview.org/files/dependencies/openvr_1.26.7_win_thin.tar.gz
+FilesAnalyzed: False
+PackageLicenseConcluded: BSD-3-Clause AND MIT
+PackageLicenseDeclared: BSD-3-Clause AND MIT
+PackageCopyrightText: <text>
+Copyright (c) 2015, Valve Corporation Copyright (c) 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-openvr

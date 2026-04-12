@@ -21,7 +21,7 @@ import time
 import fileinput
 
 ## @ingroup Input_Output-OpenVSP
-def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag):
+def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag,cfd_far_field_flag):  # NILS: added last argument on 21.03.2026 to create base.stl mesh without CFD far field bounding box
     """This create an .stl surface mesh based on a vehicle stored in a .vsp3 file.
     
     Assumptions:
@@ -73,7 +73,11 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     STL_multi    = vsp.FindParm(vehicle_cont, 'MultiSolid', 'STLSettings')
     vsp.SetParmVal(STL_multi, 1.0)
     
-    vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,1)
+    # vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,1)
+    ###
+    # vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,0)
+    vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,cfd_far_field_flag)
+    ###
     if half_mesh_flag == True:
         vsp.SetCFDMeshVal(vsp.CFD_HALF_MESH_FLAG,1)
         
@@ -114,6 +118,9 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     tf = time.time()
     dt = tf-ti
     print('VSP meshing for ' + tag + ' completed in ' + str(dt) + ' s')
+
+    import sys
+    # sys.exit("NILS: stop here.")  # NILS: 26.03.2026 - this is to allow testing of the mesh generation without running the CFD analysis, which can be time-consuming. Remove or comment out this line to run the full analysis.
     
 ## @ingroup Input_Output-OpenVSP
 def set_sources(geometry):

@@ -70,8 +70,8 @@ def base_analysis(vehicle):
     # ------------------------------------------------------------------
     #  Stability Analysis
     stability = SUAVE.Analyses.Stability.AVL()
-    stability.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\avl.exe"  # NILS: set AVL executable name
-    #stability.settings.spanwise_vortex_density                  = 3
+    stability.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\avl\avl3.52\avl.exe"  # NILS: set AVL executable name
+    #stability.settings.spanwise_vortex_density = 3
     stability.geometry = vehicle
     analyses.append(stability)
     
@@ -169,7 +169,7 @@ def vehicle_setup():
 
     # Wing Segments
     root_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-    root_airfoil.coordinate_file          = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
+    root_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
     segment                               = SUAVE.Components.Wings.Segment()
     segment.tag                           = 'Root'
     segment.percent_span_location         = 0.0
@@ -182,7 +182,7 @@ def vehicle_setup():
     wing.append_segment(segment)
 
     yehudi_airfoil                        = SUAVE.Components.Airfoils.Airfoil()
-    yehudi_airfoil.coordinate_file        = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
+    yehudi_airfoil.coordinate_file        = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
     segment                               = SUAVE.Components.Wings.Segment()
     segment.tag                           = 'Yehudi'
     segment.percent_span_location         = 0.324
@@ -195,7 +195,7 @@ def vehicle_setup():
     wing.append_segment(segment)
 
     mid_airfoil                           = SUAVE.Components.Airfoils.Airfoil()
-    mid_airfoil.coordinate_file           = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
+    mid_airfoil.coordinate_file           = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
     segment                               = SUAVE.Components.Wings.Segment()
     segment.tag                           = 'Section_2'
     segment.percent_span_location         = 0.963
@@ -208,7 +208,7 @@ def vehicle_setup():
     wing.append_segment(segment)
 
     tip_airfoil                           =  SUAVE.Components.Airfoils.Airfoil()
-    tip_airfoil.coordinate_file           = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
+    tip_airfoil.coordinate_file           = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
     segment                               = SUAVE.Components.Wings.Segment()
     segment.tag                           = 'Tip'
     segment.percent_span_location         = 1.
@@ -589,16 +589,16 @@ if __name__ == '__main__':
         elif not aircraft_is_b737:
             date_str = date.today().strftime("%d%m%y")
             if ac_segment == "narrowbody":
-                df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_211225.csv')
+                df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_geometry_narrowbody_kerosene_211225.csv')
                 # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_{date_str}.csv')
-                df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_211225_6.csv')
+                df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_results_narrowbody_kerosene_211225_6.csv')
                 # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_{date_str}_{study_idx}.csv')
                 aircraft.tag = 'Airbus_A220-100'
                 t_tail_bool = False
             elif ac_segment == "regional":
-                df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_211225.csv')
+                df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_geometry_regional_kerosene_211225.csv')
                 # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_{date_str}.csv')
-                df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_211225_6.csv')
+                df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_results_regional_kerosene_211225_6.csv')
                 # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_{date_str}_{study_idx}.csv')
                 aircraft.tag = 'ATR_72-600'
                 t_tail_bool = True
@@ -721,7 +721,7 @@ if __name__ == '__main__':
                 if aircraft_is_b737:  # 4 segments (see ..\..\regression\scripts\Vehicles\Boeing_737.py)
     
                     root_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-                    root_airfoil.coordinate_file          = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
+                    root_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Root'
                     segment.percent_span_location         = df_geom['wing_root_percent_span_location'][0]
@@ -734,7 +734,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
         
                     yehudi_airfoil                       = SUAVE.Components.Airfoils.Airfoil()
-                    yehudi_airfoil.coordinate_file       = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
+                    yehudi_airfoil.coordinate_file       = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Yehudi'
                     segment.percent_span_location         = df_geom['wing_yehudi_percent_span_location'][0]
@@ -747,7 +747,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
         
                     section2_airfoil                      =  SUAVE.Components.Airfoils.Airfoil()
-                    section2_airfoil.coordinate_file      = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
+                    section2_airfoil.coordinate_file      = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Section 2'
                     segment.percent_span_location         = df_geom['wing_section2_percent_span_location'][0]
@@ -760,7 +760,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
                     
                     tip_airfoil                      =  SUAVE.Components.Airfoils.Airfoil()
-                    tip_airfoil.coordinate_file      = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
+                    tip_airfoil.coordinate_file      = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Tip'
                     segment.percent_span_location         = df_geom['wing_tip_percent_span_location'][0]
@@ -775,7 +775,7 @@ if __name__ == '__main__':
                 elif not aircraft_is_b737:  # 3 segments (see TASOPT.jl)
                     
                     center_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-                    center_airfoil.coordinate_file          = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
+                    center_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Root'
                     segment.percent_span_location         = df_geom['wing_center_percent_span_location'][0]
@@ -788,7 +788,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
         
                     inboard_airfoil                       = SUAVE.Components.Airfoils.Airfoil()
-                    inboard_airfoil.coordinate_file       = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
+                    inboard_airfoil.coordinate_file       = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Yehudi'
                     segment.percent_span_location         = df_geom['wing_inboard_percent_span_location'][0]
@@ -801,7 +801,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
         
                     outboard_airfoil                      =  SUAVE.Components.Airfoils.Airfoil()
-                    outboard_airfoil.coordinate_file      = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
+                    outboard_airfoil.coordinate_file      = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Section 2'
                     segment.percent_span_location         = df_geom['wing_outboard_percent_span_location'][0]
@@ -814,7 +814,7 @@ if __name__ == '__main__':
                     wing.append_segment(segment)
                     
                     tip_airfoil                      =  SUAVE.Components.Airfoils.Airfoil()
-                    tip_airfoil.coordinate_file      = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
+                    tip_airfoil.coordinate_file      = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
                     segment                               = SUAVE.Components.Wings.Segment()
                     segment.tag                           = 'Tip'
                     segment.percent_span_location         = df_geom['wing_tip_percent_span_location'][0]
@@ -983,7 +983,7 @@ if __name__ == '__main__':
             # # Wing Segments
             # for i_segs in range(n_segments):
             #     root_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-            #     root_airfoil.coordinate_file          = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
+            #     root_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
             #     segment                               = SUAVE.Components.Wings.Segment()
             #     # segment                               = SUAVE.Components.Nacelles.Segment()
             #     segment.tag                           = 'Root'
@@ -1088,7 +1088,7 @@ if __name__ == '__main__':
     # elif tag == 'vertical_stabilizer':
         
     # root_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-    # root_airfoil.coordinate_file          = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
+    # root_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
     # segment                               = SUAVE.Components.Wings.Segment()
     # segment.tag                           = 'root'
     # segment.percent_span_location         = df['wing_root_percent_span_location'][0]
@@ -1101,7 +1101,7 @@ if __name__ == '__main__':
     # wing.append_segment(segment)
 
     # inboard_airfoil                       = SUAVE.Components.Airfoils.Airfoil()
-    # inboard_airfoil.coordinate_file       = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
+    # inboard_airfoil.coordinate_file       = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
     # segment                               = SUAVE.Components.Wings.Segment()
     # segment.tag                           = 'inboard'
     # segment.percent_span_location         = df['wing_inboard_percent_span_location'][0]
@@ -1114,7 +1114,7 @@ if __name__ == '__main__':
     # wing.append_segment(segment)
 
     # outboard_airfoil                      =  SUAVE.Components.Airfoils.Airfoil()
-    # outboard_airfoil.coordinate_file      = r'/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
+    # outboard_airfoil.coordinate_file      = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
     # segment                               = SUAVE.Components.Wings.Segment()
     # segment.tag                           = 'outboard'
     # segment.percent_span_location         = df['wing_outboard_percent_span_location'][0]

@@ -1,0 +1,240 @@
+
+-------------------
+JVL 1.05, 3 Jul 07
+Protoype code
+
+-------------------
+JVL 1.06, 7 Feb 18
+Updated eigenmode plotting to match latest AVL version
+
+-------------------
+JVL 2.00, 26 Jun 20
+Major code revision:
+
+Added NOALBE,NOLOAD,NOWAKE keywords to allow modeling tunnel walls
+and other non-shedding surfaces, like in AVL 3.36
+
+Jet control properties (JETCONTROL keyword) are now defined at sections 
+rather than surfaces.  Hence, a jet can now extend over only a part of 
+a SURFACE, like a control surface defined by CONTROL.
+
+The following keywords can now be placed before the first SECTION
+of a SURFACE, which makes their data the defaults for all SECTIONs.
+This eliminates the need to copy this same data for all SECTIONs,
+thus simplifying the case setup and shrinking the input file.
+  NACA       
+  AIRFOIL    
+  AFILE      
+  CLAF       
+  CDCL        
+  JETPARAM   
+But note that moving these outside individual SECTIONs will make the file
+unreadable by AVL, even if the JETPARAM and JETCONTROL stuff is commented out.
+
+Jet control variables are now the jet velocity excess DVjet.
+This can be superimposed, so that spanwise-antisymmetric differential blowing 
+can be superimposed on symmetric blowing to model powered yaw and/or 
+roll control.
+
+Added constraints on the jet control variables, like total Delta J,
+propulsor mass flow, thrust, power.  Can also drive differential blowing
+to a specified yaw or roll moment or yaw or roll rates.
+
+Reformulated solution procedure into a full Newton method.
+This also gives the correct stability, control, and design derivatives
+regardless of the "severity" of the trim state.
+
+Expanded the theory document.
+
+Created jvl_doc.txt user guide.
+
+-------------------
+JVL 2.02, 14 Sep 20
+
+Bug fix:
+The jet on a reflected surface was not being assigned an asymmetric jet control gain. OK now.
+
+
+-------------------
+JVL 2.10, 18 Feb 21
+
+Improved jet modeling treatment:
+
+- Jet sheet now also runs from actuator disk to LE, 
+in addition to the existing sheet trailing from TE
+
+- Jet force is now computed via the added load of the jet flowing along 
+the curved surface.  The propulsor thrust is also added at the disk center.
+This replaces the previous method of overall jet force calculation via the 
+jet momentum flux leaving the TE.  The new treatment more accurately
+computes the moments produced by the jet.
+
+Body force and moment calculation has been improved by the inclusion
+of loads due to streamline curvature at the body, which for example
+might be created by an adjacent wing.
+
+Expanded the theory document describing the above new features.
+Also added a section on the flight-dynamic equation linearization procedures
+and eigenmode calculation performed in MODE.
+
+-------------------
+JVL 2.11, 2 Mar 21
+
+Extended the eigenmode formulation to include force and moment 
+dependence on dU/dt and dOmega/dt.  But only a subset of these 
+can be used in the code implementation, specifically those defined 
+by added alpha-dot derivatives. Also included other added derivatives.
+The available ones now are:
+CL_a
+CL_u
+CL_alphadot
+
+CD_a
+CD_u
+CD_alphadot
+
+CM_a
+CM_u
+CM_alphadot
+
+Added the ability to specify onboard angular momentum in the M menu,
+which will produce coupling between the longitudinal and lateral dynamics.
+
+Expanded the flight dynamics section in the theory document to cover all this.
+
+
+-------------------
+JVL 2.12, 21 Mar 21
+
+Recast the JVL formulation to make the distinction between Vinf and Vref.
+Vinf is the freestream, and Vref is used for normalization of all quantities.
+For the usual steady or quasi-steady analysis in OPER, the two are the same.
+However, Vinf is allowed to depart from Vref in the definition of body-axis 
+stability derivatives with respect to u,v,w.  For eigenmode analyses, 
+Vref is the trim speed |V0| = sqrt(u0^2 + v0^2 + w0^2), while Vinf 
+is the perturbed speed |V| = sqrt(u^2 + v^2 + w^2) which can change
+in the definition of e.g. Cxu, Cmu, etc.  This was already done in 
+earlier versions, but the distinction between Vref and Vinf was 
+not explicit and not documented.  Also, the distinction will cause some
+jet-related loads to have a somewhat different response to aircraft
+speed changes, also related to the new parameter ajet (see below).
+
+DVjet now has a scale factor of Vinf^ajet, which allows modeling of 
+speed-dependent blowing intensity and thrust via the specified exponent ajet.
+
+Isolated the computation of the body-axis derivatives in subroutine gcoeffs.
+This could be modified to accept stability derivatives from an outside source
+to override the JVL's derivatives that it normally returns.  This can then
+be used to combine JVL and external-source derivatives in MODE's
+eigenmode analysis.
+
+Further refined the body model to include the effects on a body 
+from other bodies, although this will not be signficant in most cases.
+
+Added FB,FL menu items in OPER to output body total forces and body-element
+strengths and loadings.
+
+Updated the flight dynamics section in the theory document to cover all this.
+
+--------------------
+JVL 2.12b, 9 Apr 21
+
+Switched most of the output text listing formats from F to G, 
+to ensure sufficient significant figures for any quantity magnitude.
+
+
+--------------------
+JVL 2.12c, 15 Apr 21
+
+Fixed a few printout format problems.
+
+
+--------------------
+JVL 2.12d, 21 Apr 21
+
+Fixed more printout format problems.
+
+Added the ability to specify XYZmom in the RE menu in OPER.
+This is a moment-reference location which can be different from XYZref,
+to allow obtaining hinge-force and hinge-moment derivatives for a surface.
+XYZmom is used _only_ in the printout routines to shift all the moments,
+and _not_ in any of the calculations.  XYZmom is also reset back to XYZref
+when any calculation is performed, to reduce the risk of unintended moment
+shifts on output.
+
+
+--------------------
+JVL 2.14, 21 Feb 22
+
+Fixed handling of profile drag polar data via CDCL keyword
+
+Added the ability to model combined aero/hydro surfaces, e.g. hydrofoil sailboat:
+
+- Each surface can have associated with it a local/reference density ratio,
+input via the optional keyword DENSITY.  If absent this defauts to 1.0
+The density ratio is used to scale all the forces of that surface, consisting of:
+  inviscid forces (vorticity)
+  viscous forces (profile cd)
+  jet force (momentum excess * curvature)
+
+- The waterplane as seen by the aero surfaces is modeled with
+IZSYM=1, z_water=ZSYM, same as the usual ground effect.
+However, vortices on opposite sides of the z=ZSYM plane to not "see" eath other.
+Specifically, vorticity in the air does not contribute of water velocities,
+and vice versa.
+
+- The sign of an image across the z=ZSYM plane can be set individually
+for each SURFACE via the new ZIMAGE keyword, which requires an integer.
+-1, 0, +1.  This overrides the global IZSYM value only for that surface,
+and is interpreted the same way, i.e.
+-1 = image, to model a constant-pressure water plane or free jet surface
+ 0 = no image
++1 = anti-image, to model a solid water plane or ground plane surface 
+
+The -1 case is the correct model for a free surface at very large Froude number.
+So a hydrofoil SURFACE located at z < ZSYM (underwater) would have
+
+DENSITY
+816.0
+
+ZIMAGE
+-1
+
+--------------------
+JVL 2.15, 22 Mar 23
+
+Fixed handling of bodies to correctly handle YDUP images (was missing one of
+the body parameters when duplicated), in subroutine jbdforc.f.
+
+Changed handling of vortex core radius to separate core scaling based on chord
+and based on strip width.  The core radius scaling for a "fuselage" modeled as
+a vortex SURFACE was badly smearing velocities.  Now two parameters for vortex
+core scaling are used, VRCOREC for the chord scaling factor, and VRCOREW for
+the core radius based on strip width.
+
+The core radius SRCORE, used for body source/doublet velocities was changed 
+from a scaling on body radius to a local scale factor based on the length of
+each source segment.  Affected source jvl.f, jaic.f, jexec.f
+ 
+Added optional read of core radius factors to input file with CORE keyword.
+Sample input with core parameters:
+
+CORE
+  0.0 2.0 2.0       VRCOREC VRCOREW SRCORE
+ 
+The matrix solution calls to LAPACK routines in jexec.f were changed to call
+high speed LAPACK/BLAS solvers through intermediate routines LUDCMP and BAKSUB.
+This allows external LAPACK solver libraries to be used with their native calls
+for single or double precision.
+The matrix intermediaries are in matrix-lapacksp.f for single precision and
+matrix-lapackdp.f for double precision.  The Makefile should reflect the
+suitable choice for the precision.
+
+Added check for body YDUP with 0.0 offset and no Y translation as this would
+duplicate the body onto itself.
+
+Changed large AIC arrays for aicn,vc_gam,vv_gam from COMMON to allocated (heap)
+storage.  This is done with an f90 module (jvl_inc) which gets used
+(adding statement "use jvl_inc") to each subroutine that accesses those arrays.
+These arrays are allocated initially and/or deallocated in new routine
+jvlheap.f90.

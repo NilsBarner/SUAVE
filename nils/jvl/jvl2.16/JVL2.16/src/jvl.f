@@ -1,0 +1,1312 @@
+
+C***********************************************************************
+C    Module:  jvl.f
+C 
+C    Copyright (C) 2021 Mark Drela, Harold Youngren
+C 
+C    This program is free software; you can redistribute it and/or modify
+C    it under the terms of the GNU General Public License as published by
+C    the Free Software Foundation; either version 2 of the License, or
+C    (at your option) any later version.
+C
+C    This program is distributed in the hope that it will be useful,
+C    but WITHOUT ANY WARRANTY; without even the implied warranty of
+C    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+C    GNU General Public License for more details.
+C
+C    You should have received a copy of the GNU General Public License
+C    along with this program; if not, write to the Free Software
+C    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+C***********************************************************************
+
+      program jvl
+c=======================================================================
+c     3-D Vortex Lattice code with jet-sheet modeling
+c     See file avl_doc.txt for user guide.
+c     See file version_notes.txt for most recent changes.
+c
+c     % jvl configfile [ runfile massfile ]
+c
+c=======================================================================
+      include 'jvl.inc'
+      include 'jvlplt.inc'
+      logical error, linpfile
+
+      character*4 comand
+      character*128 comarg
+      character*80 fnnew
+
+      real    rinput(20)
+      integer iinput(20)
+
+      version = 2.16
+
+ 1000 format(a)
+
+      write (*,1005) version
+ 1005 format (
+     &  /' ==================================================='
+     &  /'  Jet Vortex Lattice  program      version ',f5.2
+     &  /'  Copyright (c) 2021   Mark Drela, Harold Youngren'
+     & //'  This software comes with absolutely no warranty,' 
+     &  /'    subject to the GNU general public license.'
+     & //'  Caveat computor'
+     &  /' ===================================================')
+
+c
+      pi = 4.0*atan(1.0)
+      dtr = pi/180.0
+
+c---- flag for having valid input data from file
+      linpfile = .false.
+
+c---- logical units
+      luinp = 4   ! configuration file
+      lurun = 7   ! run case file
+      lumas = 8   ! mass file
+      luout = 19  ! output dump file
+      lustd = 20  ! stability derivative dump file
+      lusys = 22  ! dynamic system matrix dump file
+
+c---- set basic defaults
+      call defini
+      call masini
+      call rundef(0)
+
+c---- initialize heap storage arrays for AIC's
+      call jvlheap_init
+
+c---- initialize xplot, and jvl plot stuff
+      call plinit
+
+c---- read a new input geometry from input file
+      call getarg0(1,fildef)
+
+      if(fildef.ne.' ') then
+       call input(luinp,fildef,error)
+
+c----- no valid geometry... skip reading run and mass files
+       if(error) go to 100
+
+c----- set up all parameter names, units, values
+       linpfile = .true.
+       call parset
+       call rundef(0)
+
+c----- process geometry to define strip and vortex data
+       lpltnew = .true.
+       call encalc
+
+c       do i = ifrsts(1), ilasts(1)
+c         write(33,'(1x,4g17.9)') rv(1,i), rc(1,i), enc(1,i), enc(3,i)
+c       enddo
+
+      else
+c----- no geometry... skip reading run and mass files
+       go to 100
+
+      endif
+
+c-------------------------------------------------------------------
+c---- try to read mass file
+      call getarg0(3,fmsdef)
+      if(fmsdef.eq.' ') then
+       kdot = index(fildef,'.')
+       if(kdot.eq.0) then
+        call bstrip(fildef,lenf)
+        fmsdef = fildef(1:lenf) // '.mass'
+       else
+        fmsdef = fildef(1:kdot) // 'mass'
+       endif
+      endif
+
+      call bstrip(fmsdef,nms)
+      write(*,*) 
+      write(*,*)
+     & '---------------------------------------------------------------'
+      write(*,*) 'trying to read file: ', fmsdef(1:nms), '  ...'
+      call masget(lumas,fmsdef,error)
+
+      if(error) then
+       write(*,*) 'internal mass defaults used'
+       call masini
+
+      else
+       write(*,*)
+       write(*,*) 'mass distribution read ...'
+
+c----- calculate and display real mass, inertias
+       call massho(6)
+
+c----- calculate and display apparent masses, inertias
+       call appget
+       write(*,*) 
+     & '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'
+       call appsho(6,rho0)
+
+      endif
+
+c-------------------------------------------------------------------
+c---- try to read run case file
+      call getarg0(2,frndef)
+      if(frndef.eq.' ') then
+       kdot = index(fildef,'.')
+       if(kdot.eq.0) then
+        call bstrip(fildef,lenf)
+        frndef = fildef(1:lenf) // '.run'
+       else
+        frndef = fildef(1:kdot) // 'run'
+       endif
+      endif
+
+      call bstrip(frndef,nfr)
+      write(*,*)
+      write(*,*)
+     & '---------------------------------------------------------------'
+      write(*,*) 'Trying to read file: ', frndef(1:nfr), '  ...'
+      call runget(lurun,frndef,error)
+
+      if(error) then
+       write(*,*)
+       write(*,*) 'Read error on file  ', frndef(1:nfr)
+       write(*,*) 'Internal run case defaults used'
+
+       irun = 1
+       nrun = 1
+       call runini(irun)
+
+c----- all run cases are targets for eigenmode calculation
+       irune = 0
+
+c----- first run case is default for time march initial state
+       irunt = 1
+
+      else
+       write(*,1025) (ir, rtitle(ir), ir=1, nrun)
+ 1025  format(//' Run cases read  ...',
+     &        100(/1x,i4,': ',a))
+       
+       call runini(0)
+
+      endif
+
+cc---- check alfa(vbar), beta(vbar) linearizations
+cc      call linchka
+cc      call linchkr
+cc      call linchkf
+
+c-------------------------------------------------------------------
+ 100  continue
+
+c---- set up plotting parameters for geometry (if any)
+      if(linpfile) call plpars
+
+      write(*,2000) 
+ 2000 format(
+     &  /' =========================================================='
+     &  /'   Quit    Exit program'
+     & //'  .OPER    Compute operating-point run cases'
+     &  /'  .MODE    Eigenvalue analysis of run cases'  !    &  /'  .TIME    Time-domain calculations'
+     & //'   LOAD f  Read configuration input file'
+     &  /'   MASS f  Read mass distribution file'
+     &  /'   CASE f  Read run case file'
+     & //'   CINI    Clear and initialize run cases'
+     &  /'   MSET i  Apply mass file data to stored run case(s)'
+     & //'  .PLOP    Plotting options'
+     &  /'   NAME s  Specify new configuration name')
+
+c======================================================================
+c---- start of menu loop
+  500 continue
+      call askc(' JVL^',comand,comarg)
+
+c---- extract command line numeric arguments
+      do i=1, 20
+        iinput(i) = 0
+        rinput(i) = 0.0
+      enddo
+      ninput = 20
+      call getint(comarg,iinput,ninput,error)
+      ninput = 20
+      call getflt(comarg,rinput,ninput,error)
+
+c===============================================
+      if(comand.eq.'    ') then
+       go to 500
+
+c===============================================
+      elseif(comand.eq.'?   ') then
+       write(*,2000)
+
+c===============================================
+      elseif(comand.eq.'QUIT' .or.
+     &       comand.eq.'Q   '      ) then
+       call plclose
+c---- free heap storage arrays for AIC's
+       call jvlheap_clean
+       stop
+
+c===============================================
+      elseif(comand.eq.'OPER') then
+       call oper
+
+c===============================================
+      elseif(comand.eq.'MODE') then
+       call mode
+
+cc===============================================
+c      elseif(comand.eq.'TIME') then
+ccc       call time
+
+c===============================================
+      else if(comand.eq.'LOAD') then
+c----- read a new input geometry from input file
+       if(comarg.ne.' ') then
+        fildef = comarg
+
+       else
+        call bstrip(fildef,lenf)
+        lenf1 = max(lenf,1)
+
+        write(*,2010) fildef(1:lenf1)
+ 2010   format(' Enter input filename: ', a)
+        read (*,1000)  fnnew
+
+        if(fnnew.eq.' ') then
+         if(lenf.eq.0) go to 500
+        else
+         fildef = fnnew
+        endif
+
+       endif
+
+       linpfile = .false.
+       call input(luinp,fildef,error)
+       if(error) then
+        write(*,*) 
+     &    '** File not processed. Current geometry may be corrupted.'
+       go to 500
+       endif
+
+c----- we have an input dataset to process
+       linpfile = .true.
+       call parset
+
+       if(nrun.eq.0) then
+c------ default number of run cases
+        irun = 1
+        nrun = 1
+
+c------ all run cases are targets for eigenmode calculation
+        irune = 0
+
+c------ first run case is default for time march initial state
+        irunt = 1
+c----- set up all parameter names, units, values
+ccc   -HHY 07052023
+        call rundef(0)
+
+       else
+        write(*,*)
+        write(*,*) 'Existing run case setup will be used.'
+        write(*,*) 'Issue CASE or CINI command if necessary.'
+
+       endif
+
+c----- process geometry to define strip and vortex data
+       lpltnew = .true.
+       call encalc
+
+c----- initialize run variables
+       call runini(irun)
+
+c----- no AIC matrices or valid solution yet
+       laic = .false.
+       lsol = .false.
+
+c----- set up plotting parameters for new geometry 
+       call plpars
+
+c===============================================
+      else if(comand.eq.'MASS') then
+c----- read a new mass distribution file
+       if(comarg.ne.' ') then
+        fmsdef = comarg
+
+       else
+        call bstrip(fmsdef,lenf)
+        lenf1 = max(lenf,1)
+
+        write(*,3010) fmsdef(1:lenf1)
+ 3010   format(' Enter mass filename: ', a)
+        read (*,1000)  fnnew
+
+        if(fnnew.eq.' ') then
+         if(lenf.eq.0) go to 500
+        else
+         fmsdef = fnnew
+        endif
+       endif
+
+       call bstrip(fmsdef,nms)
+       call masget(lumas,fmsdef,error)
+       if(error) then
+       else
+        write(*,*)
+        write(*,*) 'Mass distribution read ...'
+        call massho(6)
+
+        call appget
+        write(*,*) 
+     & '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'
+        call appsho(6,rho0)
+
+        write(*,*)
+        write(*,*) 
+     &    'Use MSET to apply these mass,inertias to run cases'
+ccc        call masput(1,nrmax)
+       endif
+
+c===============================================
+      else if(comand.eq.'CASE') then
+c----- read a new run case file
+       if(comarg.ne.' ') then
+        frndef = comarg
+
+       else
+        call bstrip(frndef,lenf)
+        lenf1 = max(lenf,1)
+
+        write(*,3020) frndef(1:lenf1)
+ 3020   format(' Enter run case filename: ', a)
+        read (*,1000)  fnnew
+
+        if(fnnew.eq.' ') then
+         if(lenf.eq.0) go to 500
+        else
+         frndef = fnnew
+        endif
+       endif
+
+       call bstrip(frndef,nfr)
+       call runget(lurun,frndef,error)
+       if(error) then
+        write(*,*)
+        write(*,*) 'Read error on file  ', frndef(1:nfr)
+        write(*,*) 'No changes made'
+
+       else
+c------ initialize states for all read-in run cases
+        call runini(0)
+        write(*,1025) (ir, rtitle(ir), ir=1, nrun)
+        lsol = .false.
+
+       endif
+
+c===============================================
+      else if(comand.eq.'CINI') then
+       if(lgeo) then
+        call runini(0)
+       else
+        write(*,*) 'No configuration available.'
+        nrun = 0
+       endif
+
+c===============================================
+      else if(comand.eq.'MSET') then
+c----- set input mass,inertias
+       if(ninput.ge.1) then
+        ir1 = iinput(1)
+       else
+ 60     write(*,3060) 
+ 3060   format(/
+     &     ' Enter index of target run case (0=all, -1=abort):  0')
+        ir1 = 0
+        call readi(1,ir1,error)
+        if(error) go to 60
+       endif
+
+       if(ir1.eq.0) then
+        ir1 = 1
+        ir2 = nrun
+       else
+        ir2 = ir1
+       endif
+
+       if(ir1.lt.1 .or. ir1.gt.nrun) go to 500
+
+       call masput(ir1,ir2)
+
+c===============================================
+      elseif(comand.eq.'PLOP') then
+       call oplset(idev,idevh,ipslu,
+     &             plsize,plotar,
+     &             xmarg,ymarg,xpage,ypage,
+     &             csize,scrnfrac,lcurs,lcrev)
+
+c===============================================
+      elseif(comand.eq.'NAME') then
+       if(comarg.eq.' ') then
+        call asks('Enter new name^',title)
+       else
+        title = comarg
+       endif
+
+c===============================================
+      else
+       write(*,1050) comand
+ 1050  format(1x,a4,' Command not recognized.  Type a "?" for list')
+
+      endif
+
+      go to 500
+      end ! jvl
+
+
+ 
+      subroutine plinit
+c---- initialize plotting variables
+
+      include 'jvl.inc'
+      include 'jvlplt.inc'
+
+      real rorg(3)
+
+c---- plotting flag
+      idev = 1   ! x11 window only
+c     idev = 2   ! b&w postscript output file only (no color)
+c     idev = 3   ! both x11 and b&w postscript file
+c     idev = 4   ! color postscript output file only 
+c     idev = 5   ! both x11 and color postscript file 
+
+c---- re-plotting flag (for hardcopy)
+ccc      idevh = 2    ! b&w postscript
+      idevh = 4    ! color postscript
+
+c---- movie-plotting flag
+cc    idevm = 3    ! b&w postscript
+      idevm = 5   ! both x11 and color postscript file 
+
+      lsvmov = .false.   ! no movie ps output yet
+
+c---- postscript output logical unit and file specification
+ccc   ipslu = -1  ! output to files plotnnn.ps on lu 80, with nnn = 001, 002, ...
+      ipslu = 0   ! output to file  plot.ps    on lu 80   (default case)
+ccc   ipslu = nnn ! output to file  plotnnn.ps on lu nnn
+
+c---- screen fraction taken up by plot window upon opening
+c     scrnfrac = 0.70    ! landscape
+      scrnfrac = 0.85    ! landscape
+c     scrnfrac = -0.85   ! portrait  specified if < 0
+
+c---- default plot size in inches
+c-    (default plot window is 11.0 x 8.5)
+      plsize = 9.0
+
+c---- plot aspect ratio
+      plotar = 0.70
+
+c---- character width/plsize
+      csize = 0.017
+
+      call plinitialize
+
+      ncolors = 0
+c---- set up color spectrum
+ccc      ncolors = 32
+ccc      call colorspectrumhues(ncolors,'rygcbm')
+
+c---- plot-window dimensions in inches for plot blowup calculations
+c-    currently,  11.0 x 8.5  default window is hard-wired in libplt
+      xpage = 11.0
+      ypage = 8.5
+
+      xwind = 11.0
+      ywind = 8.5
+
+c---- page margins in inches
+      xmarg = 0.0
+      ymarg = 0.0
+
+c---- bottom,left plot margin from edge
+      pmarg = 0.15
+
+      if(idev.eq.0) then 
+        lplot = .false.
+      endif
+
+
+c---- set colors for run cases
+      do ir = 1, nrmax
+        ircolor(ir) = mod(ir-1,8) + 3
+      enddo
+
+c---- set vectors for little axes
+      slen = 0.5
+      hlen = 0.5
+
+      rhead = hlen * 0.25
+      nhead = nhaxis
+
+      rorg(1) = 0.
+      rorg(2) = 0.
+      rorg(3) = 0.
+      do iax = 1, 3
+        uaxdir(1,iax) = 0.
+        uaxdir(2,iax) = 0.
+        uaxdir(3,iax) = 0.
+        uaxdir(iax,iax) = 1.0
+        call arwset(rorg,uaxdir(1,iax),slen,hlen,rhead,nhead,
+     &                   uaxarw(1,1,1,iax),nlinax)
+      enddo
+
+c---- initial phase, eigenvector scale, slo-mo scale (for mode plots)
+      ephase = 0.0
+      eigenf = 1.0
+      slomof = 1.0
+      tmofac = 1.0
+
+      return
+      end ! plinit
+
+
+
+      subroutine plpars
+      include 'jvl.inc'
+      include 'jvlplt.inc'
+
+      imarksurf = 0
+      do n = 1, nsurf
+        lpltsurf(n) = .true. 
+      end do
+      do n = 1, nbody
+        lpltbody(n) = .true. 
+      end do
+
+c---- scaling factors for velocity and pressure
+      cpfac = min(0.4*cref,0.1*bref)  / cref
+      enfac = min(0.3*cref,0.06*bref) / cref
+      hnfac = min(    cref,0.50*bref) / cref
+      wsfac = min(0.2*cref,0.05*bref) / cref
+
+c---- initialize observer position angles and perspective 1/distance
+      azimob = -45.0
+      elevob =  20.0
+      tiltob =   0.
+      robinv = 0.
+
+c---- slo-mo factor
+      slomof = 1.0
+
+c---- eigenmode animation integration time step
+      dtimed = 0.025
+
+c---- movie-dump frame time step
+      dtmovie = 0.05
+
+c---- max length of movie
+      tmovie = 10.0
+
+c---- plot selection flags
+      label_body = .false.
+      label_surf = .false.
+      label_strp = .false.
+      label_vrtx = .false.
+      lwakeplt   = .false.
+      lhingeplt  = .false.
+      lloadplt   = .false.
+      lwaklplt   = .true.
+      lcntlplt   = .false.
+      lnrmlplt   = .false.
+      laxesplt   = .true.
+      lvelcplt   = .false.
+      lwsegplt   = .false.
+
+      lrrefplt   = .true.
+      lclperplt  = .false.
+      ldwashplt  = .true.
+      llabsurf   = .false.
+      lcambplt   = .false.
+      lchordplt  = .true.
+      lboundplt  = .true.
+      ldiskplt   = .true.
+
+c---- enable hidden lines
+      lhidden = .true.
+
+c---- initially assume no reverse color output
+      lcrev = .false.
+
+c---- flags to plot parameter values above eigenmode map
+      do ip = 1, iptot
+        lppar(ip) = .false.
+      enddo
+
+      lppar(ipalfa) = .true.
+      lppar(ipbeta) = .true.
+c      lppar(iprotx) = .true.
+c      lppar(iproty) = .true.
+c      lppar(iprotz) = .true.
+      lppar(ipcl  ) = .true.
+      lppar(ipcd0 ) = .true.
+
+      lppar(ipphi ) = .true.
+c      lppar(ipthe ) = .true.
+c      lppar(ippsi ) = .true.
+
+c      lppar(ipmach) = .true.
+      lppar(ipvee ) = .true.
+      lppar(iprho ) = .true.
+c      lppar(ipgee ) = .true.
+
+      lppar(iprad ) = .true.
+c      lppar(ipfac ) = .true.
+
+      lppar(ipxcg ) = .true.
+c      lppar(ipycg ) = .true.
+      lppar(ipzcg ) = .true.
+
+      lppar(ipmass) = .true.
+
+c      lppar(ipixx ) = .true.
+c      lppar(ipiyy ) = .true.
+c      lppar(ipizz ) = .true.
+c      lppar(ipixy ) = .true.
+c      lppar(ipiyz ) = .true.
+c      lppar(ipizx ) = .true.
+
+c      lppar(iphx  ) = .true.
+c      lppar(iphy  ) = .true.
+c      lppar(iphz  ) = .true.
+
+c      lppar(ipcla ) = .true.
+c      lppar(ipclu ) = .true.
+c      lppar(ipclad) = .true.
+
+c      lppar(ipcda ) = .true.
+c      lppar(ipcdu ) = .true.
+c      lppar(ipcdad) = .true.
+
+c      lppar(ipcma ) = .true.
+c      lppar(ipcmu ) = .true.
+c      lppar(ipcmad) = .true.
+
+      return
+      end ! plpars
+
+
+
+      subroutine defini
+      include 'jvl.inc'
+
+c---- flag for forces in standard nasa stability axes (as in etkin)
+      lnasa_sa  = .true.
+
+c---- flag for rotations defined in stability axes or body axes
+      lsa_rates = .true.
+
+c---- file output flags
+      lptot   = .true.
+      lpsurf  = .false.
+      lpstrp  = .false.
+      lpelem  = .false.
+      lpbody  = .false.
+      lpblin  = .false.
+      lphinge = .false.
+      lpderiv = .false.
+
+      lgeo  = .false.
+      lenc  = .false.
+
+      laic  = .false.
+      lsol  = .false.
+
+      lvisc    = .true.
+      lbforce  = .true.
+c---- clv for cdv polar includes jet forces
+      lclvjet  = .true.
+      ltrforce = .true.
+
+      lmwait = .false.
+
+c---- default exponent of DVjet dependence on Vinf:  DVjet ~ (Vinf/Vref)^vjexp
+      dvjexp0 = 0.0
+
+      nitmax = 20
+
+      saxfr = 0.25  ! x/c location of spanwise axis for vperp definition
+
+c---- default core radius ratios
+      vrcorec = 0.  ! vortex core radius / strip chord
+      vrcorew = 2.0    ! vortex core radius / vortex strip span
+      srcore  = 2.0    ! source core radius / segment length
+
+c---- dafault basic units
+      unitl = 1.
+      unitm = 1.
+      unitt = 1.
+      unchl = 'Lunit'
+      unchm = 'Munit'
+      uncht = 'Tunit'
+      nul = 5
+      num = 5
+      nut = 5
+
+c---- set corresponding derived units
+      call unitset
+
+c---- default air density and grav. accel.
+      rho0 = 1.0
+      gee0 = 1.0
+
+c---- no eigenvalue reference data yet
+      fevdef = ' '
+      do ir = 1, nrmax
+        neigendat(ir) = 0
+      enddo
+
+c---- no run cases defined yet
+      nrun = 0
+      irun = 1
+
+c---- number of valid time levels stored
+      ntlev = 0
+
+c---- default time step, and number of time steps to take
+      deltat = 0.0
+      ntsteps = 0
+
+      return
+      end ! defini
+
+
+
+      subroutine parset
+      include 'jvl.inc'
+
+c---- variable names
+      varnam(ivvelx) = '????? '
+      varnam(ivvelz) = 'alpha '
+      varnam(ivvely) = 'beta  '
+      varnam(ivomgx) = 'pb/2V '
+      varnam(ivomgy) = 'qc/2V '
+      varnam(ivomgz) = 'rb/2V '
+
+c---- variable selection keys
+      varkey(ivvelx) = '????? '    ! this should not be available
+      varkey(ivvelz) = 'A lpha'
+      varkey(ivvely) = 'B eta'
+      varkey(ivomgx) = 'R oll  rate'
+      varkey(ivomgy) = 'P itch rate'
+      varkey(ivomgz) = 'Y aw   rate'
+
+c---- constraint names
+ccc                     123456789012
+      connam(icvinf) = '????? '
+      connam(icalfa) = 'alpha '
+      connam(icbeta) = 'beta  '
+      connam(icomgx) = 'pb/2V '
+      connam(icomgy) = 'qc/2V '
+      connam(icomgz) = 'rb/2V '
+      connam(iccl  ) = 'CL    '
+      connam(iccy  ) = 'CY    '
+      connam(icmomx) = 'Cl roll mom'
+      connam(icmomy) = 'Cm pitchmom'
+      connam(icmomz) = 'Cn yaw  mom'
+
+c                       1234567890123456
+      connam(icjetv) = 'Delta VJ/Vinf'
+      connam(icjetj) = 'Delta CJ'
+      connam(icjett) = 'CT'
+      connam(icjetp) = 'CP'
+
+c---- constraint selection keys
+      conkey(icvinf) = '??'   ! Vinf constraint is not selectable
+      conkey(icalfa) = 'A '
+      conkey(icbeta) = 'B '
+      conkey(icomgx) = 'R '
+      conkey(icomgy) = 'P '
+      conkey(icomgz) = 'Y '
+      conkey(iccl  ) = 'C '
+      conkey(iccy  ) = 'S '
+      conkey(icmomx) = 'RM'
+      conkey(icmomy) = 'PM'
+      conkey(icmomz) = 'YM'
+      conkey(icjetv) = 'JV'
+      conkey(icjetj) = 'JJ'
+      conkey(icjett) = 'JT'
+      conkey(icjetp) = 'JP'
+
+c------------------------------------------------------------------------
+      izero = ichar('0')
+
+c---- add control variables, direct constraints
+      do n = 1, ncontrol
+        iten = n/10
+        ione = n - 10*iten
+
+c------ assign slots in variable ond constraint lists
+        iv = ivtot + n
+        ic = ictot + n
+        varnam(iv) = dname(n)
+        connam(ic) = dname(n)
+        if(iten.eq.0) then
+         varkey(iv) = 'D' // char(izero+ione) // ' '
+     &             // ' ' // dname(n)(1:8)
+         conkey(ic) = 'D' // char(izero+ione)
+        else
+         varkey(iv) = 'D' // char(izero+iten) // char(izero+ione)
+     &             // ' ' // dname(n)(1:8)
+         conkey(ic) = 'D' // char(izero+iten) // char(izero+ione)
+        endif
+
+        lcondef(n) = .true.
+      enddo
+
+c---- add jet variables, direct constraints
+      do n = 1, nvarjet
+        iten = n/10
+        ione = n - 10*iten
+
+c------ assign slots in variable ond constraint lists
+        iv = ivtot + ncontrol + n
+        ic = ictot + ncontrol + n
+        varnam(iv) = jname(n)
+        connam(ic) = jname(n)
+        if(iten.eq.0) then
+         varkey(iv) = 'J' // char(izero+ione) // ' '
+     &             // ' ' // jname(n)(1:8)
+         conkey(ic) = 'J' // char(izero+ione)
+        else
+         varkey(iv) = 'J' // char(izero+iten) // char(izero+ione)
+     &             // ' ' // jname(n)(1:8)
+         conkey(ic) = 'J' // char(izero+iten) // char(izero+ione)
+        endif
+
+        ljetdef(n) = .true.
+      enddo
+
+c---- default design-variable flags, names
+      do n = 1, ndesign
+        ldesdef(n) = .true.
+      enddo
+
+c---- total number of variables, constraints
+      nvtot = ivtot + ncontrol + nvarjet
+      nctot = ictot + ncontrol + nvarjet
+
+c---- run-case parameter names
+      parnam(ipalfa) = 'alpha    '
+      parnam(ipbeta) = 'beta     '
+      parnam(iprotx) = 'pb/2V    '
+      parnam(iproty) = 'qc/2V    '
+      parnam(iprotz) = 'rb/2V    '
+
+      parnam(ipcl )  = 'CL       '
+      parnam(ipcd0)  = 'CDo      '
+
+      parnam(ipphi)  = 'bank     '
+      parnam(ipthe)  = 'elevation'
+      parnam(ippsi)  = 'heading  '
+
+      parnam(ipmach) = 'Mach     '
+      parnam(ipvee)  = 'velocity '
+      parnam(iprho)  = 'density  '
+      parnam(ipgee)  = 'grav.acc.'
+      parnam(iprad)  = 'turn_rad.'
+      parnam(ipfac)  = 'load_fac.'
+
+      parnam(ipxcg)  = 'X_cg     '
+      parnam(ipycg)  = 'Y_cg     '
+      parnam(ipzcg)  = 'Z_cg     '
+
+      parnam(ipmass) = 'mass     '
+
+      parnam(ipixx)  = 'Ixx      '
+      parnam(ipiyy)  = 'Iyy      '
+      parnam(ipizz)  = 'Izz      '
+      parnam(ipixy)  = 'Ixy      '
+      parnam(ipiyz)  = 'Iyz      '
+      parnam(ipizx)  = 'Izx      '
+
+      parnam(iphx)   = 'hx       '
+      parnam(iphy)   = 'hy       '
+      parnam(iphz)   = 'hz       '
+
+      parnam(ipdvjx) = 'DVj exp. '
+
+      parnam(ipcla)  = 'add. CL_a'
+      parnam(ipclu)  = 'add. CL_u'
+      parnam(ipclad) = 'CL_adot  '
+
+      parnam(ipcma)  = 'add. CM_a'
+      parnam(ipcmu)  = 'add. CM_u'
+      parnam(ipcmad) = 'CM_adot  '
+
+      parnam(ipcda)  = 'add. CD_a'
+      parnam(ipcdu)  = 'add. CD_u'
+      parnam(ipcdad) = 'CD_adot  '
+
+c---- total number of parameters
+      nptot = iptot
+
+c---- set default parameter unit names
+      call paruset
+
+      return
+      end ! parset
+
+
+      subroutine paruset
+      include 'jvl.inc'
+
+c---- set parameter unit name
+      do ip = 1, iptot
+        parunch(ip) = ' '
+      enddo
+
+      parunch(ipalfa) = 'deg'
+      parunch(ipbeta) = 'deg'
+      parunch(ipphi)  = 'deg'
+      parunch(ipthe)  = 'deg'
+      parunch(ippsi)  = 'deg'
+      parunch(ipvee)  = unchv
+      parunch(iprho)  = unchd
+      parunch(ipgee)  = uncha
+      parunch(iprad)  = unchl
+      parunch(ipxcg)  = unchl
+      parunch(ipycg)  = unchl
+      parunch(ipzcg)  = unchl
+      parunch(ipmass) = unchm
+      parunch(ipixx)  = unchi
+      parunch(ipiyy)  = unchi
+      parunch(ipizz)  = unchi
+      parunch(ipixy)  = unchi
+      parunch(ipiyz)  = unchi
+      parunch(ipizx)  = unchi
+      parunch(iphx)   = unchh
+      parunch(iphy)   = unchh
+      parunch(iphz)   = unchh
+
+      return
+      end ! paruset
+
+
+      subroutine rundef(irin)
+c-----------------------------------------------------
+c     Clears contraints, parameters, for run irin, 
+c     or for all runs if irin=0.
+c     Sets these to default values.
+c-----------------------------------------------------
+      include 'jvl.inc'
+
+c---- initialize case variables
+      call runini(irin)
+
+      if(irin .eq. 0) then
+       ir1 = 1
+       ir2 = nrmax
+      else
+       ir1 = irin
+       ir2 = irin
+      endif
+
+      do ir = ir1, ir2
+c------ set direct constraint for each variable
+        icon(ivvelx,ir) = icvinf
+        icon(ivvely,ir) = icbeta
+        icon(ivvelz,ir) = icalfa
+        icon(ivomgx,ir) = icomgx
+        icon(ivomgy,ir) = icomgy
+        icon(ivomgz,ir) = icomgz
+
+c------ constraint values
+        do ic = 1, ictot
+          conval(ic,ir) = 0.
+        enddo
+        conval(icvinf,ir) = 1.0
+
+c------ run case titles
+        rtitle(ir) = ' -unnamed- '
+
+c------ dimensional run case parameters
+        do ip = 1, nptot
+          parval(ip,ir) = 0.
+        enddo
+        parval(ipmach,ir) = mach0
+        parval(ipgee,ir) = gee0
+        parval(iprho,ir) = rho0
+
+c------ default cg location is the input reference location
+        parval(ipxcg,ir) = xyzref0(1)
+        parval(ipycg,ir) = xyzref0(2)
+        parval(ipzcg,ir) = xyzref0(3)
+
+        parval(ipmass,ir) = rmass0
+        parval(ipixx,ir) = riner0(1,1)
+        parval(ipiyy,ir) = riner0(2,2)
+        parval(ipizz,ir) = riner0(3,3)
+        parval(ipixy,ir) = riner0(1,2)
+        parval(ipiyz,ir) = riner0(2,3)
+        parval(ipizx,ir) = riner0(3,1)
+
+        parval(ipcd0,ir) = cdref0
+
+        parval(ipdvjx,ir) = dvjexp0
+
+        parval(ipcla,ir) = dcl_a0
+        parval(ipclu,ir) = dcl_u0
+        parval(ipclad,ir) = dcl_ad0
+
+        parval(ipcda,ir) = dcd_a0
+        parval(ipcdu,ir) = dcd_u0
+        parval(ipcdad,ir) = dcd_ad0
+
+        parval(ipcma,ir) = dcm_a0
+        parval(ipcmu,ir) = dcm_u0
+        parval(ipcmad,ir) = dcm_ad0
+
+c-----  control variables, direct constraints
+        do n = 1, ndmax
+          iv = ivtot + n
+          ic = ictot + n
+          icon(iv,ir) = ic
+          conval(ic,ir) = 0.
+        enddo
+
+        lsolr(ir) = .false.
+      enddo
+
+      return
+      end ! rundef
+
+
+      subroutine runini(irin)
+c---------------------------------------------------
+c     Initializes variables of run irin, 
+c     or of all runs if irin=0
+c---------------------------------------------------
+      include 'jvl.inc'
+
+      if(irin .eq. 0) then
+       ir1 = 1
+       ir2 = nrmax
+      else
+       ir1 = irin
+       ir2 = irin
+      endif
+
+      do ir = ir1, ir2
+        varval(ivvelx,ir) = 1.0
+        varval(ivvely,ir) = 0.
+        varval(ivvelz,ir) = 0.
+        varval(ivomgx,ir) = 0.
+        varval(ivomgy,ir) = 0.
+        varval(ivomgz,ir) = 0.
+        do n = 1, ncontrol
+          iv = n + 6
+          varval(iv,ir) = 0.
+        enddo
+        do n = 1, nvarjet
+          iv = n + 6 + ncontrol
+          varval(iv,ir) = 0.
+        enddo
+        itrim(ir) = 0
+        neigen(ir) = 0
+
+        lsolr(ir) = .false.
+      enddo
+
+      return
+      end ! runini
+ 
+
+      subroutine runget(lu,fname,error)
+c-------------------------------------------------
+c     Reads run case file into run case arrays
+c     Returns error=T if read was unsuccessful
+c-------------------------------------------------
+      include 'jvl.inc'
+      character*(*) fname
+      logical error
+
+      character*80 line
+      character*12 varn, conn
+      character*8  parn
+
+      open(lu,file=fname,status='old',err=90)
+      iline = 0
+
+      ir = 0
+      error = .false.
+
+c==============================================================
+c---- start line-reading loop
+ 10   continue
+
+      read(lu,1000,end=50) line
+ 1000 format(a)
+      iline = iline + 1
+
+      kcol = index(line,':' )
+      karr = index(line,'->')
+      kequ = index(line,'=' )
+      if(kcol.ne.0) then
+c----- start of new run case
+       read(line(kcol-3:kcol-1),*,err=80) ir
+
+       if(ir.lt.1 .or. ir.gt.nrmax) then
+        write(*,*) 'RUNGET:  Run case array limit nrmax exceeded:', ir
+        ir = 0
+        go to 10
+       endif
+
+       nrun = max(nrun,ir)
+
+       rtitle(ir) = line(kcol+1:80)
+       call bstrip(rtitle(ir),nrt)
+
+      elseif(ir.eq.0) then
+c----- keep ignoring lines if valid run case index is not set
+       go to 10
+
+      elseif(karr.ne.0 .and. kequ.ne.0) then
+c----- variable/constraint declaration line
+       varn = line(1:karr-1)
+       conn = line(karr+2:kequ-1)
+       call bstrip(varn,nvarn)
+       call bstrip(conn,nconn)
+
+       do iv = 2, nvtot
+         if(index(varnam(iv),varn(1:nvarn)).ne.0) go to 20
+       enddo
+       write(*,*)
+     &  'Variable   in .run file is not defined in .jvl file: ',
+     &   varn(1:nvarn)
+       error = .true.
+       go to 10
+
+ 20    continue
+       do ic = 2, nctot
+         if(index(connam(ic),conn(1:nconn)).ne.0) go to 25
+       enddo
+       write(*,*)
+     &  'Constraint in .run file is not defined in this JVL version: ',
+     &   conn(1:nconn)
+       error = .true.
+       go to 10
+
+ 25    continue
+       read(line(kequ+1:80),*,err=80) conv
+
+       icon(iv,ir) = ic
+       conval(ic,ir) = conv
+
+      elseif(karr.eq.0 .and. kequ.ne.0) then
+c----- run case parameter data line
+       parn = line(1:kequ-1)
+       call bstrip(parn,nparn)
+       do ip = 1, nptot
+         if(index(parnam(ip),parn(1:nparn)).ne.0) go to 30
+       enddo
+       write(*,*) 
+     &  'Parameter  in .run file is not defined in this JVL version: ',
+     &   parn(1:nparn)
+       error = .true.
+       go to 10
+
+ 30    continue
+       read(line(kequ+1:80),*,err=80) parv
+
+       parval(ip,ir) = parv
+      endif
+
+c---- keep reading lines
+      go to 10
+
+c==============================================================
+
+ 50   continue
+      close(lu)
+      return
+
+ 80   continue
+      call bstrip(fname,nfn)
+      call bstrip(line ,nli)
+      write(*,8000) fname(1:nfn), iline, line(1:nli)
+ 8000 format(/' Run case file  ',a,'  READ error on line', i4,':',a)
+      close(lu)
+      error = .true.
+      nrun = 0
+      return
+
+ 90   continue
+      call bstrip(fname,nfn)
+      write(*,9000) fname(1:nfn)
+ 9000 format(/' Run case file  ',a,'  OPEN error')
+      error = .true.
+      return
+      end ! runget
+
+
+
+      subroutine runsav(lu)
+      include 'jvl.inc'
+
+      do ir = 1, nrun
+        write(lu,1010) ir, rtitle(ir)
+        do iv = 2, nvtot
+          ic = icon(iv,ir)
+          write(lu,1050) varnam(iv), connam(ic), conval(ic,ir)
+        enddo
+
+        write(lu,*)
+
+        do ip = 1, nptot
+          write(lu,1080) parnam(ip), parval(ip,ir), parunch(ip)
+        enddo
+      enddo
+
+ 1010 format(/' ---------------------------------------------'
+     &       /' Run case', i3,':  ', a /)
+ 1050 format(1x,a,' ->  ', a, '=', g14.6, 1x, a)
+ 1080 format(1x,a,'=', g14.6, 1x, a)
+
+      return
+      end ! runsav
+
+
+
+      logical function lowrit(fname)
+      character*(*) fname
+
+      character*1 ans
+ 1000 format(a)
+
+      k = index(fname,' ')
+
+      write(*,*) 'File  ', fname(1:k), ' exists.  Overwrite?  Y'
+      read (*,1000) ans
+      lowrit = index('Nn',ans) .eq. 0
+
+      return
+      end ! lowrit
+
+
+      subroutine aocfil(fname,ifile)
+      character*(*) fname
+
+      character*1 ans
+ 1000 format(a)
+
+      k = index(fname,' ')
+
+      write(*,*) 'file  ', fname(1:k), 
+     &     ' Exists.  Append, Overwrite, or Cancel?  A'
+      read (*,1000) ans
+      ifile = index('aoc',ans) + index('AOC',ans)
+
+      if(ifile.eq.0) ifile = 1
+
+      return
+      end ! aocfil

@@ -114,16 +114,16 @@ def base_analysis(vehicle):
     # ------------------------------------------------------------------
     #  Aerodynamics Analysis
     aerodynamics = SUAVE.Analyses.Aerodynamics.AVL()
-    aerodynamics.process.compute.lift.inviscid.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\avl.exe"  # NILS: set AVL executable name
-    #aerodynamics.process.compute.lift.inviscid.settings.spanwise_vortex_density    = 3 
+    aerodynamics.process.compute.lift.inviscid.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\avl\avl3.52\avl.exe"  # NILS: set AVL executable name
+    #aerodynamics.process.compute.lift.inviscid.settings.spanwise_vortex_density = 3 
     aerodynamics.geometry = vehicle
     analyses.append(aerodynamics)
 
     # ------------------------------------------------------------------
     #  Stability Analysis
     stability = SUAVE.Analyses.Stability.AVL()
-    stability.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\avl.exe"  # NILS: set AVL executable name
-    #stability.settings.spanwise_vortex_density                  = 3
+    stability.settings.filenames.avl_bin_name = r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\avl\avl3.52\avl.exe"  # NILS: set AVL executable name
+    #stability.settings.spanwise_vortex_density = 3
     stability.geometry = vehicle
     analyses.append(stability)
 

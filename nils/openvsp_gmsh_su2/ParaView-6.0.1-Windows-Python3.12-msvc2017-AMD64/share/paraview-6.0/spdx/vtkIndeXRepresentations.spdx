@@ -1,0 +1,22 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: vtkIndeXRepresentations
+DocumentNamespace: https://paraview.org/spdx/vtkIndeXRepresentations
+Creator: Tool: CMake
+Created: 2025-09-25T21:02:19Z
+
+##### Package: vtkIndeXRepresentations
+
+PackageName: vtkIndeXRepresentations
+SPDXID: SPDXRef-Package-vtkIndeXRepresentations
+PackageDownloadLocation: https://gitlab.kitware.com/paraview/paraview/-/tree/master/Plugins/pvNVIDIAIndeX/src
+FilesAnalyzed: True
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseDeclared: BSD-3-Clause
+PackageCopyrightText: <text>
+Copyright 2025 NVIDIA Corporation
+Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-vtkIndeXRepresentations

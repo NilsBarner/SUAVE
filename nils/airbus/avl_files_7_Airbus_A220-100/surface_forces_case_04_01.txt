@@ -1,0 +1,31 @@
+ ---------------------------------------------------------------
+ Surface Forces (referred to Sref,Cref,Bref about Xref,Yref,Zref)
+ Standard axis orientation,  X fwd, Z down         
+
+     Sref =   151.4       Cref =    4.4752   Bref =   40.7563
+     Xref =     19.0910   Yref =    0.0000   Zref =   -0.9323
+
+ n      Area      CL      CD      Cm      CY      Cn      Cl     CDi     CDv
+ 1    76.063  0.2462  0.0041  0.0414 -0.0176 -0.0025 -0.0514  0.0041  0.0000   main_wing_1
+ 2    76.063  0.2462  0.0041  0.0414  0.0176  0.0025  0.0514  0.0041  0.0000   main_wing_1 (YDUP)
+ 3    24.802  0.0142  0.0006 -0.0527  0.0001 -0.0001 -0.0011  0.0006  0.0000   horizontal_stabilizer
+ 4    24.802  0.0142  0.0006 -0.0527 -0.0001  0.0001  0.0011  0.0006  0.0000   horizontal_stabilizer (YDUP)
+ 5    49.674  0.0000 -0.0000 -0.0000 -0.0000  0.0000 -0.0000 -0.0000  0.0000   vertical_stabilizer
+ 6   125.374 -0.0060 -0.0008  0.0202 -0.0000 -0.0000  0.0000 -0.0008  0.0000   fuselage_horizontal
+ 7   124.958 -0.0000  0.0000  0.0000 -0.0000  0.0000 -0.0000  0.0000  0.0000   fuselage_vertical
+ 8    20.813 -0.0018  0.0003  0.0012 -0.0042  0.0001  0.0004  0.0003  0.0000   nacelle
+ 9    20.813 -0.0018  0.0003  0.0012  0.0042 -0.0001 -0.0004  0.0003  0.0000   nacelle (YDUP)
+
+ Surface Forces (referred to Ssurf, Cave about root LE on hinge axis)
+
+   n     Ssurf      Cave       cl       cd      cdv
+   1    76.063     3.714   0.4913   0.0082   0.0000  main_wing_1
+   2    76.063     3.714   0.4913   0.0082   0.0000  main_wing_1 (YDUP)
+   3    24.802     3.464   0.0866   0.0035   0.0000  horizontal_stabilizer
+   4    24.802     3.464   0.0866   0.0035   0.0000  horizontal_stabilizer (YDUP)
+   5    49.674     6.398   0.0000  -0.0000   0.0000  vertical_stabilizer
+   6   125.374    33.885  -0.0073  -0.0010   0.0000  fuselage_horizontal
+   7   124.958    33.772   0.0000   0.0000   0.0000  fuselage_vertical
+   8    20.813     4.189   0.0332   0.0021   0.0000  nacelle
+   9    20.813     4.189   0.0332   0.0021   0.0000  nacelle (YDUP)
+ ---------------------------------------------------------------

@@ -1,0 +1,21 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: pythoncftime
+DocumentNamespace: https://paraview.org/spdx/pythoncftime
+Creator: Tool: CMake
+Created: 2025-09-25T16:35:24Z
+
+##### Package: pythoncftime
+
+PackageName: pythoncftime
+SPDXID: SPDXRef-Package-pythoncftime
+PackageDownloadLocation: https://www.paraview.org/files/dependencies/cftime-1.6.3.tar.gz
+FilesAnalyzed: False
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: MIT
+PackageCopyrightText: <text>
+Copyright 2008 Jeffrey Whitaker
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-pythoncftime

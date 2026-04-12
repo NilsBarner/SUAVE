@@ -1,0 +1,29 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: vtkWrappingTools
+DocumentNamespace: https://paraview.org/spdx/vtkWrappingTools
+Creator: Tool: CMake
+Created: 2025-09-25T20:47:55Z
+
+##### Package: vtkWrappingTools
+
+PackageName: vtkWrappingTools
+SPDXID: SPDXRef-Package-vtkWrappingTools
+PackageDownloadLocation: https://gitlab.kitware.com/vtk/vtk/-/tree/master/VTK/Wrapping/Tools
+FilesAnalyzed: True
+PackageLicenseConcluded: BSD-3-Clause AND GPL-3.0 WITH Bison-exception-2.2
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseInfoFromFiles: BSD-3-Clause
+PackageLicenseInfoFromFiles: GPL-3.0 WITH Bison-exception-2.2
+PackageCopyrightText: <text>
+Copyright (c) 2011 David Gobbi
+Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
+Copyright (c) 2012 David Gobbi
+Copyright (c) 2010,2015 David Gobbi
+Copyright (C) 2002-2015, 2018-2021 Free Software Foundation, Inc.
+Copyright (c) Kitware, Inc.
+Copyright (c) 2010 David Gobbi
+</text>
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-vtkWrappingTools

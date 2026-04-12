@@ -1,0 +1,47 @@
+
+
+ ---------------------------------------------
+ Run case  1:   case_01_01
+
+ alpha        ->  CL       =   3.219        
+ beta         ->  beta        =   0.0
+ pb/2V        ->  pb/2V       =   0.0
+ qc/2V        ->  qc/2V       =   0.0
+ rb/2V        ->  rb/2V       =   0.00000
+ flap         ->  flap        =   0.00000
+ aileron      ->  Cl roll mom =   0.00000
+ elevator     ->  Cm pitchmom =   0.00000
+
+ DVjet        ->  DVjet       =   1.00000
+
+ alpha     =   0.00000     deg
+ beta      =   0.00000     deg
+ pb/2V     =   0.0
+ qc/2V     =   0.0
+ rb/2V     =   0.00000
+ CL        =   3.2189906034669096                        
+ CDo       =   0.0
+ bank      =   0.00000     deg
+ elevation =   0.00000     deg
+ heading   =   0.00000     deg
+ Mach      =   0.1229
+ velocity  =   0.0     m/s               
+ density   =   1.225     kg/m^3
+ grav.acc. =   9.81     m/s^2
+ turn_rad. =   0.00000     m
+ load_fac. =   1.0
+ X_cg      =   11.850740696184332     m
+ Y_cg      =   0.0     m
+ Z_cg      =   1.385     m
+ mass      =   23063.275284922365     kg
+ Ixx       =   19164.679881293712     kg-m^2
+ Iyy       =   345191.4983565567     kg-m^2
+ Izz       =   329529.4083396503     kg-m^2
+ Ixy       =   195.2698586729213     kg-m^2
+ Iyz       =   9546.737889643957     kg-m^2
+ Izx       =   7990.712816123215     kg-m^2
+ visc CL_a =   0.00000
+ visc CL_u =   0.00000
+ visc CM_a =   0.00000
+ visc CM_u =   0.00000
+

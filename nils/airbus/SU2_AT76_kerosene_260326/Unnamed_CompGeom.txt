@@ -1,0 +1,21 @@
+...Comp Geom...
+4 Num Comps
+6 Total Num Meshes
+4208 Total Num Tris
+
+Theo_Area   Wet_Area   Theo_Vol    Wet_Vol  Name
+  144.186    141.837     13.666     13.666  main_wing      
+   36.599     35.632      2.534      2.510  horizontal_stabilizer
+   36.014     33.242      4.460      4.188  vertical_stabilizer
+  213.273    209.557    135.504    135.439  fuselage       
+-------------------------------------------------
+  430.072    420.268    156.165    155.802  Totals         
+
+Tag_Theo_Area   Tag_Wet_Area    Tag_Name
+       72.093         70.918    main_wing_Surf0
+       72.093         70.918    main_wing_Surf1
+       18.300         17.816    horizontal_stabilizer_Surf0
+       18.300         17.816    horizontal_stabilizer_Surf1
+       36.014         33.242    vertical_stabilizer_Surf0
+      213.273        209.557    fuselage_Surf0 
+WARNING: 2 open meshes merged

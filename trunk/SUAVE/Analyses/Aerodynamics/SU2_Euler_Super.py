@@ -76,6 +76,7 @@ class SU2_Euler_Super(Markup):
         settings.vsp_mesh_growth_ratio              = 1.3
         settings.vsp_mesh_growth_limiting_flag      = False
         settings.recalculate_total_wetted_area      = False
+        settings.cfd_far_field_flag = 1  # NILS: added on 21.03.2026 to create base.stl mesh without CFD far field bounding box
         
         
         
@@ -138,7 +139,7 @@ class SU2_Euler_Super(Markup):
         tag = self.geometry.tag
         # Mesh the geometry in prepartion for CFD if no training file exists
         if self.process.compute.lift.inviscid.training_file is None:
-            write_vsp_mesh(self.geometry,tag,self.settings.half_mesh_flag,self.settings.vsp_mesh_growth_ratio,self.settings.vsp_mesh_growth_limiting_flag)
+            write_vsp_mesh(self.geometry,tag,self.settings.half_mesh_flag,self.settings.vsp_mesh_growth_ratio,self.settings.vsp_mesh_growth_limiting_flag,self.settings.cfd_far_field_flag)  # NILS: added last argument on 21.03.2026 to create base.stl mesh without CFD far field bounding box
             write_geo_file(tag)
             mesh_geo_file(tag)
         

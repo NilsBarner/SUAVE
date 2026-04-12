@@ -1,0 +1,116 @@
+
+c---- variable indices
+      parameter (
+     &  ivvelx =  1,
+     &  ivvelz =  2,
+     &  ivvely =  3,
+     &  ivomgx =  4,
+     &  ivomgy =  5,
+     &  ivomgz =  6,
+     &  ivtot  =  6 )
+
+c---- constraint indices
+      parameter (
+     &  icvinf =  1,
+     &  icalfa =  2,
+     &  icbeta =  3,
+     &  icomgx =  4,
+     &  icomgy =  5,
+     &  icomgz =  6,
+     &  iccl   =  7,
+     &  iccy   =  8,
+     &  icmomx =  9,
+     &  icmomy = 10,
+     &  icmomz = 11,
+     &  icjetv = 12,
+     &  icjetj = 13,
+     &  icjett = 14,
+     &  icjetp = 15,
+     &  ictot  = 15 )
+c
+c---- run-case parameter indices
+      parameter (
+     &  ipalfa  =  1,
+     &  ipbeta  =  2,
+     &  iprotx  =  3,
+     &  iproty  =  4,
+     &  iprotz  =  5,
+     &  ipcl    =  6,
+     &  ipcd0   =  7,
+     &  ipphi   =  8,
+     &  ipthe   =  9,
+     &  ippsi   = 10,
+     &  ipmach  = 11,
+     &  ipvee   = 12,
+     &  iprho   = 13,
+     &  ipgee   = 14,
+     &  iprad   = 15,
+     &  ipfac   = 16,
+     &  ipxcg   = 17,
+     &  ipycg   = 18,
+     &  ipzcg   = 19,
+     &  ipmass  = 20,
+     &  ipixx   = 21,
+     &  ipiyy   = 22,
+     &  ipizz   = 23,
+     &  ipixy   = 24,
+     &  ipiyz   = 25,
+     &  ipizx   = 26,
+     &  iphx    = 27,
+     &  iphy    = 28,
+     &  iphz    = 29,
+     &  ipdvjx  = 30,
+     &  ipcla   = 31,
+     &  ipclu   = 32,
+     &  ipclad  = 33,
+     &  ipcda   = 34,
+     &  ipcdu   = 35,
+     &  ipcdad  = 36,
+     &  ipcma   = 37,
+     &  ipcmu   = 38,
+     &  ipcmad  = 39,
+     &  iptot   = 39 )
+
+c---- eigenmode variable indices
+      parameter(
+     &  jeu   =  1,
+     &  jew   =  2,
+     &  jeq   =  3,
+     &  jeth  =  4,
+     &  jev   =  5,
+     &  jep   =  6,
+     &  jer   =  7,
+     &  jeph  =  8,
+     &  jex   =  9,
+     &  jey   = 10,
+     &  jez   = 11,
+     &  jeps  = 12,
+     &  jetot = 12 )
+
+c---- time-trace parameter indices
+      parameter (kpbank =  1,
+     &           kpelev =  2,
+     &           kphead =  3,
+     &           kpvinf =  4,
+     &           kpalfa =  5,
+     &           kpbeta =  6,
+     &           kpclif =  7,
+     &           kpcdrg =  8,
+     &           kpcdin =  9,
+     &           kpcmom = 10,
+     &           kplift = 11,
+     &           kpdrag = 12,
+     &           kpmach = 13,
+     &           kpaltk = 14,
+     &           kpdens = 15,
+     &           kpvsou = 16,
+     &           kpload = 17 )
+      parameter (kptot  = 17 )
+      parameter (kpvac =  1,
+     &           kprac =  2,
+     &           kpvel =  3,
+     &           kprot =  4,  
+     &           kppos =  5,
+     &           kpfor =  6,
+     &           kpmom =  7 )
+      parameter (kpvtot = 7 )

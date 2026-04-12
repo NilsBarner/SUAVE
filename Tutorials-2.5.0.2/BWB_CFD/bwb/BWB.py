@@ -9,8 +9,8 @@
 
 # NILS: add OpenVSP python binding to path (add to system path long-term)
 import sys
-# sys.path.insert(0, r"C:\Users\nmb48\Documents\GitHub\SUAVE\OpenVSP-3.46.0-win64-Python3.9\OpenVSP-3.46.0-win64\python\openvsp")  # NILS: use with OpenVSP 3.46.0
-sys.path.insert(0, r'C:\Users\nmb48\Documents\GitHub\SUAVE\OpenVSP-3.19.0-win64\python\openvsp')  # NILS: use with OpenVSP 3.19.0
+# sys.path.insert(0, r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\OpenVSP-3.46.0-win64-Python3.9\OpenVSP-3.46.0-win64\python\openvsp")  # NILS: use with OpenVSP 3.46.0
+sys.path.insert(0, r'C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\OpenVSP-3.19.0-win64\python\openvsp')  # NILS: use with OpenVSP 3.19.0
 
 import SUAVE
 assert SUAVE.__version__=='2.5.0', 'These tutorials only work with the SUAVE 2.5.0 release'

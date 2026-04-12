@@ -1,0 +1,341 @@
+Hotel1
+#Mach
+0
+#IYsym   IZsym   Zsym
+     0      0 -2.87
+#Sref    Cref    Bref
+603.87 9.36 65.02
+#Xref    Yref    Zref
+16.59 0.000000 4.21
+#CDp
+-0.00400
+
+
+# ====================================================================
+SURFACE
+Wing flap
+#Nchordwise Cspace Nspanwise Sspace
+12.0  1.0  22  1
+COMPONENT
+0
+YDUPLICATE
+ 0.000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+12.76 2.4384 7.620000 9.73 4.000000
+AFILE
+airfoils\bw02.dat
+CLAF
+1.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+#5.24 0.497 6.47 0.754 9.8 1.87
+#1.98 0.0212 2.79 0.0318 3.32 0.0538
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+flap 1.000000 0.650000 0.000000 0.000000 0.000000 1.000000
+JETCONTROL 
+#Jname Jgain SgnDup
+DVjet 1.0 1.0
+JETPARAM 
+#hdisk fh djet0 djet1 djet3
+2.59 1.0 0.0 -2.12 -0.0
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+12.76 22.4384 7.620000 9.73 4.000000
+AFILE
+airfoils\bw02.dat
+CLAF
+1.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+#5.24 0.497 6.47 0.754 9.8 1.87
+#1.98 0.0212 2.79 0.0318 3.32 0.0538
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+flap 1.000000 0.650000 0.000000 0.000000 0.000000 1.000000
+JETCONTROL 
+#Jname Jgain SgnDup
+DVjet 1.0 1.0
+JETPARAM 
+#hdisk fh djet0 djet1 djet3
+2.59 1.0 0.0 -2.12 -0.0
+# ====================================================================
+SURFACE
+Wing tip
+#Nchordwise Cspace Nspanwise Sspace
+12.0  1.0  12  1
+COMPONENT
+0
+YDUPLICATE
+ 0.000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+12.76 22.4384 7.620000 9.73 4.000000
+AFILE
+airfoils\bw02.dat
+CLAF
+1.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+12.76 22.757 7.620000 9.73 4.000000
+AFILE
+airfoils\bw02.dat
+CLAF
+1.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+aileron 1.000000 0.725600 0.000000 0.000000 0.000000 -1.000000
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+flaperon 1.000000 0.725600 0.000000 0.000000 0.000000 1.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+13.32    30.227   7.62     7.499    4.000000
+AFILE
+airfoils\bw02.dat
+CLAF
+1.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+aileron 1.000000 0.725600 0.000000 0.000000 0.000000 -1.000000
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+flaperon 1.000000 0.725600 0.000000 0.000000 0.000000 1.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+13.49 32.51 7.620000 6.81 4.000000
+AFILE
+airfoils\naca23016.dat
+CLAF
+1.000000
+CDCL
+-0.963978 0.015220 0.024940 0.008613 1.85 0.01738
+# ====================================================================
+SURFACE
+Daggerlet
+#Nchordwise Cspace Nspanwise Sspace
+12.0  -1.0  
+COMPONENT
+0
+YDUPLICATE
+ 0.000
+TRANSLATE
+0.000000 0.000000 0.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+13.49    32.51    7.620000 6.81     4.000000  15      -1
+AFILE
+airfoils/naca23016.dat
+CLAF
+1.000000
+CDCL
+-0.963978 0.015220 0.024940 0.008613 1.85 0.01738
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+14.442 32.51 3.07 3 4.000000 15 -1
+AFILE
+airfoils/naca23016.dat
+CLAF
+1.000000
+CDCL
+-0.963978 0.015220 0.024940 0.008613 1.85 0.01738
+#-------------------------------------------------------------
+#SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+#14.442 32.51 0.0 3 4.000000 
+#AFILE
+#airfoils/naca23016.dat
+#CLAF
+#1.000000
+#CDCL
+#-0.963978 0.015220 0.024940 0.008613 1.85 0.01738
+#=========================
+SURFACE
+Fuselage XY
+  30   1   6  -1
+INDEX
+0
+YDUPLICATE
+0
+TRANSLATE
+  0  0.000000  7.62
+SCALE 
+1 1 1
+#NOWAKE
+#-------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+  0.000  0.000  0.0000    42.06  3.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+fusec 1.000000 0.7500 0.000000 0.000000 0.000000 1.000000
+#-------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+#4.572  2.286  0.000000 37.488  7.000000
+4.572  2.4384  0.000000 37.488  3.000000
+CDCL
+-1.128727 0.015303 0.086140 0.007770 1.85 0.01738
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+fusec 1.000000 0.7500 0.000000 0.000000 0.000000 1.000000
+# ====================================================================
+SURFACE
+Htail
+#Nchordwise Cspace Nspanwise Sspace
+12.0  -1.0  12  -1.0
+INDEX
+1
+YDUPLICATE
+ 0.000
+TRANSLATE
+0.000000 0.000000 0.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+38.9 0.00000 15.38 7.19 0.000000
+AFILE
+airfoils/naca0012.dat
+CLAF
+1.000000
+CDCL
+-1.250387 0.014239 0.000000 0.00643 1.77 0.02418
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+HTinc     1.0000 0.0000 0.0000 0.0000 0.0000 1.0000
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+elevator 1.000000 0.6500000 0.000000 0.000000 0.000000 1.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+38.9 10.785 15.38 7.19 0.000000
+AFILE
+airfoils/naca0012.dat
+CLAF
+1.000000
+CDCL
+-1.250387 0.014239 0.000000 0.00643 1.77 0.02418
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+HTinc     1.0000 0.0000 0.0000 0.0000 0.0000 1.0000
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+elevator 1.000000 0.6500000 0.000000 0.000000 0.000000 1.000000
+
+# ====================================================================
+SURFACE
+Vtail
+#Nchordwise Cspace Nspanwise Sspace
+12.0  -1.0  20  -1.0
+INDEX
+1
+YDUPLICATE
+ 0.000
+TRANSLATE
+0.000000 0.000000 0.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+#35.76 2.1336 7.620000 6.27 0.000000
+30.744 2.1336 7.620000 11.286 0.000000
+AFILE
+airfoils/naca0012.dat
+CLAF
+1.000000
+CDCL
+-1.250387 0.014239 0.000000 0.00643 1.77 0.02418
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+#rudder 1.000000 0.6500000 0.000000 0.000000 0.000000 -1.000000
+rudder 1.000000 0.805500 0.000000 0.000000 0.000000 -1.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+36.67 2.718 9.87000 5.908 0.000000
+AFILE
+airfoils/naca0012.dat
+CLAF
+1.000000
+CDCL
+-1.250387 0.014239 0.000000 0.00643 1.77 0.02418
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+rudder 1.000000 0.6500000 0.000000 0.000000 0.000000 -1.000000
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+38.9 4.15 15.38 5.02 0.000000
+AFILE
+airfoils/naca0012.dat
+CLAF
+1.000000
+CDCL
+-1.250387 0.014239 0.000000 0.00643 1.77 0.02418
+CONTROL
+# Cname Cgain Xhinge HingeVec SgnDup 
+rudder 1.000000 0.6500000 0.000000 0.000000 0.000000 -1.000000
+#=========================
+SURFACE
+Fuselage XZ
+  24   1   16  0.0
+INDEX
+1
+NOWAKE
+#-------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+  6.096  0.000000  0.000000   11.86  0.000000
+AFILE
+avl_files/naca0012.dat
+CDCL
+ -1.640000  0.013617  0.000000  0.005589  1.640000  0.013611
+#-------------------------
+#SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+#3.81  0.000000  1.39 26.25  0.000000
+#AFILE
+#avl_files/naca0012.dat
+#CDCL
+# -1.640000  0.013617  0.000000  0.005589  1.640000  0.013611
+#-------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+ 2.76  0.000000  1.7 30.03  0.000000
+AFILE
+avl_files/naca0012.dat
+CDCL
+ -1.640000  0.013617  0.000000  0.005589  1.640000  0.013611
+#-------------------------
+#SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+# 1.905  0.000000   2.48 32.3  0.000000
+#AFILE
+#avl_files/naca0012.dat
+#CDCL
+# -1.640000  0.013617  0.000000  0.005589  1.640000  0.013611
+#-------------------------
+SECTION
+#Xle     Yle      Zle      Chord    Ainc   Nspanwise  Sspace
+ 0.0  0.000000   7.62 42.06  0.000000
+AFILE
+avl_files/naca0012.dat
+CDCL
+ -1.640000  0.013617  0.000000  0.005589  1.640000  0.013611

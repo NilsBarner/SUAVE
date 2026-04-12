@@ -1,0 +1,12 @@
+ftnchek -common=1 -novice=4 -arguments=all -array=2 -notruncation \
+-include=../../plotlib_mac \
+jvl.f joper.f jmode.f jmass.f jexec.f jvsum.f jsetup.f jmake.f jinput.f joutput.f jaero.f jtrim.f jsfforc.f jbdforc.f jtpforc.f jaic.f airutil.f jutil.f jplotvl.f jplottp.f jplotmd.f limits.f cdcl.f pltops.f hidden.f plsubs.f userio.f plutil.f arrow3d.f getvm.f spline.f sgutil.f second.f linchk.f \
+../eispack_mac/eispack.f \
+../../plotlib_mac/plt_base.f \
+../../plotlib_mac/plt_font.f \
+../../plotlib_mac/plt_color.f \
+../../plotlib_mac/plt_util.f
+
+
+
+

@@ -5,16 +5,19 @@ an \airfoils folder. Check out \OptVL\examples\plot_aircraft.py,
 \OptVL\examples\plot_airfoils.py, and \OptVL\examples\plot_sectional_data.py.
 """
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from optvl import OVLSolver
 
-# from matplotlib_custom_settings import *
+sys.path.append(r"C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2")
+from matplotlib_custom_settings import *
 
 # Load .avl file
-# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\avl3.52\AVL3.52rel09032025\runs\b737.avl", debug=False)  # test case
+# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\avl\avl3.52\AVL3.52rel09032025\runs\b737.avl", debug=False)  # test case
 # ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.avl", debug=False)  # my designs
-ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.jvl", debug=False)  # my designs
+# ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.jvl", debug=False)  # my designs
+ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\CUsersnmb48\avl_files_6\vehicle.avl", debug=False)
 
 # Uncomment if want to plot lift distribution
 # ovl_solver.set_variable("alpha", 5.0)  # set AOA
@@ -22,8 +25,8 @@ ovl_solver = OVLSolver(geo_file=r"C:\Users\nmb48\avl_files_6\vehicle.jvl", debug
 ovl_solver.execute_run()
 
 # Produce figure
-# ovl_solver.plot_geom_nils(colors=[colors[0], colors[1]])
-ovl_solver.plot_geom()  # original version
+ovl_solver.plot_geom_nils(colors=[colors[0], colors[1]])
+# ovl_solver.plot_geom()  # original version
 
 ovl_solver.set_variable("alpha", 5.00)
 ovl_solver.execute_run()

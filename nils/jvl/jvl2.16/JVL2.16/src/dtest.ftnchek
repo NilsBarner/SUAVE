@@ -1,0 +1,2 @@
+ftnchek -common=1 -novice=no -arguments=2 -array=2 -notruncation \
+dtest.f

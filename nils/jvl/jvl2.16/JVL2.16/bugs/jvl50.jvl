@@ -1,0 +1,60 @@
+Calibrate JVL file
+#Mach
+0.0
+#IYsim IZsym Zsym 
+0   0   0 
+#Sref   Cref   Bref 
+1000 1.0 1000
+#Xref   Yref   Zref 
+0.25 0.0 0.0 
+#CDp
+0.0
+!
+SURFACE
+Wing
+#Nchordwise Cspace Nspanwise Sspace 
+6 1.0 50 0
+YDUPLICATE
+0.0
+SECTION
+#Xle Yle Zle Chord Ainc Nspanwise Sspace
+0.0 0.0 0.0 1.0 0.0
+AFILE
+airfoils/bw02.dat
+CLAF 
+1.0
+#CDCL
+#-1.128727 0.015303 0.086140 0.007770 1.326460 0.013750
+#5.24 0.497 6.47 0.754 9.8 1.87
+#4.637 0.31 5.475 0.4507 6.97 1.008
+#1.98 0.0212 2.79 0.0318 3.32 0.0538
+CONTROL 
+#Cname Cgain Xhinge HingeVec SgnUp
+Flap 1.0 0.65 0.0 0.0 0.0  1.0 
+JETCONTROL 
+#Jname Jgain SgnDup
+DVjet 1.0 1.0
+JETPARAM 
+#hdisk fh djet0 djet1 djet3
+0.266 1.0 0.0 -2.12 -0.0 
+SECTION
+#Xle Yle Zle Chord Ainc Nspanwise Sspace
+0.0 500.0 0.0 1.0 0.0
+AFILE
+airfoils/bw02.dat
+CLAF 
+1.0
+#CDCL
+#-1.128727 0.015303 0.086140 0.007770 1.326460 0.013750
+#5.24 0.497 6.47 0.754 9.8 1.87
+#4.637 0.31 5.475 0.4507 6.97 1.008
+#1.98 0.0212 2.79 0.0318 3.32 0.0538
+CONTROL 
+#Cname Cgain Xhinge HingeVec SgnUp
+Flap 1.0 0.65 0.0 0.0 0.0  1.0 
+JETCONTROL 
+#Jname Jgain SgnDup
+DVjet 1.0 1.0
+JETPARAM 
+#hdisk fh djet0 djet1 djet3
+0.266 1.0 0.0 -2.12 -0.0 

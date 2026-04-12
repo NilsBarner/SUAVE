@@ -1,0 +1,11 @@
+.pdf -> .png with given DPI:
+C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv>gswin64c -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -r600 -sOutputFile=xdsm_packaging_functional.png xdsm_packaging.pdf
+
+.svg -> .pdf:
+C:\Users\nmb48\OneDrive - University of Cambridge\Desktop\PhD\Software\Inkscape\suave_avl>inkscape xdsm_stability_avl_off_design_edited.svg --export-type=pdf --export-filename=xdsm_stability_avl_off_design_edited.pdf
+
+.pdf -> .svg:
+C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial>inkscape xdsm_stability_avl_on_design.pdf --export-type=svg --export-filename=xdsm_stability_avl_on_design.svg
+
+Note on changing the colour of the lines in a plot00.ps (which I then convert to .svg) figure (vortex lattice geometry):
+in Inkscape, go to Extensions -> Colour -> Replace Colour -> use eyesdropper to select "Colour to replace" and "New colour"

@@ -1,0 +1,62 @@
+Hydrofoil
+
+#Mach
+ 0.0    
+
+#IYsym   IZsym   Zsym
+ 0       1      -1.0
+
+#Sref    Cref    Bref
+2.0      0.125   2.0
+
+#Xref    Yref    Zref
+0.03125  0.0    -3.0
+
+#====================================================================
+SURFACE 
+Hydrofoil
+#Nchordwise  Cspace   Nspanwise   Sspace
+6            1.0      16          -2.0
+
+DENSITY
+816.0
+
+ZIMAGE
+-1
+
+YDUPLICATE
+0.0
+
+SCALE 
+1. 1. 1.
+
+TRANSLATE
+0.0   0.0  -3.0
+
+ANGLE
+2.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle    Yle    Zle     Chord   Ainc  Nspanwise  Sspace
+0.0     0.0    0.      0.125     0.0 
+
+NACA
+2400
+
+CONTROL
+#Cname    Cgain  Xhinge  HingeVec     SgnDup
+hydroflap 1.0    0.40   0.0 1.0 0.0   1.0
+
+#-------------------------------------------------------------
+SECTION
+#Xle     Yle     Zle     Chord   Ainc  Nspanwise  Sspace
+0.0      1.0      0.      0.125   0.0 
+
+NACA
+2400
+
+CONTROL
+#Cname   Cgain  Xhinge  HingeVec     SgnDup
+hydroflap 1.0    0.40   0.0 1.0 0.0   1.0
+

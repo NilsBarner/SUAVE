@@ -53,7 +53,8 @@ PLOP
     deck_filename = avl_object.current_status.deck_file 
     mass_filename = avl_object.settings.filenames.mass_file
     if backend == 'AVL':
-        plot_command = 'G'  # NILS: Graphics-enable flag?
+        # plot_command = 'G'  # NILS: Graphics-enable flag?
+        plot_command = 'I'  # NILS: 27.03.2026 - also want separate plot files with AVL backend
     elif backend == 'JVL':
         plot_command = 'I'  # NILS: Individual ps file output?
 
@@ -132,7 +133,10 @@ x
 {16}
 {17}
 {18}
-'''  # NILS: added arguments {13}-{18}
+{19}
+{20}
+{21}
+'''  # NILS: added arguments {13}-{21}
     
     # if trim analysis is specified, this function writes the trim commands else it 
     # uses the defined deflection of the control surfaces of the aircraft
@@ -167,6 +171,9 @@ x
 
     # NILS: produce 3D geometry and 2D Trefftz plane plots and save hardcopy .ps files
     geometry_plot_command = 'g'
+    axes_off_command = 'ax'
+    viewpoint_command_1 = 'v'  # NILS: corresponds to isometric view vector (1, -1, 1), matching the 3D aircraft model generated with OpenVSP and visualised with pyvista
+    viewpoint_command_2 = '-45.0 35.264'  # NILS: corresponds to isometric view vector (1, -1, 1), matching the 3D aircraft model generated with OpenVSP and visualised with pyvista
     hardcopy_plot_command = 'h'
     trefftz_plane_plot_command = 't'
     
@@ -174,12 +181,12 @@ x
     if not avl_object.settings.keep_files:
         purge_files([aero_file_1])
         purge_files([aero_file_2])
-        purge_files([aero_file_3])      
+        purge_files([aero_file_3])
     
     # write input deck for avl executable 
     case_command = base_case_command.format(index,trim_command,roll_rate_command,pitch_rate_command ,beta_command,aero_command_1 , aero_file_1 ,aero_command_2  \
                                             , aero_file_2 , aero_command_3 , aero_file_3, aero_command_4 , aero_file_4,
-                                            geometry_plot_command, hardcopy_plot_command, '', trefftz_plane_plot_command, hardcopy_plot_command, '')  # NILS: new arguments in v2.5.2 vs v2.5.0, and added hardcopy plot commands
+                                            geometry_plot_command, axes_off_command, viewpoint_command_1, viewpoint_command_2, hardcopy_plot_command, '', trefftz_plane_plot_command, hardcopy_plot_command, '')  # NILS: new arguments in v2.5.2 vs v2.5.0, and added hardcopy plot commands
         
     return case_command
 
