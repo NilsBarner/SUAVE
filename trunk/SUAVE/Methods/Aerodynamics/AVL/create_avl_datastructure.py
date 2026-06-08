@@ -516,7 +516,7 @@ def populate_turboprop_nacelle_sections_nils(avl_nacelle, suave_nacelle):
     semispan_v = suave_nacelle.diameter * 0.5
     origin = suave_nacelle.origin
     
-    # from parametric_geometry import generate_streamlined_body_geometry
+    # from nils.parametric_geometry import generate_streamlined_body_geometry
     
     import sys
     import numpy as np
