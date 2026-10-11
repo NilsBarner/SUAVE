@@ -108,7 +108,14 @@ def call_avl(avl_object,print_output):
                 if print_output == False:
                     sys.stdout = sys.__stdout__                    
                     
-            avl_run.wait()
+            # avl_run.wait()
+            # NILS (04.10.2026): AVL loops forever on end-of-input when the command deck gets out of step
+            # (e.g. no flow solution after an invalid geometry), so abort instead of hanging indefinitely
+            try:
+                avl_run.wait(timeout=120)
+            except subprocess.TimeoutExpired:
+                avl_run.kill()
+                raise RuntimeError(f"AVL did not finish within 120 s for deck {in_deck} - check the .avl/.run files in the run folder (e.g. for nan)")
     
             exit_status = avl_run.returncode
             ctime = time.ctime()

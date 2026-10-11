@@ -263,6 +263,10 @@ class AVL(Stability):
         training_altitude=None,
         training_load_factor=None,
         training_mass=None,
+        training_cg=None,  # NILS (03.10.2026, fix A6): per-case [x_cg, y_cg, z_cg] (m)
+        training_inertia=None,  # NILS (03.10.2026, fix A6): per-case 3x3 inertia tensor (kg m^2)
+        training_flap_deflection=None,  # NILS (03.10.2026, fix A4): per-case flap deflection (rad)
+        training_CD0=None,  # NILS (04.10.2026): per-case profile drag coefficient for AVL's CDo
         backend=None,
         run_modal=None,
         settings_number_spanwise_vortices=None,
@@ -362,7 +366,9 @@ class AVL(Stability):
         Cl_beta = []  # NILS: added independently
         Cn_r = []  # NILS: added independently
         Cl_r = []  # NILS: added independently
-        
+        x_cg_avl = []  # NILS (03.10.2026, fix A6): per-case CG logged in static outputs
+        delta_e = []  # NILS (03.10.2026, fix A3): trimmed elevator deflection (deg) for forward CG limit
+
         # remove old files in run directory  
         if os.path.exists(run_folder):  # NILS: use run_folder name to allow parallelisation
             if not self.regression_flag:
@@ -407,6 +413,24 @@ class AVL(Stability):
             
             # Update aircraft mass
             geometry.mass_properties.mass = _W / 9.81
+            # NILS (03.10.2026, fix A6): update CG and inertia tensor per case (were frozen across all cases)
+            if training_cg is not None:
+                for _k in range(3):
+                    geometry.mass_properties.center_of_gravity[0][_k] = training_cg[i][_k]
+                cg = geometry.mass_properties.center_of_gravity[0][0]  # used for static margin below
+            if training_inertia is not None:
+                for _r in range(3):
+                    for _c in range(3):
+                        geometry.mass_properties.moments_of_inertia.tensor[_r][_c] = training_inertia[i][_r][_c]
+            # NILS (03.10.2026, fix A4): per-case flap deflection, written to the .run file in write_run_cases.py
+            if training_flap_deflection is not None:
+                geometry.wings.main_wing.control_surfaces.flap.deflection = training_flap_deflection[i]
+            # NILS (04.10.2026): per-case profile drag coefficient, written to the .run file in write_run_cases.py
+            self.settings.profile_drag_coefficient = training_CD0[i] if training_CD0 is not None else 0.0
+            # NILS (03.10.2026, fix A5): write_input_deck.py trims with AVL's C1 (level flight), which is
+            # inconsistent with n != 1 (CL scaled by n but no pitch rate) - a pull-up would require C2
+            if trim_aircraft and not np.isclose(_n, 1.0):
+                raise ValueError(f"Load factor n = {_n} is incompatible with the C1 (level-flight) trim used in write_input_deck.py")
             # Update aircraft load factor
             run_conditions.aerodynamics.load_factor = _n
             # Calculate required lift coefficient
@@ -443,7 +467,15 @@ class AVL(Stability):
             Cl_beta.append(results.stability.static.Cl_beta[0,0])  # NILS: added independently
             Cn_r.append(results.stability.static.Cn_r[0,0])  # NILS: added independently
             Cl_r.append(results.stability.static.Cl_r[0,0])  # NILS: added independently
-            
+            x_cg_avl.append(cg)  # NILS (03.10.2026, fix A6)
+            # NILS (03.10.2026, fix A3): trimmed elevator deflection (deg, +ve trailing edge down) from AVL output
+            _de = np.nan
+            for _cs_case in results.stability.static.control_surfaces_cases.values():
+                for _cs in _cs_case.control_surfaces.values():  # see Control_Surface_Data in Methods/Aerodynamics/AVL/Data/Wing.py
+                    if getattr(_cs, 'tag', '') == 'elevator':
+                        _de = _cs.deflection
+            delta_e.append(_de)
+
             # NILS: added independently
             # AoA_list.append(AoA)
             # Mach_list.append(_Mach * np.ones_like(AoA))
@@ -465,8 +497,9 @@ class AVL(Stability):
         # n_col = np.concatenate(n_list)[:, None]
         # W_col = np.concatenate(W_list)[:, None]
         sigma_fcs_col = np.ones_like(np.array(AoA_list)[:, None]) * sigma_fcs
-        span_loc_col = np.ones_like(np.array(AoA_list)[:, None]) * span_loc
-        fcs_loc_col = np.ones_like(np.array(AoA_list)[:, None]) * fcs_loc
+        # span_loc_col = np.ones_like(np.array(AoA_list)[:, None]) * span_loc
+        span_loc_col = np.full((len(AoA_list), 1), span_loc, dtype=object)  # NILS (04.10.2026): `span_loc` is the string "eng" in study 2, analogous to `fcs_loc` below
+        fcs_loc_col = np.full((len(AoA_list), 1), fcs_loc, dtype=object)  # NILS: more robust solution applied on 29.09.2026 as `fcs_loc` can sometimes be a string and sometimes a number  # previously was `np.ones_like(np.array(AoA_list)[:, None]) * fcs_loc`
         wing_frac_col = np.ones_like(np.array(AoA_list)[:, None]) * wing_frac
         nacelle_frac_col = np.ones_like(np.array(AoA_list)[:, None]) * nacelle_frac
         AoA_col = np.array(AoA_list)[:, None]
@@ -513,6 +546,8 @@ class AVL(Stability):
             Cl_beta_1D = np.array(Cl_beta)[:, None]  # NILS: added independently
             Cn_r_1D = np.array(Cn_r)[:, None]  # NILS: added independently
             Cl_r_1D = np.array(Cl_r)[:, None]  # NILS: added independently
+            x_cg_avl_1D = np.array(x_cg_avl)[:, None]  # NILS (03.10.2026, fix A6)
+            delta_e_1D = np.array(delta_e)[:, None]  # NILS (03.10.2026, fix A3)
             
             static_stability_file_name = (
                 'suave_static_stability_outputs_' + str(study_idx) + '_' + str(counter) + '_' + aircraft_tag + '.txt'
@@ -530,13 +565,40 @@ class AVL(Stability):
                     Cl_beta_1D,
                     Cn_r_1D,
                     Cl_r_1D,
+                    x_cg_avl_1D,  # NILS (03.10.2026, fix A6)
+                    delta_e_1D,  # NILS (03.10.2026, fix A3)
                 ]),
-                fmt='%10.8f',
+                # fmt='%10.8f',
+                # NILS: replaced above line on 29.09.2026 to deal with `fcs_loc = "eng"`
+                fmt=[
+                    '%10.8f',  # sigma_fcs
+                    '%10s',    # span_loc  # NILS (04.10.2026): was '%10.8f' (can be the string "eng")
+                    '%10s',    # fcs_loc
+                    '%10.8f',  # wing_frac
+                    '%10.8f',  # nacelle_frac
+                    '%10.8f',  # AoA
+                    '%10.8f',  # Mach
+                    '%10.8f',  # Beta
+                    '%10.8f',  # h
+                    '%10.8f',  # n
+                    '%10.8f',  # W
+                    '%10.8f',  # hCM
+                    '%10.8f',  # Cm_alpha
+                    '%10.8f',  # Cn_beta
+                    '%10.8f',  # NP
+                    '%10.8f',  # static_margin
+                    '%10.8f',  # Cl_beta
+                    '%10.8f',  # Cn_r
+                    '%10.8f',  # Cl_r
+                    '%10.8f',  # x_cg_avl  # NILS (03.10.2026, fix A6)
+                    '%10.8f',  # delta_e  # NILS (03.10.2026, fix A3)
+                ],
                 # header='   AoA       Mach       Beta       hCM       Cm_alpha       Cn_beta       NP       static_margin       Cl_beta       Cn_r       Cl_r'
                 header=(
                     '   sigma_fcs       span_loc       fcs_loc       wing_frac       nacelle_frac       '
                     'AoA       Mach       Beta       h       n       W       '
-                    'hCM       Cm_alpha       Cn_beta       NP       static_margin       Cl_beta       Cn_r       Cl_r'
+                    'hCM       Cm_alpha       Cn_beta       NP       static_margin       Cl_beta       Cn_r       Cl_r       '
+                    'x_cg_avl       delta_e'  # NILS (03.10.2026, fixes A3 and A6)
                 )
             )
         
@@ -706,10 +768,20 @@ class AVL(Stability):
                 'suave_dynamic_stability_outputs_' + str(study_idx) + '_' + str(counter) + '_' + aircraft_tag + '.txt'
                 if (study_idx != None and counter != None) else 'suave_dynamic_stability_outputs.txt'
             )  # added for better logging control
+            print('ev_list_stacked =', ev_list_stacked)
             np.savetxt(
                 dynamic_stability_file_name,  # replaces line above
                 ev_list_stacked,  # data_out,
-                fmt="%12.6f",
+                # fmt="%12.6f",
+                # NILS: replaced above line on 29.09.2026 to deal with `fcs_loc = "eng"`
+                fmt=[
+                    "%12.6f",  # sigma_fcs
+                    "%12s",    # span_loc  # NILS (04.10.2026): was "%12.6f" (can be the string "eng")
+                    "%12s",    # fcs_loc
+                    "%12.6f",  # wing_frac
+                    "%12.6f",  # nacelle_frac
+                    *["%12.6f"] * (ev_list_stacked.shape[1] - 5),
+                ],
                 header=header,
                 comments="",  # prevents '#' from being added
             )
@@ -907,13 +979,15 @@ class AVL(Stability):
 
             # RUN AVL!
             results_avl = run_analysis(self, print_output, self.backend)  # NILS: added last argument to match SUAVE 2.5.2
-            print('results_avl.aerodynamics.wing_section_cls =', results_avl['case_01_01'].aerodynamics.wing_section_cls)
-            print('results_avl.aerodynamics.wing_section_chords =', results_avl['case_01_01'].aerodynamics.wing_section_chords)
-            print('results_avl.aerodynamics.wing_local_spans =', results_avl['case_01_01'].aerodynamics.wing_local_spans)
+            # print('results_avl.keys() =', results_avl.keys())
+            # sys.exit()
+            # print('results_avl.aerodynamics.wing_section_cls =', results_avl['case_01_01'].aerodynamics.wing_section_cls)
+            # print('results_avl.aerodynamics.wing_section_chords =', results_avl['case_01_01'].aerodynamics.wing_section_chords)
+            # print('results_avl.aerodynamics.wing_local_spans =', results_avl['case_01_01'].aerodynamics.wing_local_spans)
             
-            np.savetxt("wing_section_cls.txt", results_avl['case_01_01'].aerodynamics.wing_section_cls)
-            np.savetxt("wing_section_chords.txt", results_avl['case_01_01'].aerodynamics.wing_section_chords)
-            np.savetxt("wing_local_spans.txt", results_avl['case_01_01'].aerodynamics.wing_local_spans)
+            # np.savetxt("wing_section_cls.txt", results_avl['case_01_01'].aerodynamics.wing_section_cls)
+            # np.savetxt("wing_section_chords.txt", results_avl['case_01_01'].aerodynamics.wing_section_chords)
+            # np.savetxt("wing_local_spans.txt", results_avl['case_01_01'].aerodynamics.wing_local_spans)
             
     
         if self.backend == 'JVL':  # NILS

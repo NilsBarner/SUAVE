@@ -362,8 +362,13 @@ def read_results(avl_object, backend='AVL'):  # NILS: skip read_results() when J
                     if line.strip() == '' or line.strip().startswith('#'):
                         continue
             
-                    eig_real.append(float(line[8:26].strip()))
-                    eig_imag.append(float(line[26:40].strip()))
+                    # eig_real.append(float(line[8:26].strip()))
+                    # eig_imag.append(float(line[26:40].strip()))
+                    # NILS (04.10.2026): fixed-width slicing cut off the exponent of e.g. '0.99289924E-01' (read as 0.993),
+                    # so split on whitespace instead (columns: run case, real part, imaginary part)
+                    _vals = line.split()
+                    eig_real.append(float(_vals[1]))
+                    eig_imag.append(float(_vals[2]))
             
                 case_res.stability.eigenvalues_real = np.array(eig_real)
                 case_res.stability.eigenvalues_imag = np.array(eig_imag)

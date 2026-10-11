@@ -26,12 +26,36 @@ from nils.matplotlib_custom_settings import *
 
 #%% Import eigenvalue and A and B system matrix data and associate with 5 eigenmodes
 
-from nils.avl.dynamic_stability.eigenvalue_classification import match_evals_to_emodes
+from nils.avl.code.dynamic_stability.eigenvalue_classification import match_evals_to_emodes
 
 # matfile = r"C:/Users/nmb48/suave_dynamic_stability_matrix_combined.txt"
 # eigfile = r"C:/Users/nmb48/suave_dynamic_stability_outputs_combined.txt"
-matfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/suave_dynamic_stability_matrix_combined.txt"
-eigfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/suave_dynamic_stability_outputs_combined.txt"
+# matfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/nils/avl/data/suave_dynamic_stability_matrix_combined.txt"
+# eigfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/nils/avl/data/suave_dynamic_stability_outputs_combined.txt"
+#####
+# matfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/suave_dynamic_stability_matrix_combined.txt"
+# eigfile = r"C:/Users/nmb48/Documents/GitHub/SUAVE/suave_dynamic_stability_outputs_combined.txt"
+#####
+# NILS (04.10.2026): Figs. 4.9 and 4.10 for either aircraft with the loading scenarios of all mass distribution
+# studies in one figure. The combined files are written here from the per-case SUAVE output files (as
+# eigenvalue_loading.py and system_matrix_loading.py do), so the glob patterns no longer need editing by hand.
+# Usage: python -m nils.avl.code.dynamic_stability.process_dynamic_stability [aircraft] [modes_type]
+from nils.avl.code.dynamic_stability.eigenvalue_loading import combine_eigen_outputs
+from nils.avl.code.dynamic_stability.system_matrix_loading import combine_system_matrices
+from nils.avl.code.stability_zones import MIL_LIMITS, flight_phase_category, COLOR_OK, COLOR_FAIL  # NILS (04.10.2026): single source of the criteria and colours (Figs. 4.8-4.11)
+
+#####
+# NILS: used to generate figures in Chapter 7 of thesis
+SUAVE_ROOT = os.environ.get("SUAVE_ROOT", r"C:\Users\nmb48\Documents\GitHub\SUAVE\nils\avl\data\ch7")
+#####
+aircraft = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else 'ATR_72-600'  # 'ATR_72-600' or 'Airbus_A220-100'
+study_list = [1, 2, 5, 6, 7]  # studies 3 and 4 are identical to 7 and 6
+save_fig = False
+
+eig_files = [f for s in study_list for f in glob.glob(os.path.join(SUAVE_ROOT, f"suave_dynamic_stability_outputs_{s}_*_{aircraft}.txt"))]
+mat_files = [f for s in study_list for f in glob.glob(os.path.join(SUAVE_ROOT, f"suave_dynamic_stability_matrix_{s}_*_{aircraft}.txt"))]
+eigfile = combine_eigen_outputs(eig_files, os.path.join(SUAVE_ROOT, f"suave_dynamic_stability_outputs_combined_{aircraft}.txt"))
+matfile = combine_system_matrices(mat_files, os.path.join(SUAVE_ROOT, f"suave_dynamic_stability_matrix_combined_{aircraft}.txt"))
 res = match_evals_to_emodes(matfile, eigfile, plot_matching=True)
 
 #%% Time response properties derived from eigenvalues
@@ -51,6 +75,30 @@ def omega0(lamda):  # (1/s)
 def CAP(lamda, n, alpha):  # (1/s^2)
     return omega0(lamda)**2 / (n / alpha)  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris
 
+# NILS (03.10.2026, fix A9): in (3.111), n/alpha denotes n_alpha = dn/dalpha (load factor per radian of AoA),
+# not the ratio of trim load factor to trim AoA (which is wrong whenever alpha_0 != 0 and needed abs(aoa)).
+# n_alpha = |Z_w| U0 / g is taken from the AVL system matrix in eigenvalue_classification.py.
+def CAP_nalpha(omega_n, n_alpha):  # (1/s^2)
+    return omega_n**2 / n_alpha
+
+# NILS (03.10.2026, fixes A8 and A10): MIL-F-8785C / MIL-STD-1797A Level 1 limits for Class II (land-based)
+# aircraft. Take-off and landing (mission points 1 and 6) are terminal flight phases (Category C), climb,
+# cruise and descent are Category B. The Dutch roll limit was previously zeta >= 0.15 (Category B requires
+# zeta >= 0.08 AND zeta*omega_n >= 0.15 rad/s AND omega_n >= 0.4 rad/s).
+# NILS (04.10.2026): MIL_LIMITS and flight_phase_category() moved to stability_zones.py (imported above)
+# MIL_LIMITS = {
+#     'B': dict(zeta_sp_min=0.30, zeta_sp_max=2.00, CAP_sp_min=0.085, CAP_sp_max=3.6,
+#               zeta_ph_min=0.04, tau_roll_max=1.4, T_2_sl_min=20.0,
+#               zeta_dr_min=0.08, zeta_omega_dr_min=0.15, omega_n_dr_min=0.4),
+#     'C': dict(zeta_sp_min=0.35, zeta_sp_max=1.30, CAP_sp_min=0.16, CAP_sp_max=3.6,
+#               zeta_ph_min=0.04, tau_roll_max=1.4, T_2_sl_min=12.0,
+#               zeta_dr_min=0.08, zeta_omega_dr_min=0.10, omega_n_dr_min=0.4),
+# }
+#
+# def flight_phase_category(rid):
+#     """NILS (03.10.2026, fix A10): rid = 1..6 (take-off, climb, start of cruise, end of cruise, descent, landing)"""
+#     return 'C' if rid in (1, 6) else 'B'
+
 def tau(lamda):  # (s)
     return T0p5(lamda) / np.log(2)  # page 125 in AE3202 Flight Dynamics Lecture Notes
 
@@ -65,8 +113,9 @@ def compute_lambdas_from_zeta_omega(zeta0, omega0):
 
 #%% Plot MIL-STD-1797 requirements (section 3.4.2 in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris)
 
-def plot_mil_limits(aoa, mach, beta, h, n, W):
+def plot_mil_limits(aoa, mach, beta, h, n, W, n_alpha=None, category='B'):  # NILS (03.10.2026, fixes A9 and A10): added n_alpha and category
     
+    lim = MIL_LIMITS[category]  # NILS (03.10.2026, fix A10)
     amb = Atmosphere(h)
     V = mach * amb.speed_of_sound[0]
     aoa = np.deg2rad(aoa)
@@ -78,11 +127,16 @@ def plot_mil_limits(aoa, mach, beta, h, n, W):
     # zeta_dr_min = 0.08  # 3rd row of Table 3.14 (Class II, Category B, Level I)
     # =============================================================================
     # 26.03.2026
-    zeta_dr_min = 0.15
+    # zeta_dr_min = 0.15
     # =============================================================================
-    omega_n_dr_min = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
-    T_2_sl_min = 20  # 2nd row of Table 3.13 (Category B, Level I)
-    tau_roll_max = 1.4  # 3rd row of Table 3.12 (Class II, Category B, Level I)
+    # omega_n_dr_min = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
+    # T_2_sl_min = 20  # 2nd row of Table 3.13 (Category B, Level I)
+    # tau_roll_max = 1.4  # 3rd row of Table 3.12 (Class II, Category B, Level I)
+    # NILS (03.10.2026, fixes A8 and A10): limits by flight phase category (shading omits zeta*omega_n for now)
+    zeta_dr_min = lim['zeta_dr_min']
+    omega_n_dr_min = lim['omega_n_dr_min']
+    T_2_sl_min = lim['T_2_sl_min']
+    tau_roll_max = lim['tau_roll_max']
     
     # Dutch roll
     
@@ -104,22 +158,25 @@ def plot_mil_limits(aoa, mach, beta, h, n, W):
     x_vert_sl_max = -np.log(0.5) / T_2_sl_min
     
     # Roll
-    x_vert_roll_max = -np.log(0.5)**2 / tau_roll_max
+    # x_vert_roll_max = -np.log(0.5)**2 / tau_roll_max
+    x_vert_roll_max = -1.0 / tau_roll_max  # NILS (04.10.2026, fix B2): tau = -1/Re (see tau() above), i.e. Re <= -1/tau_max
     
     ###
     
     # Longitudinal stability limits
-    zeta_ph_min = 0.04  # 1st row in Table 3.9 (Class II, Category B, Level I)
-    zeta_sp_min = 0.3  # 1st row, 4th column in Table 3.10 (Class II, Category B, Level I)
-    zeta_sp_max = 2.0  # 1st row, 5th column in Table 3.10 (Class II, Category B, Level I)
-    CAP_sp_min = 0.085  # 1st row, 4th column in Table 3.11 (Class II, Category B, Level I)
-    CAP_sp_max = 3.6  # 1st row, 5th column in Table 3.11 (Class II, Category B, Level I)
+    zeta_ph_min = lim['zeta_ph_min']  # 1st row in Table 3.9 (Class II, Category B, Level I)  # NILS (03.10.2026, fix A10): by category
+    zeta_sp_min = lim['zeta_sp_min']  # 1st row, 4th column in Table 3.10 (Class II, Category B, Level I)  # NILS (03.10.2026, fix A10): by category
+    zeta_sp_max = lim['zeta_sp_max']  # 1st row, 5th column in Table 3.10 (Class II, Category B, Level I)  # NILS (03.10.2026, fix A10): by category
+    CAP_sp_min = lim['CAP_sp_min']  # 1st row, 4th column in Table 3.11 (Class II, Category B, Level I)  # NILS (03.10.2026, fix A10): by category
+    CAP_sp_max = lim['CAP_sp_max']  # 1st row, 5th column in Table 3.11 (Class II, Category B, Level I)  # NILS (03.10.2026, fix A10): by category
     
     # Short period
     
     # NOTE: abs() below not in original (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris but required to prevent nan when aoa < 0
-    omega_n_sp_min = np.sqrt(CAP_sp_min * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
-    omega_n_sp_max = np.sqrt(CAP_sp_max * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
+    # omega_n_sp_min = np.sqrt(CAP_sp_min * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
+    # omega_n_sp_max = np.sqrt(CAP_sp_max * n / abs(aoa))  # (3.111) in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris rearranged
+    omega_n_sp_min = np.sqrt(CAP_sp_min * n_alpha)  # NILS (03.10.2026, fix A9): CAP = omega_n^2 / n_alpha rearranged
+    omega_n_sp_max = np.sqrt(CAP_sp_max * n_alpha)  # NILS (03.10.2026, fix A9): CAP = omega_n^2 / n_alpha rearranged
     r_circle_sp_min = omega_n_sp_min
     r_circle_sp_max = omega_n_sp_max
     theta = np.linspace(0, 2 * np.pi, N_points)
@@ -153,6 +210,7 @@ def plot_mil_limits(aoa, mach, beta, h, n, W):
 def mask_mil_limits(
     mode,
     df_mode,
+    rid=None,  # NILS (03.10.2026, fix A10): mission point 1..6 determines flight phase category
 ):
     
     ev_array = df_mode['Re'].to_numpy() + 1j * df_mode['Im'].to_numpy()
@@ -165,17 +223,25 @@ def mask_mil_limits(
     h = df_mode['h'].to_numpy()
     n = df_mode['n'].to_numpy()
     W = df_mode['W'].to_numpy()
+    # NILS (03.10.2026, fixes A9 and A11): damping ratio and natural frequency from eigenvalue_classification.py
+    # (correct for overdamped real pairs, for which zeta(ev) = 1 per root), and n_alpha from the A matrix
+    zeta_mode = df_mode['zeta'].to_numpy()
+    wn_mode = df_mode['wn'].to_numpy()
+    n_alpha = df_mode['n_alpha'].to_numpy()
+    lim = MIL_LIMITS[flight_phase_category(rid)]  # NILS (03.10.2026, fix A10)
     
     # Longitudinal stability limits
     
     # Short period
     if mode == 'short-period':
-        zeta_sp_min = 0.3  # 1st row, 4th column in Table 3.10 (Class II, Category B, Level I)
-        zeta_sp_max = 2.0  # 1st row, 5th column in Table 3.10 (Class II, Category B, Level I)
-        CAP_sp_min = 0.085  # 1st row, 4th column in Table 3.11 (Class II, Category B, Level I)
-        CAP_sp_max = 3.6  # 1st row, 5th column in Table 3.11 (Class II, Category B, Level I)
-        zeta_sp = zeta(ev_array)
-        CAP_sp = CAP(ev_array, n, aoa)
+        zeta_sp_min = lim['zeta_sp_min']  # NILS (03.10.2026, fix A10): was 0.3 (Category B) for all points
+        zeta_sp_max = lim['zeta_sp_max']  # NILS (03.10.2026, fix A10): was 2.0 (Category B) for all points
+        CAP_sp_min = lim['CAP_sp_min']  # NILS (03.10.2026, fix A10): was 0.085 (Category B) for all points
+        CAP_sp_max = lim['CAP_sp_max']  # NILS (03.10.2026, fix A10): was 3.6 for all points
+        # zeta_sp = zeta(ev_array)
+        # CAP_sp = CAP(ev_array, n, aoa)
+        zeta_sp = zeta_mode  # NILS (03.10.2026, fix A11)
+        CAP_sp = CAP_nalpha(wn_mode, n_alpha)  # NILS (03.10.2026, fix A9)
         valid_mask = (
             (zeta_sp > zeta_sp_min) & (zeta_sp < zeta_sp_max) &
             (CAP_sp > CAP_sp_min) & (CAP_sp < CAP_sp_max)
@@ -183,21 +249,22 @@ def mask_mil_limits(
         
     # Phugoid
     elif mode == 'phugoid':
-        zeta_ph_min = 0.04  # 1st row in Table 3.9 (Class II, Category B, Level I)
-        zeta_ph = zeta(ev_array)
+        zeta_ph_min = lim['zeta_ph_min']  # 1st row in Table 3.9 (Class II, Category B, Level I)
+        # zeta_ph = zeta(ev_array)
+        zeta_ph = zeta_mode  # NILS (03.10.2026, fix A11)
         valid_mask = (zeta_ph > zeta_ph_min)
         
     # Lateral stability limits
     
     # Roll
     elif mode == 'roll':
-        tau_roll_max = 1.4  # 3rd row of Table 3.12 (Class II, Category B, Level I)
+        tau_roll_max = lim['tau_roll_max']  # 3rd row of Table 3.12 (Class II, Category B, Level I)
         tau_roll = tau(ev_array)
         valid_mask = (tau_roll < tau_roll_max)
         
     # Spiral
     elif mode == 'spiral':
-        T_2_sl_min = 20  # 2nd row of Table 3.13 (Category B, Level I)
+        T_2_sl_min = lim['T_2_sl_min']  # NILS (03.10.2026, fix A10): 20 s (Category B), 12 s (Category C)
         T_2_sl = T2(ev_array)
         valid_mask = (T_2_sl > T_2_sl_min) | (T_2_sl < 0)  # only applies to positive real parts
         
@@ -206,12 +273,17 @@ def mask_mil_limits(
         # zeta_dr_min = 0.08  # 3rd row of Table 3.14 (Class II, Category B, Level I)
         # =============================================================================
         # 26.03.2026
-        zeta_dr_min = 0.15
+        # zeta_dr_min = 0.15
         # =============================================================================
-        omega_n_dr_min = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
+        # omega_n_dr_min = 0.4  # 3rd row of Table 3.14 (Class II, Category B, Level I)
+        # NILS (03.10.2026, fix A8): zeta >= 0.08, zeta*omega_n >= 0.15 (B) / 0.10 (C) rad/s, omega_n >= 0.4 rad/s
+        zeta_dr_min = lim['zeta_dr_min']
+        zeta_omega_dr_min = lim['zeta_omega_dr_min']
+        omega_n_dr_min = lim['omega_n_dr_min']
         zeta_dr = zeta(ev_array)
         omega_n_dr = omega0(ev_array)
-        valid_mask = (zeta_dr > zeta_dr_min) & (omega_n_dr > omega_n_dr_min)
+        # valid_mask = (zeta_dr > zeta_dr_min) & (omega_n_dr > omega_n_dr_min)
+        valid_mask = (zeta_dr > zeta_dr_min) & (zeta_dr * omega_n_dr > zeta_omega_dr_min) & (omega_n_dr > omega_n_dr_min)
         # print('zeta_dr, zeta_dr_min =', zeta_dr, zeta_dr_min)
         # print('valid_mask =', valid_mask)
         # raise Exception()
@@ -248,7 +320,8 @@ params = {
 mpl.rcParams.update(params)
 
 # User input
-modes_type = 'longitudinal'  # 'longitudinal', 'lateral'
+modes_type = 'lateral'  # 'longitudinal', 'lateral'
+modes_type = sys.argv[2] if len(sys.argv) > 2 else modes_type  # NILS (04.10.2026)
 
 edgecolor = 'k'
 linewidth = 0.5
@@ -285,7 +358,8 @@ init_dict = {
         }
         for mode in ['short-period', 'phugoid', 'roll', 'dutch-roll', 'spiral']
     }
-    for cat in ['fuselage', 'wing', 'nacelle']
+    # for cat in ['fuselage', 'wing', 'nacelle']
+    for cat in res.keys()  # NILS (04.10.2026, fix B4): categories from eigenvalue_classification.py (incl. 'mixed')
 }
 ev_valid_dict = copy.deepcopy(init_dict)
 ev_invalid_dict = copy.deepcopy(init_dict)
@@ -299,6 +373,11 @@ ev_valid_sl_dict = copy.deepcopy(init_dict)
 ev_invalid_sl_dict = copy.deepcopy(init_dict)
 ev_valid_dr_dict = copy.deepcopy(init_dict)
 ev_invalid_dr_dict = copy.deepcopy(init_dict)
+
+# NILS (04.10.2026, fix B3): left x-limit of the lateral plots from the fastest roll root (roll roots between
+# -1.4 and -3.2 1/s were clipped by the fixed xlim of -2.0)
+roll_re = [res[cat]['roll'][rid]['Re'].to_numpy() for cat in res for rid in range(1, 7) if len(res[cat]['roll'][rid]) > 0]
+x_lim_lat_left = min(-2.0, 1.1 * np.nanmin(np.concatenate(roll_re))) if len(roll_re) > 0 else -2.0
 
 for row_idx, ax in enumerate(axes):
     rid = row_idx + 1
@@ -325,7 +404,11 @@ for row_idx, ax in enumerate(axes):
         )
         axins.axvline(0.0, color='k')
         axins.axhline(0.0, color='k')
-        axins.tick_params(labelleft=False, labelbottom=False)
+        # axins.tick_params(labelleft=False, labelbottom=False)
+        axins.tick_params(labelleft=False, labelright=True, labelbottom=True, labelsize=0.5 * fontsize, pad=2)  # NILS (04.10.2026, fix B6): scale of the phugoid inset (right, clear of the main y-axis)
+        axins.xaxis.set_major_locator(plt.MaxNLocator(2))
+        axins.yaxis.set_major_locator(plt.MaxNLocator(2))
+        axins.set_title('Phugoid', fontsize=0.5 * fontsize, pad=2)  # NILS (04.10.2026, fix B6)
         axins.tick_params(axis='y', which='both', length=0)
         axins.tick_params(axis='x', which='both', length=0)
         mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
@@ -336,9 +419,11 @@ for row_idx, ax in enumerate(axes):
         
         y_lim_lat = 3
         
-        ax.set_xlim((-2.0, 0.1))
+        # ax.set_xlim((-2.0, 0.1))
+        ax.set_xlim((x_lim_lat_left, 0.1))  # NILS (04.10.2026, fix B3)
         ax.set_ylim((-0.1, y_lim_lat))
-        ax.set_xticks([-1, -0.5])
+        # ax.set_xticks([-1, -0.5])
+        ax.set_xticks([t for t in [-3, -2, -1] if t > x_lim_lat_left])  # NILS (04.10.2026, fix B3)
         ax.set_yticks([1, 2])
         '''
         # Add second x-axis left of break to plot roll subsidence roots    
@@ -380,7 +465,8 @@ for row_idx, ax in enumerate(axes):
     x_ray_ph_max_list = []
     y_ray_ph_max_list = []
     
-    for j, cat in enumerate(['fuselage','wing','nacelle']):
+    # for j, cat in enumerate(['fuselage','wing','nacelle']):
+    for j, cat in enumerate(res.keys()):  # NILS (04.10.2026, fix B4)
     # =============================================================================
     # for j, cat in enumerate(['wing']):
     # for j, cat in enumerate(['fuselage']):
@@ -393,6 +479,8 @@ for row_idx, ax in enumerate(axes):
         # for k, mode in enumerate(['spiral']):
         # =============================================================================
             
+            if len(res[cat][mode][rid]) == 0:  # NILS (04.10.2026): category not present in the selected studies
+                continue
             print('cat, mode, rid =', cat, mode, rid)
             df_cat = res[cat][mode][rid]
             (
@@ -404,6 +492,7 @@ for row_idx, ax in enumerate(axes):
             mask_mil_limits(
                 mode,
                 df_cat,
+                rid,  # NILS (03.10.2026, fix A10)
             )
             
             ev_valid_dict[cat][mode][rid]['ev'] = ev_valid
@@ -418,8 +507,8 @@ for row_idx, ax in enumerate(axes):
             # ax.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor=opaque_color_from_hex(colors[j], alpha=alpha_valid), edgecolor=opaque_color_from_hex(mcolors.to_hex(edgecolor), alpha=alpha_valid), linewidth=linewidth, zorder=100, clip_on=True)
             # ax.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor=opaque_color_from_hex(colors[j], alpha=alpha_invalid), edgecolor=opaque_color_from_hex(mcolors.to_hex(edgecolor), alpha=alpha_invalid), linewidth=linewidth, zorder=100, clip_on=True)
             ###
-            ax.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor='green', edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=True)
-            ax.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor='red', edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=True)
+            ax.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor=COLOR_OK, edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=True)  # NILS (04.10.2026): COLOR_OK = 'green' (stability_zones.py)
+            ax.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor=COLOR_FAIL, edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=True)  # NILS (04.10.2026): COLOR_FAIL = 'red'
             ###
         
             if mode == 'short-period':
@@ -435,8 +524,8 @@ for row_idx, ax in enumerate(axes):
                 # axins.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor=opaque_color_from_hex(colors[j], alpha=alpha_valid), edgecolor=opaque_color_from_hex(mcolors.to_hex(edgecolor), alpha=alpha_valid), linewidth=linewidth, zorder=100, clip_on=False)
                 # axins.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor=opaque_color_from_hex(colors[j], alpha=alpha_invalid), edgecolor=opaque_color_from_hex(mcolors.to_hex(edgecolor), alpha=alpha_invalid), linewidth=linewidth, zorder=100, clip_on=False)
                 ###
-                axins.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor='green', edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=False)
-                axins.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor='red', edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=False)
+                axins.scatter(ev_valid.real, ev_valid.imag, marker=markers[k], facecolor=COLOR_OK, edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=False)
+                axins.scatter(ev_invalid.real, ev_invalid.imag, marker=markers[k], facecolor=COLOR_FAIL, edgecolor=edgecolor, linewidth=linewidth, zorder=100, clip_on=False)
                 ###
                 ev_valid_ph_dict[cat][mode][rid]['ev'] = ev_valid
                 ev_invalid_ph_dict[cat][mode][rid]['ev'] = ev_invalid
@@ -465,6 +554,7 @@ for row_idx, ax in enumerate(axes):
             h_array = df_cat['h'].to_numpy()
             n_array = df_cat['n'].to_numpy()
             W_array = df_cat['W'].to_numpy()
+            n_alpha_array = df_cat['n_alpha'].to_numpy()  # NILS (03.10.2026, fix A9)
             
             # print('len(df_cat) =', len(df_cat))
             
@@ -485,7 +575,7 @@ for row_idx, ax in enumerate(axes):
                     x_circle_sp_min, y_circle_sp_min, x_circle_sp_max, y_circle_sp_max, x_ray_sp_max, y_ray_sp_max, r_circle_sp_min, r_circle_sp_max, zeta_sp_min,
                     x_ray_ph_max, y_ray_ph_max,
                 ) = \
-                plot_mil_limits(aoa, mach, beta, h, n, W)
+                plot_mil_limits(aoa, mach, beta, h, n, W, n_alpha=n_alpha_array[l], category=flight_phase_category(rid))  # NILS (03.10.2026, fixes A9 and A10)
                 
                 x_circle_dr_min_list.append(x_circle_dr_min)
                 y_circle_dr_min_list.append(y_circle_dr_min)
@@ -593,7 +683,8 @@ for row_idx, ax in enumerate(axes):
         # ax.axvline(x_vert_roll_max, color='black', alpha=alpha_constr)
         y_stacked_ray_roll_max = [-y_lim_lat, y_lim_lat]
         ax.fill_betweenx(
-            y=y_stacked_ray_roll_max, x1=-y_lim_lat, x2=x_vert_roll_max,
+            # y=y_stacked_ray_roll_max, x1=-y_lim_lat, x2=x_vert_roll_max,
+            y=y_stacked_ray_roll_max, x1=x_lim_lat_left, x2=x_vert_roll_max,  # NILS (04.10.2026, fix B3): to the left x-limit
             facecolor='None', edgecolor='black', hatch='..', alpha=0.1, zorder=-1,
         )
         '''
@@ -606,7 +697,8 @@ for row_idx, ax in enumerate(axes):
         # ax.axvline(x_vert_sl_max, color='black', alpha=alpha_constr)
         y_stacked_ray_sl_max = [-y_lim_lat, y_lim_lat]
         ax.fill_betweenx(
-            y=y_stacked_ray_sl_max, x1=-y_lim_lat, x2=x_vert_sl_max,
+            # y=y_stacked_ray_sl_max, x1=-y_lim_lat, x2=x_vert_sl_max,
+            y=y_stacked_ray_sl_max, x1=x_lim_lat_left, x2=x_vert_sl_max,  # NILS (04.10.2026, fix B3): to the left x-limit
             facecolor='lightgrey', edgecolor='None', alpha=0.5, zorder=-1,
         )
         '''
@@ -639,7 +731,17 @@ for row_idx, ax in enumerate(axes):
         y_wedge_dr = np.concatenate([
             y_wedge_dr_max, [-y_ray_dr_max[-1], -y_ray_dr_max[-1], y_ray_dr_max[-1], y_ray_dr_max[-1]],
         ])
-        ax.fill(x_wedge_dr, y_wedge_dr, facecolor='None', edgecolor='black', hatch='//', alpha=0.1, zorder=-1)
+        # ax.fill(x_wedge_dr, y_wedge_dr, facecolor='None', edgecolor='black', hatch='//', alpha=0.1, zorder=-1)
+        # NILS (04.10.2026): Dutch roll ok region including zeta*omega_n >= 0.15 (B) / 0.10 (C) rad/s, i.e. the
+        # intersection of Re <= -(zeta*omega_n)_min, zeta >= zeta_min (wedge) and omega_n >= omega_n_min (circle)
+        lim_lat = MIL_LIMITS[flight_phase_category(rid)]
+        y_dr_ok = np.linspace(-y_lim_lat, y_lim_lat, 401)
+        x_dr_ok = np.minimum.reduce([
+            np.full_like(y_dr_ok, -lim_lat['zeta_omega_dr_min']),
+            -np.abs(y_dr_ok) * lim_lat['zeta_dr_min'] / np.sqrt(1.0 - lim_lat['zeta_dr_min']**2),
+            -np.sqrt(np.maximum(lim_lat['omega_n_dr_min']**2 - y_dr_ok**2, 0.0)),
+        ])
+        ax.fill_betweenx(y_dr_ok, x_lim_lat_left, x_dr_ok, facecolor='None', edgecolor='black', hatch='//', alpha=0.1, zorder=-1)
         x_wedge_dr = np.concatenate([
             x_wedge_dr_max, [x_ray_dr_max[-1], -65, -65, x_ray_dr_max[-1]],
         ])
@@ -748,7 +850,8 @@ elif modes_type == 'lateral':
         # 'Roll subsidence nacelle', 'Roll subsidence wing', 'Roll subsidence fuselage',
         # 'Spiral nacelle', 'Spiral wing', 'Spiral fuselage',
         # 'Dutch roll nacelle', 'Dutch roll wing', 'Dutch roll fuselage',
-        'Roll', 'Spiral', 'Dutch roll',
+        # 'Roll', 'Spiral', 'Dutch roll',
+        'Roll', 'Dutch roll', 'Spiral',  # NILS (04.10.2026, fix B1): same order as modes_sublist/markers ('o', 'd', '^')
     ]
     legend_elements = [
         mpatches.Patch(
@@ -800,6 +903,8 @@ fig.text(0.5, 0.025, 'Real component (1/s)', ha='center', va='bottom')
 fig.text(0.025, 0.5, 'Imaginary component (1/s)', ha='right', va='center', rotation='vertical')
 # plt.savefig('longitudinal_roots.png', format='png', dpi=600)
 # plt.savefig('lateral_roots.png', format='png', dpi=600)
+if save_fig:  # NILS (04.10.2026)
+    plt.savefig(f'{modes_type}_roots_{aircraft}.png', format='png', dpi=600)
 
 plt.show()
 
@@ -869,14 +974,3 @@ for j, cat in enumerate(['fuselage','wing','nacelle']):
     break
 
 plt.show()
-
-
-
-
-
-
-
-
-
-
-

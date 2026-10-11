@@ -1,0 +1,741 @@
+
+C:\Users\nmb48>mamba activate C:\Users\nmb48\AppData\Local\miniconda3
+
+(base) C:\Users\nmb48>conda env list
+
+# conda environments:
+#
+# *  -> active
+# + -> frozen
+                         C:\Users\nmb48\.julia\conda\3\x86_64
+base                 *   C:\Users\nmb48\AppData\Local\miniconda3
+alphapem                 C:\Users\nmb48\AppData\Local\miniconda3\envs\alphapem
+fulmar                   C:\Users\nmb48\AppData\Local\miniconda3\envs\fulmar
+openconcept              C:\Users\nmb48\AppData\Local\miniconda3\envs\openconcept
+py311b                   C:\Users\nmb48\AppData\Local\miniconda3\envs\py311b
+py311d                   C:\Users\nmb48\AppData\Local\miniconda3\envs\py311d
+py39a                    C:\Users\nmb48\AppData\Local\miniconda3\envs\py39a
+py39a_wlrm004            C:\Users\nmb48\AppData\Local\miniconda3\envs\py39a_wlrm004
+pybada                   C:\Users\nmb48\AppData\Local\miniconda3\envs\pybada
+pyembree                 C:\Users\nmb48\AppData\Local\miniconda3\envs\pyembree
+rcaide_leads             C:\Users\nmb48\AppData\Local\miniconda3\envs\rcaide_leads
+rcaide_leads_wlrm004     C:\Users\nmb48\AppData\Local\miniconda3\envs\rcaide_leads_wlrm004
+suave                    C:\Users\nmb48\AppData\Local\miniconda3\envs\suave
+suave-vsp3190            C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190
+
+
+(base) C:\Users\nmb48>conda activate suave-vsp3190
+
+(suave-vsp3190) C:\Users\nmb48>conda list spyder-kernels
+
+CondaValueError: No packages match 'spyder-kernels'.
+
+
+(suave-vsp3190) C:\Users\nmb48>conda deactivate
+
+(base) C:\Users\nmb48>conda activate suave
+
+(suave) C:\Users\nmb48>conda list spyder-kernels
+# packages in environment at C:\Users\nmb48\AppData\Local\miniconda3\envs\suave:
+#
+# Name                     Version          Build            Channel
+spyder-kernels             3.1.0            pypi_0           pypi
+
+(suave) C:\Users\nmb48>conda deactivate
+
+(base) C:\Users\nmb48>conda activate suave-vsp3190
+
+(suave-vsp3190) C:\Users\nmb48>pip show spyder-kernels
+WARNING: Package(s) not found: spyder-kernels
+
+(suave-vsp3190) C:\Users\nmb48>conda deactivate
+
+(base) C:\Users\nmb48>conda activate suave
+
+(suave) C:\Users\nmb48>pip show spyder-kernels
+Name: spyder-kernels
+Version: 3.1.0
+Summary: Jupyter kernels for Spyder's console
+Home-page: https://github.com/spyder-ide/spyder-kernels
+Author:
+Author-email: Spyder Development Team <spyderlib@googlegroups.com>
+License-Expression: MIT
+Location: c:\users\nmb48\appdata\local\miniconda3\envs\suave\lib\site-packages
+Requires: cloudpickle, ipykernel, ipython, jupyter-client, packaging, pyzmq, traitlets
+Required-by:
+
+(suave) C:\Users\nmb48>conda deactivate
+
+(base) C:\Users\nmb48>conda activate suave-vsp3190
+
+(suave-vsp3190) C:\Users\nmb48>pip index versions spyder-kernels
+WARNING: pip index is currently an experimental command. It may be removed/changed in a future release without prior warning.
+spyder-kernels (2.5.2)
+Available versions: 2.5.2, 2.5.1, 2.5.0, 2.4.4, 2.4.3, 2.4.2, 2.4.1, 2.4.0, 2.3.3, 2.3.2, 2.3.1, 2.3.0, 2.2.1, 2.2.0, 2.1.3, 2.1.2, 2.1.1, 2.1.0, 2.0.5, 2.0.4, 2.0.3, 2.0.2, 2.0.1, 2.0.0, 1.10.3, 1.10.2, 1.10.1, 1.10.0, 1.9.4, 1.9.3, 1.9.2, 1.9.1, 1.9.0, 1.8.1, 1.8.0, 1.7.0, 1.6.0, 1.5.0, 1.4.0, 1.3.3, 1.3.2, 1.3.1, 1.3.0, 1.2.0, 1.1.0, 1.0.3, 1.0.2, 1.0.1, 1.0.0, 0.5.2, 0.5.1, 0.5.0, 0.4.4, 0.4.3, 0.4.2, 0.4.1, 0.4.0, 0.3.0, 0.2.6, 0.2.5, 0.2.4, 0.2.3, 0.2.2, 0.2.1, 0.2.0, 0.1.0
+
+(suave-vsp3190) C:\Users\nmb48>pip install "spyder-kernels==3.1.0"
+ERROR: Could not find a version that satisfies the requirement spyder-kernels==3.1.0 (from versions: 0.1.0, 0.2.0, 0.2.1, 0.2.2, 0.2.3, 0.2.4, 0.2.5, 0.2.6, 0.3.0, 0.4.0, 0.4.1, 0.4.2, 0.4.3, 0.4.4, 0.5.0, 0.5.1, 0.5.2, 1.0.0, 1.0.1, 1.0.2, 1.0.3, 1.1.0, 1.2.0, 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.4.0, 1.5.0, 1.6.0, 1.7.0, 1.8.0, 1.8.1, 1.9.0, 1.9.1, 1.9.2, 1.9.3, 1.9.4, 1.10.0, 1.10.1, 1.10.2, 1.10.3, 2.0.0, 2.0.1, 2.0.2, 2.0.3, 2.0.4, 2.0.5, 2.1.0, 2.1.1, 2.1.2, 2.1.3, 2.2.0, 2.2.1, 2.3.0, 2.3.1, 2.3.2, 2.3.3, 2.4.0, 2.4.1, 2.4.2, 2.4.3, 2.4.4, 2.5.0, 2.5.1, 2.5.2)
+ERROR: No matching distribution found for spyder-kernels==3.1.0
+
+(suave-vsp3190) C:\Users\nmb48>pip install "spyder-kernels==2.5.2"
+Collecting spyder-kernels==2.5.2
+  Downloading spyder_kernels-2.5.2-py2.py3-none-any.whl (99 kB)
+     |████████████████████████████████| 99 kB 4.6 MB/s
+Collecting cloudpickle
+  Using cached cloudpickle-2.2.1-py3-none-any.whl (25 kB)
+Collecting pyzmq>=24.0.0
+  Downloading pyzmq-25.1.2-cp36-cp36m-win_amd64.whl (1.2 MB)
+     |████████████████████████████████| 1.2 MB ...
+ERROR: Could not find a version that satisfies the requirement jupyter-client<9,>=7.4.9; python_version >= "3" (from spyder-kernels) (from versions: 4.0.0, 4.1.0, 4.1.1, 4.2.0, 4.2.1, 4.2.2, 4.3.0, 4.4.0, 5.0.0, 5.0.1, 5.1.0, 5.2.0, 5.2.1, 5.2.2, 5.2.3, 5.2.4, 5.3.0, 5.3.1, 5.3.2, 5.3.3, 5.3.4, 5.3.5, 6.0.0, 6.1.0, 6.1.1, 6.1.2, 6.1.3, 6.1.5, 6.1.6, 6.1.7, 6.1.8, 6.1.9, 6.1.10, 6.1.11, 6.1.12, 6.1.13, 6.2.0, 7.0.0a0, 7.0.0a1, 7.0.0rc0, 7.0.0rc1, 7.0.0, 7.0.1, 7.0.2, 7.0.3, 7.0.4, 7.0.5,7.0.6, 7.1.0, 7.1.1, 7.1.2)
+ERROR: No matching distribution found for jupyter-client<9,>=7.4.9; python_version >= "3"
+
+(suave-vsp3190) C:\Users\nmb48>which python
+'which' is not recognized as an internal or external command,
+operable program or batch file.
+
+(suave-vsp3190) C:\Users\nmb48>python --version
+Python 3.6.15
+
+(suave-vsp3190) C:\Users\nmb48>pip install "spyder-kernels==2.2.1"
+Collecting spyder-kernels==2.2.1
+  Downloading spyder_kernels-2.2.1-py2.py3-none-any.whl (70 kB)
+     |████████████████████████████████| 70 kB 4.5 MB/s
+Collecting cloudpickle
+  Using cached cloudpickle-2.2.1-py3-none-any.whl (25 kB)
+Collecting jupyter-client>=7.1.0
+  Downloading jupyter_client-7.1.2-py3-none-any.whl (130 kB)
+     |████████████████████████████████| 130 kB ...
+Collecting ipython<8,>=7.6.0
+  Downloading ipython-7.16.3-py3-none-any.whl (783 kB)
+     |████████████████████████████████| 783 kB ...
+ERROR: Could not find a version that satisfies the requirement ipykernel>=6.6.1; python_version >= "3" (from spyder-kernels) (from versions: 4.0.1, 4.0.2, 4.0.3, 4.1.0, 4.1.1, 4.2.0, 4.2.1, 4.2.2, 4.3.0, 4.3.1, 4.4.0, 4.4.1, 4.5.0, 4.5.1, 4.5.2,4.6.0, 4.6.1, 4.7.0, 4.8.0, 4.8.1, 4.8.2, 4.9.0, 4.10.0, 4.10.1, 5.0.0b1, 5.0.0, 5.1.0, 5.1.1, 5.1.2, 5.1.3, 5.1.4, 5.2.0,5.2.1, 5.3.0, 5.3.1, 5.3.2, 5.3.3, 5.3.4, 5.4.0, 5.4.1, 5.4.2, 5.4.3, 5.5.0, 5.5.3, 5.5.4, 5.5.5, 5.5.6, 6.0.0a0)
+ERROR: No matching distribution found for ipykernel>=6.6.1; python_version >= "3"
+
+(suave-vsp3190) C:\Users\nmb48>pip install "spyder-kernels==2.1.3"
+Collecting spyder-kernels==2.1.3
+  Downloading spyder_kernels-2.1.3-py2.py3-none-any.whl (68 kB)
+     |████████████████████████████████| 68 kB 1.8 MB/s
+Collecting pyzmq>=17
+  Using cached pyzmq-25.1.2-cp36-cp36m-win_amd64.whl (1.2 MB)
+Collecting jupyter-client<7,>=5.3.4
+  Downloading jupyter_client-6.1.12-py3-none-any.whl (112 kB)
+     |████████████████████████████████| 112 kB ...
+Collecting cloudpickle
+  Using cached cloudpickle-2.2.1-py3-none-any.whl (25 kB)
+Collecting ipykernel>=5.3.0
+  Downloading ipykernel-5.5.6-py3-none-any.whl (121 kB)
+     |████████████████████████████████| 121 kB ...
+Collecting ipython>=7.6.0
+  Using cached ipython-7.16.3-py3-none-any.whl (783 kB)
+Collecting traitlets>=4.1.0
+  Downloading traitlets-4.3.3-py2.py3-none-any.whl (75 kB)
+     |████████████████████████████████| 75 kB ...
+Collecting ipython-genutils
+  Using cached ipython_genutils-0.2.0-py2.py3-none-any.whl (26 kB)
+Requirement already satisfied: tornado>=4.2 in c:\users\nmb48\appdata\local\miniconda3\envs\suave-vsp3190\lib\site-packages (from ipykernel>=5.3.0->spyder-kernels==2.1.3) (6.1)
+Collecting decorator
+  Using cached decorator-5.1.1-py3-none-any.whl (9.1 kB)
+Collecting prompt-toolkit!=3.0.0,!=3.0.1,<3.1.0,>=2.0.0
+  Downloading prompt_toolkit-3.0.36-py3-none-any.whl (386 kB)
+     |████████████████████████████████| 386 kB ...
+Requirement already satisfied: setuptools>=18.5 in c:\users\nmb48\appdata\local\miniconda3\envs\suave-vsp3190\lib\site-packages (from ipython>=7.6.0->spyder-kernels==2.1.3) (58.0.4)
+Collecting jedi<=0.17.2,>=0.10
+  Downloading jedi-0.17.2-py2.py3-none-any.whl (1.4 MB)
+     |████████████████████████████████| 1.4 MB 6.4 MB/s
+Collecting pygments
+  Using cached Pygments-2.14.0-py3-none-any.whl (1.1 MB)
+Collecting colorama
+  Downloading colorama-0.4.5-py2.py3-none-any.whl (16 kB)
+Collecting backcall
+  Using cached backcall-0.2.0-py2.py3-none-any.whl (11 kB)
+Collecting pickleshare
+  Using cached pickleshare-0.7.5-py2.py3-none-any.whl (6.9 kB)
+Collecting jupyter-core>=4.6.0
+  Downloading jupyter_core-4.9.2-py3-none-any.whl (86 kB)
+     |████████████████████████████████| 86 kB 5.8 MB/s
+Requirement already satisfied: python-dateutil>=2.1 in c:\users\nmb48\appdata\local\miniconda3\envs\suave-vsp3190\lib\site-packages (from jupyter-client<7,>=5.3.4->spyder-kernels==2.1.3) (2.8.2)
+Collecting parso<0.8.0,>=0.7.0
+  Downloading parso-0.7.1-py2.py3-none-any.whl (109 kB)
+     |████████████████████████████████| 109 kB ...
+Collecting pywin32>=1.0
+  Downloading pywin32-305-cp36-cp36m-win_amd64.whl (12.2 MB)
+     |████████████████████████████████| 12.2 MB ...
+Collecting wcwidth
+  Downloading wcwidth-0.2.14-py2.py3-none-any.whl (37 kB)
+Requirement already satisfied: six>=1.5 in c:\users\nmb48\appdata\local\miniconda3\envs\suave-vsp3190\lib\site-packages (from python-dateutil>=2.1->jupyter-client<7,>=5.3.4->spyder-kernels==2.1.3) (1.16.0)
+Installing collected packages: ipython-genutils, decorator, wcwidth, traitlets, pywin32, parso, pyzmq, pygments, prompt-toolkit, pickleshare, jupyter-core, jedi, colorama, backcall, jupyter-client, ipython, ipykernel, cloudpickle, spyder-kernels
+Successfully installed backcall-0.2.0 cloudpickle-2.2.1 colorama-0.4.5 decorator-5.1.1 ipykernel-5.5.6 ipython-7.16.3 ipython-genutils-0.2.0 jedi-0.17.2 jupyter-client-6.1.12 jupyter-core-4.9.2 parso-0.7.1 pickleshare-0.7.5 prompt-toolkit-3.0.36pygments-2.14.0 pywin32-305 pyzmq-25.1.2 spyder-kernels-2.1.3 traitlets-4.3.3 wcwidth-0.2.14
+
+(suave-vsp3190) C:\Users\nmb48>pip show spyder-kernels
+Name: spyder-kernels
+Version: 2.1.3
+Summary: Jupyter kernels for Spyder's console
+Home-page: https://github.com/spyder-ide/spyder-kernels
+Author: Spyder Development Team
+Author-email: spyderlib@googlegroups.com
+License: MIT
+Location: c:\users\nmb48\appdata\local\miniconda3\envs\suave-vsp3190\lib\site-packages
+Requires: cloudpickle, ipykernel, ipython, jupyter-client, pyzmq
+Required-by:
+
+(suave-vsp3190) C:\Users\nmb48>cd "C:\Users\nmb48\Documents\GitHub\SUAVE"
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 50.96107316017151 s
+tag = base
+os.path.isfile(tag+'.su2') = False
+os.path.isfile(tag+'.geo') = True
+os.path.isfile(tag+'.su2') = False
+Info    : Running 'gmsh base.geo -3 -o base.su2 -format su2 -saveall' [Gmsh 3.0.6, 1 node, max. 1 thread]
+Info    : Started on Mon Sep 28 13:59:21 2026
+Info    : Reading 'base.geo'...
+Info    : Reading 'base.stl'...
+Info    : 132031 facets in solid 0
+Info    : 47949 facets in solid 1
+Info    : 22834 facets in solid 2
+Info    : 101689 facets in solid 3
+Info    : 11753 facets in solid 4
+Info    : 762 facets in solid 5
+Info    : Done reading 'base.stl'
+Info    : Done reading 'base.geo'
+Info    : Finalized high order topology of periodic connections
+Info    : Meshing 1D...
+Info    : Done meshing 1D (0 s)
+Info    : Meshing 2D...
+Info    : Done meshing 2D (0 s)
+Info    : Meshing 3D...
+Info    : Delaunay Meshing 1 volumes with 1 connected components
+Info    : Meshing volume 12 (Delaunay)
+Delaunizing vertices...
+Delaunay seconds:  0.768
+Creating surface mesh ...
+Surface mesh seconds:  0.207
+Recovering boundaries...
+Boundary recovery seconds:  1.106
+Removing exterior tetrahedra ...
+Exterior tets removal seconds:  0.302
+Recovering Delaunayness...
+Delaunay recovery seconds:  0.292
+Optimizing mesh...
+Optimization seconds:  0.149
+
+Writing nodes.
+Writing elements.
+Writing faces.
+Writing edges.
+
+Output seconds:  0.311
+Total running seconds:  3.146
+
+Statistics:
+
+  Input points: 158511
+  Input facets: 317018
+  Input segments: 475527
+  Input holes: 0
+  Input regions: 0
+
+  Mesh points: 158511
+  Mesh tetrahedra: 524450
+  Mesh faces: 1207409
+  Mesh edges: 841469
+  Mesh faces on exterior boundary: 317018
+  Mesh edges on exterior boundary: 475527
+  Mesh faces on input facets: 317018
+  Mesh edges on input segments: 475527
+
+Info    : 158511 points 841469 edges and 317018 faces in the initial mesh
+Info    : Found region 12
+Info    : 0 points created - Worst tet radius is 4604.47 (PTS removed 0 0)
+Info    : 485 points created - Worst tet radius is 15.7888 (PTS removed 0 15)
+Info    : 985 points created - Worst tet radius is 8.50048 (PTS removed 0 15)
+Info    : 1485 points created - Worst tet radius is 6.64176 (PTS removed 0 15)
+Info    : 1985 points created - Worst tet radius is 5.15856 (PTS removed 0 15)
+Info    : 2484 points created - Worst tet radius is 4.48834 (PTS removed 0 16)
+Info    : 2984 points created - Worst tet radius is 4.05806 (PTS removed 0 16)
+Info    : 3483 points created - Worst tet radius is 3.72696 (PTS removed 0 17)
+Info    : 3982 points created - Worst tet radius is 3.48987 (PTS removed 0 18)
+Info    : 4482 points created - Worst tet radius is 3.27214 (PTS removed 0 18)
+Info    : 4979 points created - Worst tet radius is 3.11191 (PTS removed 0 21)
+Info    : 5479 points created - Worst tet radius is 2.97976 (PTS removed 0 21)
+Info    : 5978 points created - Worst tet radius is 2.85957 (PTS removed 0 22)
+Info    : 6477 points created - Worst tet radius is 2.75141 (PTS removed 0 23)
+Info    : 6977 points created - Worst tet radius is 2.66623 (PTS removed 0 23)
+Info    : 7477 points created - Worst tet radius is 2.5899 (PTS removed 0 23)
+Info    : 7977 points created - Worst tet radius is 2.51765 (PTS removed 0 23)
+Info    : 8477 points created - Worst tet radius is 2.45575 (PTS removed 0 23)
+Info    : 8977 points created - Worst tet radius is 2.39581 (PTS removed 0 23)
+Info    : 9477 points created - Worst tet radius is 2.49397 (PTS removed 0 23)
+Info    : 9977 points created - Worst tet radius is 2.44872 (PTS removed 0 23)
+Info    : 10476 points created - Worst tet radius is 2.24345 (PTS removed 0 24)
+Info    : 10976 points created - Worst tet radius is 2.19927 (PTS removed 0 24)
+Info    : 11476 points created - Worst tet radius is 2.15889 (PTS removed 0 24)
+Info    : 11975 points created - Worst tet radius is 2.11997 (PTS removed 0 25)
+Info    : 12475 points created - Worst tet radius is 2.08239 (PTS removed 0 25)
+Info    : 12975 points created - Worst tet radius is 2.04647 (PTS removed 0 25)
+Info    : 13475 points created - Worst tet radius is 2.01724 (PTS removed 0 25)
+Info    : 13974 points created - Worst tet radius is 2.08342 (PTS removed 0 26)
+Info    : 14474 points created - Worst tet radius is 1.96189 (PTS removed 0 26)
+Info    : 14972 points created - Worst tet radius is 1.93562 (PTS removed 0 28)
+Info    : 15471 points created - Worst tet radius is 1.91083 (PTS removed 0 29)
+Info    : 15971 points created - Worst tet radius is 1.88485 (PTS removed 0 29)
+Info    : 16471 points created - Worst tet radius is 1.86122 (PTS removed 0 29)
+Info    : 16970 points created - Worst tet radius is 2.00124 (PTS removed 0 30)
+Info    : 17470 points created - Worst tet radius is 1.81739 (PTS removed 0 30)
+Info    : 17970 points created - Worst tet radius is 1.79565 (PTS removed 0 30)
+Info    : 18470 points created - Worst tet radius is 1.77633 (PTS removed 0 30)
+Info    : 18970 points created - Worst tet radius is 1.75861 (PTS removed 0 30)
+Info    : 19470 points created - Worst tet radius is 1.73978 (PTS removed 0 30)
+Info    : 19970 points created - Worst tet radius is 1.72249 (PTS removed 0 30)
+Info    : 20470 points created - Worst tet radius is 1.7057 (PTS removed 0 30)
+Info    : 20970 points created - Worst tet radius is 1.6893 (PTS removed 0 30)
+Info    : 21470 points created - Worst tet radius is 1.67389 (PTS removed 0 30)
+Info    : 21970 points created - Worst tet radius is 1.7565 (PTS removed 0 30)
+Info    : 22469 points created - Worst tet radius is 1.64404 (PTS removed 0 31)
+Info    : 22968 points created - Worst tet radius is 1.65758 (PTS removed 0 32)
+Info    : 23468 points created - Worst tet radius is 1.65401 (PTS removed 0 32)
+Info    : 23967 points created - Worst tet radius is 1.6025 (PTS removed 0 33)
+Info    : 24467 points created - Worst tet radius is 1.5888 (PTS removed 0 33)
+Info    : 24967 points created - Worst tet radius is 1.57557 (PTS removed 0 33)
+Info    : 25467 points created - Worst tet radius is 1.56377 (PTS removed 0 33)
+Info    : 25967 points created - Worst tet radius is 1.55192 (PTS removed 0 33)
+Info    : 26466 points created - Worst tet radius is 1.63541 (PTS removed 0 34)
+Info    : 26965 points created - Worst tet radius is 1.5302 (PTS removed 0 35)
+Info    : 27465 points created - Worst tet radius is 1.51924 (PTS removed 0 35)
+Info    : 27964 points created - Worst tet radius is 1.50811 (PTS removed 0 36)
+Info    : 28464 points created - Worst tet radius is 1.49837 (PTS removed 0 36)
+Info    : 28962 points created - Worst tet radius is 1.48813 (PTS removed 0 38)
+Info    : 29461 points created - Worst tet radius is 1.47846 (PTS removed 0 39)
+Info    : 29960 points created - Worst tet radius is 1.46938 (PTS removed 0 40)
+Info    : 30460 points created - Worst tet radius is 1.46071 (PTS removed 0 40)
+Info    : 30960 points created - Worst tet radius is 1.45184 (PTS removed 0 40)
+Info    : 31459 points created - Worst tet radius is 1.44357 (PTS removed 0 41)
+Info    : 31959 points created - Worst tet radius is 1.43445 (PTS removed 0 41)
+Info    : 32459 points created - Worst tet radius is 1.4261 (PTS removed 0 41)
+Info    : 32959 points created - Worst tet radius is 1.41809 (PTS removed 0 41)
+Info    : 33458 points created - Worst tet radius is 1.41045 (PTS removed 0 42)
+Info    : 33958 points created - Worst tet radius is 1.40318 (PTS removed 0 42)
+Info    : 34458 points created - Worst tet radius is 1.3954 (PTS removed 0 42)
+Info    : 34958 points created - Worst tet radius is 1.38775 (PTS removed 0 42)
+Info    : 35458 points created - Worst tet radius is 1.38071 (PTS removed 0 42)
+Info    : 35957 points created - Worst tet radius is 1.37349 (PTS removed 0 43)
+Info    : 36456 points created - Worst tet radius is 1.36618 (PTS removed 0 44)
+Info    : 36955 points created - Worst tet radius is 1.35826 (PTS removed 0 45)
+Info    : 37455 points created - Worst tet radius is 1.3512 (PTS removed 0 45)
+Info    : 37954 points created - Worst tet radius is 1.34453 (PTS removed 0 46)
+Info    : 38454 points created - Worst tet radius is 1.33803 (PTS removed 0 46)
+Info    : 38954 points created - Worst tet radius is 1.33175 (PTS removed 0 46)
+Info    : 39454 points created - Worst tet radius is 1.32551 (PTS removed 0 46)
+Info    : 39954 points created - Worst tet radius is 1.3194 (PTS removed 0 46)
+Info    : 40454 points created - Worst tet radius is 1.31306 (PTS removed 0 46)
+Info    : 40954 points created - Worst tet radius is 1.30711 (PTS removed 0 46)
+Info    : 41452 points created - Worst tet radius is 1.30125 (PTS removed 0 48)
+Info    : 41950 points created - Worst tet radius is 1.29545 (PTS removed 0 50)
+Info    : 42450 points created - Worst tet radius is 1.28973 (PTS removed 0 50)
+Info    : 42950 points created - Worst tet radius is 1.28374 (PTS removed 0 50)
+Info    : 43450 points created - Worst tet radius is 1.27828 (PTS removed 0 50)
+Info    : 43949 points created - Worst tet radius is 1.27242 (PTS removed 0 51)
+Info    : 44448 points created - Worst tet radius is 1.26685 (PTS removed 0 52)
+Info    : 44947 points created - Worst tet radius is 1.26146 (PTS removed 0 53)
+Info    : 45447 points created - Worst tet radius is 1.25593 (PTS removed 0 53)
+Info    : 45947 points created - Worst tet radius is 1.25053 (PTS removed 0 53)
+Info    : 46447 points created - Worst tet radius is 1.24493 (PTS removed 0 53)
+Info    : 46947 points created - Worst tet radius is 1.24003 (PTS removed 0 53)
+Info    : 47447 points created - Worst tet radius is 1.23468 (PTS removed 0 53)
+Info    : 47947 points created - Worst tet radius is 1.23017 (PTS removed 0 53)
+Info    : 48446 points created - Worst tet radius is 1.22565 (PTS removed 0 54)
+Info    : 48946 points created - Worst tet radius is 1.22071 (PTS removed 0 54)
+Info    : 49446 points created - Worst tet radius is 1.21528 (PTS removed 0 54)
+Info    : 49944 points created - Worst tet radius is 1.2105 (PTS removed 0 56)
+Info    : 50444 points created - Worst tet radius is 1.20594 (PTS removed 0 56)
+Info    : 50944 points created - Worst tet radius is 1.20155 (PTS removed 0 56)
+Info    : 51444 points created - Worst tet radius is 1.19672 (PTS removed 0 56)
+Info    : 51944 points created - Worst tet radius is 1.19234 (PTS removed 0 56)
+Info    : 52444 points created - Worst tet radius is 1.18785 (PTS removed 0 56)
+Info    : 52943 points created - Worst tet radius is 1.21571 (PTS removed 0 57)
+Info    : 53443 points created - Worst tet radius is 1.17962 (PTS removed 0 57)
+Info    : 53941 points created - Worst tet radius is 1.17528 (PTS removed 0 59)
+Info    : 54441 points created - Worst tet radius is 1.1708 (PTS removed 0 59)
+Info    : 54940 points created - Worst tet radius is 1.1666 (PTS removed 0 60)
+Info    : 55440 points created - Worst tet radius is 1.34537 (PTS removed 0 60)
+Info    : 55940 points created - Worst tet radius is 1.15831 (PTS removed 0 60)
+Info    : 56440 points created - Worst tet radius is 1.15431 (PTS removed 0 60)
+Info    : 56939 points created - Worst tet radius is 1.18341 (PTS removed 0 61)
+Info    : 57439 points created - Worst tet radius is 1.17631 (PTS removed 0 61)
+Info    : 57939 points created - Worst tet radius is 1.14196 (PTS removed 0 61)
+Info    : 58438 points created - Worst tet radius is 1.13805 (PTS removed 0 62)
+Info    : 58938 points created - Worst tet radius is 1.13436 (PTS removed 0 62)
+Info    : 59438 points created - Worst tet radius is 1.13109 (PTS removed 0 62)
+Info    : 59938 points created - Worst tet radius is 1.1274 (PTS removed 0 62)
+Info    : 60438 points created - Worst tet radius is 1.12374 (PTS removed 0 62)
+Info    : 60938 points created - Worst tet radius is 1.11989 (PTS removed 0 62)
+Info    : 61437 points created - Worst tet radius is 1.11628 (PTS removed 0 63)
+Info    : 61937 points created - Worst tet radius is 1.11275 (PTS removed 0 63)
+Info    : 62435 points created - Worst tet radius is 1.10919 (PTS removed 0 65)
+Info    : 62934 points created - Worst tet radius is 1.10566 (PTS removed 0 66)
+Info    : 63432 points created - Worst tet radius is 1.10205 (PTS removed 0 68)
+Info    : 63932 points created - Worst tet radius is 1.09893 (PTS removed 0 68)
+Info    : 64430 points created - Worst tet radius is 1.09541 (PTS removed 0 70)
+Info    : 64930 points created - Worst tet radius is 1.0918 (PTS removed 0 70)
+Info    : 65429 points created - Worst tet radius is 1.08852 (PTS removed 0 71)
+Info    : 65928 points created - Worst tet radius is 1.08533 (PTS removed 0 72)
+Info    : 66428 points created - Worst tet radius is 1.08202 (PTS removed 0 72)
+Info    : 66928 points created - Worst tet radius is 1.07902 (PTS removed 0 72)
+Info    : 67428 points created - Worst tet radius is 1.07597 (PTS removed 0 72)
+Info    : 67928 points created - Worst tet radius is 1.09308 (PTS removed 0 72)
+Info    : 68428 points created - Worst tet radius is 1.06976 (PTS removed 0 72)
+Info    : 68928 points created - Worst tet radius is 1.0669 (PTS removed 0 72)
+Info    : 69428 points created - Worst tet radius is 1.06403 (PTS removed 0 72)
+Info    : 69928 points created - Worst tet radius is 1.06094 (PTS removed 0 72)
+Info    : 70427 points created - Worst tet radius is 1.05804 (PTS removed 0 73)
+Info    : 70927 points created - Worst tet radius is 1.05521 (PTS removed 0 73)
+Info    : 71427 points created - Worst tet radius is 1.05251 (PTS removed 0 73)
+Info    : 71927 points created - Worst tet radius is 1.04955 (PTS removed 0 73)
+Info    : 72427 points created - Worst tet radius is 1.04687 (PTS removed 0 73)
+Info    : 72927 points created - Worst tet radius is 1.04412 (PTS removed 0 73)
+Info    : 73426 points created - Worst tet radius is 1.0413 (PTS removed 0 74)
+Info    : 73926 points created - Worst tet radius is 1.03881 (PTS removed 0 74)
+Info    : 74426 points created - Worst tet radius is 1.03607 (PTS removed 0 74)
+Info    : 74926 points created - Worst tet radius is 1.03345 (PTS removed 0 74)
+Info    : 75426 points created - Worst tet radius is 1.20153 (PTS removed 0 74)
+Info    : 75926 points created - Worst tet radius is 1.02834 (PTS removed 0 74)
+Info    : 76426 points created - Worst tet radius is 1.02581 (PTS removed 0 74)
+Info    : 76926 points created - Worst tet radius is 1.02347 (PTS removed 0 74)
+Info    : 77426 points created - Worst tet radius is 1.02087 (PTS removed 0 74)
+Info    : 77925 points created - Worst tet radius is 1.0184 (PTS removed 0 75)
+Info    : 78424 points created - Worst tet radius is 1.01595 (PTS removed 0 76)
+Info    : 78922 points created - Worst tet radius is 1.01372 (PTS removed 0 78)
+Info    : 79422 points created - Worst tet radius is 1.0114 (PTS removed 0 78)
+Info    : 79922 points created - Worst tet radius is 1.00919 (PTS removed 0 78)
+Info    : 80421 points created - Worst tet radius is 1.00697 (PTS removed 0 79)
+Info    : 80921 points created - Worst tet radius is 1.00458 (PTS removed 0 79)
+Info    : 81420 points created - Worst tet radius is 1.0025 (PTS removed 0 80)
+Info    : 81919 points created - Worst tet radius is 1.00044 (PTS removed 0 81)
+Info    : 3D point insertion terminated (240532 points created):
+Info    :  - 220 Delaunay cavities modified for star shapeness
+Info    :  - 81 points could not be inserted
+Info    :  - 981314 tetrahedra created in 74.7813 sec. (13122 tets/sec.)
+Info    : Done meshing 3D (84.375 s)
+Info    : Optimizing 3D mesh...
+Info    : Optimizing volume 12
+Info    : Opti : STARTS with  1.25200E+07 QBAD  7.86794E-04 QAVG  5.70829E-01
+Info    : Opti : 0.00 < QUAL < 0.10 :      4835 elements
+Info    : Opti : 0.10 < QUAL < 0.20 :     13327 elements
+Info    : Opti : 0.20 < QUAL < 0.30 :     28745 elements
+Info    : Opti : 0.30 < QUAL < 0.40 :     71616 elements
+Info    : Opti : 0.40 < QUAL < 0.50 :    199149 elements
+Info    : Opti : 0.50 < QUAL < 0.60 :    241956 elements
+Info    : Opti : 0.60 < QUAL < 0.70 :    207800 elements
+Info    : Opti : 0.70 < QUAL < 0.80 :    146573 elements
+Info    : Opti : 0.80 < QUAL < 0.90 :     61695 elements
+Info    : Opti : 0.90 < QUAL < 1.00 :      5618 elements
+Info    : Opti : (39156,0,2462) =  1.25200E+07 QBAD  6.89371E-02 QAVG  5.88596E-01 (   0.719 sec)
+Info    : Opti : (40473,0,2999) =  1.25200E+07 QBAD  7.15992E-02 QAVG  5.88900E-01 (   0.984 sec)
+Info    : Opti : (40657,0,3261) =  1.25200E+07 QBAD  7.15992E-02 QAVG  5.88945E-01 (   1.250 sec)
+Info    : Opti : no ill-shaped tets in the mesh ;-)
+Info    : Opti : 0.00 < QUAL < 0.10 :         9 elements
+Info    : Opti : 0.10 < QUAL < 0.20 :       164 elements
+Info    : Opti : 0.20 < QUAL < 0.30 :      4820 elements
+Info    : Opti : 0.30 < QUAL < 0.40 :     69296 elements
+Info    : Opti : 0.40 < QUAL < 0.50 :    199042 elements
+Info    : Opti : 0.50 < QUAL < 0.60 :    241629 elements
+Info    : Opti : 0.60 < QUAL < 0.70 :    215667 elements
+Info    : Opti : 0.70 < QUAL < 0.80 :    149529 elements
+Info    : Opti : 0.80 < QUAL < 0.90 :     61736 elements
+Info    : Opti : 0.90 < QUAL < 1.00 :      5582 elements
+Info    : Done optimizing 3D mesh (2.48438 s)
+Info    : 240532 vertices 1264841 elements
+Info    : Writing 'base.su2'...
+Info    : Writing 947823 elements and 240532 vertices
+Info    : Done writing 'base.su2'
+Info    : Stopped on Mon Sep 28 14:00:54 2026
+
+-------------------------------------------------------------------------
+|    ___ _   _ ___                                                      |
+|   / __| | | |_  )   Release 8.3.0 "Harrier"                           |
+|   \__ \ |_| |/ /                                                      |
+|   |___/\___//___|   Suite (Computational Fluid Dynamics Code)         |
+|                                                                       |
+-------------------------------------------------------------------------
+| SU2 Project Website: https://su2code.github.io                        |
+|                                                                       |
+| The SU2 Project is maintained by the SU2 Foundation                   |
+| (http://su2foundation.org)                                            |
+-------------------------------------------------------------------------
+| Copyright 2012-2025, SU2 Contributors                                 |
+|                                                                       |
+| SU2 is free software; you can redistribute it and/or                  |
+| modify it under the terms of the GNU Lesser General Public            |
+| License as published by the Free Software Foundation; either          |
+| version 2.1 of the License, or (at your option) any later version.    |
+|                                                                       |
+| SU2 is distributed in the hope that it will be useful,                |
+| but WITHOUT ANY WARRANTY; without even the implied warranty of        |
+| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      |
+| Lesser General Public License for more details.                       |
+|                                                                       |
+| You should have received a copy of the GNU Lesser General Public      |
+| License along with SU2. If not, see <http://www.gnu.org/licenses/>.   |
+-------------------------------------------------------------------------
+
+Parsing config file for zone 0
+
+----------------- Physical Case Definition ( Zone 0 ) -------------------
+Compressible Euler equations.
+Mach number: 0.43.
+Angle of attack (AoA): 3 deg, and angle of sideslip (AoS): 0 deg.
+No restart solution, use the values at infinity (freestream).
+Non-Dimensional simulation (V=1.0, Rho=1.0, T=1.0 at the farfield).
+The reference area is 35.2 m^2.
+The semi-span will be computed using the max y(3D) value.
+The reference length is 1 m.
+Reference origin for moment evaluation is (0.25, 0, 0).
+Surface(s) where the force coefficients are evaluated: VEHICLE.
+
+Surface(s) where the objective function is evaluated: VEHICLE.
+Surface(s) plotted in the output file: VEHICLE.
+Input mesh file name: base.su2
+
+--------------- Space Numerical Integration ( Zone 0 ) ------------------
+Jameson-Schmidt-Turkel scheme (2nd order in space) for the flow inviscid terms.
+JST viscous coefficients (2nd & 4th): 0.5, 0.02.
+The method includes a grid stretching correction (p = 0.3).
+Gradient for upwind reconstruction: inverse-distance weighted Least-Squares.
+Gradient for viscous and source terms: inverse-distance weighted Least-Squares.
+
+--------------- Time Numerical Integration  ( Zone 0 ) ------------------
+Local time stepping (steady state simulation).
+Euler implicit method for the flow equations.
+FGMRES is used for solving the linear system.
+Using a ILU(0) preconditioning.
+Convergence criteria of the linear solver: 1e-06.
+Max number of linear iterations: 2.
+W Multigrid Cycle, with 3 multigrid levels.
+Damping factor for the residual restriction: 0.9.
+Damping factor for the correction prolongation: 0.9.
+CFL adaptation. Factor down: 0.5, factor up: 1.5,
+                lower limit: 1, upper limit: 100,
+                acceptable linear residual: 0.001'
+                starting iteration: 0.
++-------------------------------------------+
+|  MG Level| Presmooth|PostSmooth|CorrectSmo|
++-------------------------------------------+
+|         0|         1|         0|         0|
+|         1|         2|         0|         0|
+|         2|         3|         0|         0|
+|         3|         3|         0|         0|
++-------------------------------------------+
+Courant-Friedrichs-Lewy number:        5
+
+------------------ Convergence Criteria  ( Zone 0 ) ---------------------
+Maximum number of solver subiterations: 3000.
+Begin convergence monitoring at iteration 5.
+Residual minimum value: 1e-12.
+Cauchy series min. value: 1e-10.
+Number of Cauchy elements: 100.
+Begin windowed time average at iteration 0.
+
+-------------------- Output Information ( Zone 0 ) ----------------------
+File writing frequency:
++------------------------------------+
+|                     File| Frequency|
++------------------------------------+
+|                  RESTART|       250|
+|                 PARAVIEW|       250|
+|         SURFACE_PARAVIEW|       250|
++------------------------------------+
+Writing the convergence history file every 10 inner iterations.
+Writing the screen convergence history every 10 inner iterations.
+The tabular file format is CSV (.csv).
+Convergence history file name: base_history.
+Forces breakdown file name: forces_breakdown.dat.
+Surface file name: base_surface_flow.
+Volume file name: base_flow.
+Restart file name: base_restart_flow.dat.
+
+------------- Config File Boundary Information ( Zone 0 ) ---------------
++-----------------------------------------------------------------------+
+|                        Marker Type|                        Marker Name|
++-----------------------------------------------------------------------+
+|                         Euler wall|                            VEHICLE|
++-----------------------------------------------------------------------+
+|                          Far-field|                           FARFIELD|
++-----------------------------------------------------------------------+
+|                     Symmetry plane|                           SYMPLANE|
++-----------------------------------------------------------------------+
+
+-------------------- Output Preprocessing ( Zone 0 ) --------------------
+
+WARNING: SURFACE_PRESSURE_DROP can only be computed for at least 2 surfaces (outlet, inlet, ...)
+
+Screen output fields: INNER_ITER, RMS_DENSITY, RMS_ENERGY, LIFT, DRAG
+  Info: Ignoring the following history output groups:
+  RMS_RESIDUAL
+History output group(s): ITER, LIFT, DRAG
+Convergence field(s): RMS_DENSITY, RMS_ENERGY
+Warning: No (valid) fields chosen for time convergence monitoring. Time convergence monitoring inactive.
+Volume output fields: COORDINATES, SOLUTION, PRIMITIVE
+
+------------------- Geometry Preprocessing ( Zone 0 ) -------------------
+Three dimensional problem.
+240532 grid points.
+947823 volume elements.
+3 surface markers.
+304503 boundary elements in index 0 (Marker = VEHICLE).
+11753 boundary elements in index 1 (Marker = SYMPLANE).
+762 boundary elements in index 2 (Marker = FARFIELD).
+947823 tetrahedra.
+Traceback (most recent call last):
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 1283, in <module>
+    main()
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 52, in main
+    analyses.finalize()
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_Euler.py", line 149, in initialize
+    self.process.compute.lift.inviscid.initialize()
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_inviscid.py", line 104, in initialize
+    self.sample_training()
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_inviscid.py", line 226, in sample_training
+    CL[count],CD[count] = call_SU2(konditions, settings, geometry)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_inviscid.py", line 394, in call_SU2
+    CL, CD = call_SU2_CFD(tag,parallel,processors)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Input_Output\SU2\call_SU2_CFD.py", line 42, in call_SU2_CFD
+    subprocess.call(['SU2_CFD',tag+'.cfg'])
+  File "C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\lib\subprocess.py", line 289, in call
+    return p.wait(timeout=timeout)
+  File "C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\lib\subprocess.py", line 1075, in wait
+    timeout_millis)
+KeyboardInterrupt
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>pip uninstall pywin32 -y
+Found existing installation: pywin32 305
+Uninstalling pywin32-305:
+  Successfully uninstalled pywin32-305
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>conda activate suave-vsp3190
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python -c "print(''.join(open(r'C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\Lib\site.py').readlines()[520:551]))"
+    This function is called automatically when this module is imported,
+    unless the python interpreter was started with the -S flag.
+    """
+    global ENABLE_USER_SITE
+
+    abs_paths()
+    known_paths = removeduppaths()
+    known_paths = venv(known_paths)
+    if ENABLE_USER_SITE is None:
+        ENABLE_USER_SITE = check_enableusersite()
+    known_paths = addusersitepackages(known_paths)
+    known_paths = addsitepackages(known_paths)
+    setquit()
+    setcopyright()
+    sethelper()
+    if not sys.flags.isolated:
+        enablerlcompleter()
+    execsitecustomize()
+    if ENABLE_USER_SITE:
+        execusercustomize()
+    if sys.platform == 'win32':
+        # Anaconda Distribution hack in-case the environment has not been activated properly.
+        library_bin = r"%s\Library\bin" % (sys.prefix)
+        if library_bin not in os.environ["PATH"]:
+            os.environ["PATH"] = library_bin+";"+os.environ["PATH"]
+
+# Prevent extending of sys.path when python was started with -S and
+# site is imported later.
+if not sys.flags.no_site:
+    main()
+
+
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python -c "import os; p=r'C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\Lib\site.py'; t=open(p,encoding='utf-8').read(); old='if library_bin not in os.environ[\"PATH\"]:\n    os.environ[\"PATH\"] = library_bin+\";\"+os.environ[\"PATH\"]'; assert t.count(old)==1, 'pattern not found'; t2=t.replace(old, 'if library_bin not in os.environ.get(\"PATH\", \"\"):\n            os.environ[\"PATH\"] = library_bin+\";\"+os.environ.get(\"PATH\", \"\")'); tmp=p+'.tmp'; open(tmp,'w',encoding='utf-8').write(t2); os.replace(tmp,p); print('patched')"
+patched
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python -c "print(''.join(open(r'C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\Lib\site.py').readlines()[520:551]))"
+    This function is called automatically when this module is imported,
+    unless the python interpreter was started with the -S flag.
+    """
+    global ENABLE_USER_SITE
+
+    abs_paths()
+    known_paths = removeduppaths()
+    known_paths = venv(known_paths)
+    if ENABLE_USER_SITE is None:
+        ENABLE_USER_SITE = check_enableusersite()
+    known_paths = addusersitepackages(known_paths)
+    known_paths = addsitepackages(known_paths)
+    setquit()
+    setcopyright()
+    sethelper()
+    if not sys.flags.isolated:
+        enablerlcompleter()
+    execsitecustomize()
+    if ENABLE_USER_SITE:
+        execusercustomize()
+    if sys.platform == 'win32':
+        # Anaconda Distribution hack in-case the environment has not been activated properly.
+        library_bin = r"%s\Library\bin" % (sys.prefix)
+        if library_bin not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = library_bin+";"+os.environ.get("PATH", "")
+
+# Prevent extending of sys.path when python was started with -S and
+# site is imported later.
+if not sys.flags.no_site:
+    main()
+
+
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>conda install spyder-kernels=3.1.0
+3 channel Terms of Service accepted
+Retrieving notices: done
+Channels:
+ - defaults
+Platform: win-64
+Collecting package metadata (repodata.json): done
+Solving environment: failed
+
+LibMambaUnsatisfiableError: Encountered problems while solving:
+  - package spyder-kernels-3.1.0-py310hbc747e5_0 requires python >=3.10,<3.11.0a0, but none of the providers can be insd
+
+Could not solve for environment specs
+The following packages are incompatible
+├─ pin on python =3.6 * is installable and it requires
+│  └─ python =3.6 *, which can be installed;
+└─ spyder-kernels =3.1.0 * is not installable because there are no viable options
+   ├─ spyder-kernels 3.1.0 would require
+   │  └─ python >=3.10,<3.11.0a0 *, which conflicts with any installable versions previously reported;
+   ├─ spyder-kernels 3.1.0 would require
+   │  └─ python >=3.11,<3.12.0a0 *, which conflicts with any installable versions previously reported;
+   ├─ spyder-kernels 3.1.0 would require
+   │  └─ python >=3.12,<3.13.0a0 *, which conflicts with any installable versions previously reported;
+   ├─ spyder-kernels 3.1.0 would require
+   │  └─ python >=3.13,<3.14.0a0 *, which conflicts with any installable versions previously reported;
+   └─ spyder-kernels 3.1.0 would require
+      └─ python >=3.9,<3.10.0a0 *, which conflicts with any installable versions previously reported.
+
+Pins seem to be involved in the conflict. Currently pinned specs:
+ - python=3.6
+
+
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"

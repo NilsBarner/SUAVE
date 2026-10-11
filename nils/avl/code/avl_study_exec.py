@@ -5,9 +5,14 @@ perform a static and dynamic stability analysis on
 aircraft geometry data imported as a .csv from TASOPT.jl.
 
 To be run as module from Anaconda Prompt via:
-(suave) C:\Users\nmb48\Documents\GitHub\SUAVE>python -m nils.avl.run_suave_avl_wrapper_nils_new
+(suave) C:\Users\nmb48\Documents\GitHub\SUAVE>python -m nils.avl.code.avl_study_exec
 
 For further comments, see bottom of file.
+
+NOTE AS OF 11.10.2026:
+In ..\SUAVE\nils\avl\code\dynamic_stability\eigenvalue_classification.py
+several lines are ONLY VALID FOR 5 x 5 GRIDS OF INPUTS. For more fine-grained
+runs those lines MUST FIRST BE UPDATED!
 """
 
 __all__ = []
@@ -26,7 +31,7 @@ from SUAVE.Core import Units
 from SUAVE.Methods.Geometry.Two_Dimensional.Planform import segment_properties
 
 from nils.suave_base_ac_object import full_setup
-from nils.avl.avl_wrapper import wrap_avl
+from nils.avl.code.avl_wrapper import wrap_avl
 
 #%% Command-line parsing
 # `python run_suave_avl_wrapper_nils.py study_idx`, where study_idx is an integer 1..7
@@ -41,7 +46,7 @@ else:
 wing_has_segments = True  # False
 htail_has_segments = True  # False
 ac_segment = "narrowbody"  # "narrowbody" or "regional"
-fuel = "kerosene"  # "kerosene" or "LH2"
+fuel = "LH2"  # "kerosene" or "LH2"
 include_nacelles = False  # NILS: added on 21.03.2026 to exclude simple OpenVSP nacelles from geometry in favour of my own 3D CST models
 
 #%% Read geometry and mass data from .csv files
@@ -55,14 +60,19 @@ if ac_segment == "narrowbody":
         # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_{date_str}_{study_idx}.csv')
         # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_{date_str}.csv')
         # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_{date_str}_{study_idx}.csv')
-        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_260326.csv")
-        df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_260326.csv")
+        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_narrowbody_kerosene_260326.csv")
+        df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_narrowbody_kerosene_260326.csv")
     elif fuel == "LH2":
-        # 25.03.2026: something is wrong with the narrowbody LH2 geometry file; TEMPORARY FIX: use KEROSENE GEOMETRY but LH2 MASS file!
-        # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_{date_str}.csv')
-        # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_{date_str}_{study_idx}.csv')
-        df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_250326.csv')
-        df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_250326_{study_idx}.csv')
+        # # 25.03.2026: something is wrong with the narrowbody LH2 geometry file; TEMPORARY FIX: use KEROSENE GEOMETRY but LH2 MASS file!
+        # # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_{date_str}.csv')
+        # # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_{date_str}_{study_idx}.csv')
+        # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_narrowbody_kerosene_250326.csv')
+        # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_narrowbody_LH2_250326_{study_idx}.csv')
+        #####
+        # NILS: used to generate figures in Chapter 7 of thesis
+        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_041026.csv")
+        df_mass = pd.read_csv(rf"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_041026_{study_idx}.csv")
+        #####
 elif ac_segment == "regional":
     if fuel == "kerosene":
         # # df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_geometry_regional_kerosene_211225.csv')
@@ -71,13 +81,18 @@ elif ac_segment == "regional":
         # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_{date_str}_{study_idx}.csv')
         # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_{date_str}.csv')
         # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_{date_str}_{study_idx}.csv')
-        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_260326.csv")
-        df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_260326.csv")
+        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_regional_kerosene_260326.csv")
+        df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_regional_kerosene_260326.csv")
     elif fuel == "LH2":
-        # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_{date_str}.csv')
-        # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_{date_str}_{study_idx}.csv')
-        df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_250326.csv')
-        df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_250326_{study_idx}.csv')
+        # # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_{date_str}.csv')
+        # # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_{date_str}_{study_idx}.csv')
+        # df_geom = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_regional_LH2_250326.csv')
+        # df_mass = pd.read_csv(rf'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_regional_LH2_250326_{study_idx}.csv')
+        #####
+        # NILS: used to generate figures in Chapter 7 of thesis
+        df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_041026.csv")
+        df_mass = pd.read_csv(rf"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_041026_{study_idx}.csv")
+        #####
     
 #%% Loop over mass configurations of selected study case
 

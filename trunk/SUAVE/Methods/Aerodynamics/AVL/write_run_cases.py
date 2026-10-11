@@ -18,6 +18,7 @@ NILS: THIS FILE CORRESPONDS TO SUAVE 2.5.2!
 import os  # NILS: added line
 from SUAVE.Methods.Aerodynamics.AVL.purge_files       import purge_files
 from SUAVE.Components.Wings.Control_Surfaces import Aileron , Elevator , Slat , Flap , Rudder   # NILS: line added in v2.5.2 vs 2.5.0
+from SUAVE.Core import Units  # NILS (03.10.2026, fix A4)
 
 ## @ingroup Analyses-AVL
 # NILS: this function is different in v2.5.2 vs v2.5.0
@@ -153,7 +154,8 @@ def write_run_cases(avl_object,trim_aircraft, backend='AVL'):
             index = case.index
             name  = case.tag
             CL    = case.conditions.aerodynamics.lift_coefficient
-            CDp   = 0.
+            # CDp   = 0.
+            CDp   = getattr(avl_object.settings, 'profile_drag_coefficient', 0.)  # NILS (04.10.2026): was 0 (inviscid drag only, under-predicting phugoid damping)
             AoA   = round(case.conditions.aerodynamics.angle_of_attack,4)
             beta  = round(case.conditions.aerodynamics.side_slip_angle,4)
             pb_2V = round(case.conditions.aerodynamics.roll_rate_coefficient,4)
@@ -229,7 +231,7 @@ def make_controls_case_text(cs_names,avl_aircraft):
                 pass
             else:
                 # template for control surface 
-                base_control_cond_text = ' {0}->  {1}=   0.00000\n' 
+                base_control_cond_text = ' {0}->  {1}=   {2:.5f}\n'  # NILS (03.10.2026, fix A4): value was hard-coded to 0.00000
                 # This condition block assigns the control surface to a particular stabiltiy response 
                 if (type(ctrl_surf) ==  Flap):         # if control surface function is 'flap', specify to AVL that it is a flap
                     ctrl_name = "{:<13}".format(ctrl_surf.tag)
@@ -245,7 +247,10 @@ def make_controls_case_text(cs_names,avl_aircraft):
                     variable  = 'Cn yaw  mom '
                     
                 # write the control surface functionality into template 
-                text = base_control_cond_text.format(ctrl_name,variable)
+                # NILS (03.10.2026, fix A4): flaps are fixed at their prescribed deflection (deg), all other
+                # control variables are driven to zero roll/pitch/yaw moment by the trim as before
+                value = ctrl_surf.deflection / Units.degrees if (type(ctrl_surf) == Flap) else 0.0
+                text = base_control_cond_text.format(ctrl_name,variable,value)
             
                 # append text 
                 control_surface_text.append(text)

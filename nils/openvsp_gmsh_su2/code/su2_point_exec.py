@@ -1,7 +1,19 @@
-# BWB.py
-# 
-# Created:  Jan 2017, E. Botero
-# Modified: Mar 2018, T. MacDonald
+r"""
+This script is based off \SUAVE\Tutorials-2.5.0.2\BWB_CFD\bwb\BWB.py
+It is used both for running CFD simulations using SU2, as well as
+to generate 3D surface meshes of the external airframe geometry used
+for visualising packaging and stability studies in Chapter 7 of my thesis.
+In the latter case, the process aborts after the surface mesh generation step.
+
+Note that this script MUST be run from the Anaconda Prompt as
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+
+since Python 3.6.15 required for the OpenVSP 3.19 is too old for any
+spyder-kernels compatible with the Spyder 6 GUI.
+"""
+
+__all__ = []
 
 # ----------------------------------------------------------------------
 #   Imports
@@ -19,23 +31,23 @@ import numpy as np
 import pylab as plt
 
 from SUAVE.Core import Data, Units
-
 from SUAVE.Input_Output.OpenVSP import write
 from SUAVE.Input_Output.OpenVSP import get_vsp_measurements
-
-from SUAVE.Methods.Propulsion.turbofan_sizing import turbofan_sizing
-from SUAVE.Methods.Geometry.Two_Dimensional.Cross_Section.Propulsion import compute_turbofan_geometry
 from SUAVE.Methods.Geometry.Two_Dimensional.Planform import segment_properties
-
 from SUAVE.Plots.Performance.Mission_Plots import *
 
-from copy import deepcopy
-
 # NILS
-from datetime import date
+import ast
 import pandas as pd
-from SUAVE.Methods.Propulsion import propeller_design
-from SUAVE.Components.Energy.Networks.Battery_Propeller import Battery_Propeller
+from copy import deepcopy
+from datetime import date
+from SUAVE.Methods.Flight_Dynamics.Static_Stability.Approximations.Supporting_Functions.convert_sweep import convert_sweep
+
+AC_SEGMENT = "narrowbody"  # NILS: "narrowbody" or "regional"
+HALF_MESH_FLAG = False  # NILS: set `False` for visualisation, set `True` to use symmetry to halve domain size
+CFD_FAR_FIELD_FLAG = 0  # NILS: set `1` for CFD simulation, set `0` for visualisation to generate surface .stl mesh only
+MAXIMUM_ITERATIONS = 3000  # NILS: increase from original value of 10 to 1500, then to 3000
+INCLUDE_NACELLES = False  # NILS: added on 21.03.2026 to exclude simple OpenVSP nacelles from geometry in favour of my own 3D CST models
 
 # ----------------------------------------------------------------------
 #   Main
@@ -46,7 +58,6 @@ def main(vehicle=None):  # NILS: added default argument
     configs, analyses = full_setup(vehicle)  # NILS: added argument
 
     simple_sizing(configs)
-    # sys.exit('Stop after simple_sizing.')
 
     configs.finalize()
     analyses.finalize()
@@ -115,18 +126,12 @@ def base_analysis(config, vehicle):  # NILS: added second argument
     # aerodynamics.process.compute.lift.inviscid.settings.parallel          = True
     # aerodynamics.process.compute.lift.inviscid.settings.processors        = 12
     # aerodynamics.process.compute.lift.inviscid.training_file              = 'base_data_1500.txt'  # NILS: commented, othwerwise surrogate model based on precomputed CFD results will be used
-    # =============================================================================
-    # NILS: increased to 3000 to obtain smooth lift distribution
-    # aerodynamics.process.compute.lift.inviscid.settings.maximum_iterations = 1500  # NILS: increase from original value of 10
-    aerodynamics.process.compute.lift.inviscid.settings.maximum_iterations = 3000  # NILS: increase from original value of 10
-    # =============================================================================
     
-    aerodynamics.settings.drag_coefficient_increment = 0.0000
-    # aerodynamics.settings.half_mesh_flag             = False  # NILS: original setting
-    aerodynamics.settings.half_mesh_flag             = True  # NILS: use symmetry to halve domain size
-    ###
-    aerodynamics.settings.cfd_far_field_flag = 1  # NILS: added on 21.03.2026 to create base.stl mesh without CFD far field bounding box (note: this will cause SU2 meshing to fail if no training file exists, as the code currently assumes the presence of a far field bounding box for mesh generation; however, this is not an issue for surrogate model training, which is the main use case for setting this flag to 0)
-    ###
+    # NILS: increased to 3000 to obtain smooth lift distribution
+    aerodynamics.process.compute.lift.inviscid.settings.maximum_iterations = MAXIMUM_ITERATIONS
+    aerodynamics.settings.drag_coefficient_increment = 0.0000  # NILS: I could technically use this to model a nacelle/radiator
+    aerodynamics.settings.half_mesh_flag             = HALF_MESH_FLAG
+    aerodynamics.settings.cfd_far_field_flag         = CFD_FAR_FIELD_FLAG
     aerodynamics.settings.span_efficiency            = 0.85  # NILS: kept as in BWB.py for now, as not present in tut_mission_B737_AVL.py
     
     if vehicle.tag == 'Airbus_A220-100':
@@ -156,7 +161,7 @@ def vehicle_setup(
     keep_b737_defaults = False,  # True
     wing_has_segments = True,  # False
     htail_has_segments = True,  # False
-    ac_segment = "regional",  # "narrowbody" or "regional"
+    ac_segment = AC_SEGMENT,
 ):
     
     # Read geometry data from .csv file
@@ -166,39 +171,19 @@ def vehicle_setup(
     elif not aircraft_is_b737:
         date_str = date.today().strftime("%d%m%y")
         if ac_segment == "narrowbody":
-            # df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_211225.csv')
-            # df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_211225_6.csv')
-            # df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_geometry_narrowbody_kerosene_090126.csv')
-            # df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_results_narrowbody_kerosene_211225_6.csv')
-            df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_kerosene_260326.csv")
-            df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_kerosene_260326.csv")
+            # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_narrowbody_kerosene_260326.csv")
+            # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_narrowbody_kerosene_260326.csv")
+            df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_031026.csv")
+            df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_031026.csv")
             t_tail_bool = False
         elif ac_segment == "regional":
-            # df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_211225.csv')
-            # df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_211225_6.csv')
-            # df_geom = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_geometry_regional_kerosene_090126.csv')
-            # df_mass = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\mass\data\mass_distr_results_regional_kerosene_090126_6.csv')
-            df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_kerosene_260326.csv")
-            df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_kerosene_260326.csv")
+            # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_geometry_regional_kerosene_260326.csv")
+            # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\nils\airbus\data\mass_distr_results_regional_kerosene_260326.csv")
+            # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_021026.csv")
+            # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_021026.csv")
+            df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_031026.csv")
+            df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_031026.csv")
             t_tail_bool = True
-            
-    # =============================================================================
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_220326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_220326.csv")
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_220326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_220326.csv")
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_230326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_230326.csv")
-    
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_regional_LH2_240326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_regional_LH2_240326.csv")
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_240326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_240326.csv")
-    
-    # df_geom = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_geometry_narrowbody_LH2_260326.csv")
-    # df_mass = pd.read_csv(r"C:\Users\nmb48\Documents\GitHub\TASOPT.jl-priv\mass_distr_results_narrowbody_LH2_260326.csv")
-    t_tail_bool = True
-    # =============================================================================
     
     # Define clean-slate aircraft
 
@@ -362,13 +347,10 @@ def vehicle_setup(
             
         elif not aircraft_is_b737:  # 3 segments (see TASOPT.jl)
         
-            # =============================================================================
-            from SUAVE.Methods.Flight_Dynamics.Static_Stability.Approximations.Supporting_Functions.convert_sweep import convert_sweep
-            
+            # NILS: convert sweep from 35% of chord (TASOPT convention - CHECK IN MANUAL) to quarter-chord value 
             quarter_chord_sweep = convert_sweep(wing, 0.35, 0.25)
-            print('wing.sweeps.quarter_chord =', np.rad2deg(wing.sweeps.quarter_chord))
-            print('quarter_chord_sweep =', np.rad2deg(quarter_chord_sweep))
-            # =============================================================================
+            # print('wing.sweeps.quarter_chord =', np.rad2deg(wing.sweeps.quarter_chord))
+            # print('quarter_chord_sweep =', np.rad2deg(quarter_chord_sweep))
             
             center_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
             center_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
@@ -393,9 +375,7 @@ def vehicle_setup(
             segment.thickness_to_chord            = df_geom['wing_inboard_thickness_to_chord'][0]
             segment.dihedral_outboard             = df_geom['wing_inboard_dihedral_outboard'][0]
             # segment.sweeps.quarter_chord          = df_geom['wing_inboard_sweeps_quarter_chord'][0]
-            # =============================================================================
             segment.sweeps.quarter_chord          = quarter_chord_sweep
-            # =============================================================================
             segment.append_airfoil(inboard_airfoil)
             wing.append_segment(segment)
 
@@ -409,9 +389,7 @@ def vehicle_setup(
             segment.thickness_to_chord            = df_geom['wing_outboard_thickness_to_chord'][0]
             segment.dihedral_outboard             = df_geom['wing_outboard_dihedral_outboard'][0]
             # segment.sweeps.quarter_chord          = df_geom['wing_outboard_sweeps_quarter_chord'][0]
-            # =============================================================================
             segment.sweeps.quarter_chord          = quarter_chord_sweep
-            # =============================================================================
             segment.append_airfoil(outboard_airfoil)
             wing.append_segment(segment)
             
@@ -425,9 +403,7 @@ def vehicle_setup(
             segment.thickness_to_chord            = df_geom['wing_tip_thickness_to_chord'][0]
             segment.dihedral_tip             = df_geom['wing_tip_dihedral_tip'][0]
             # segment.sweeps.quarter_chord          = df_geom['wing_tip_sweeps_quarter_chord'][0]
-            # =============================================================================
             segment.sweeps.quarter_chord          = quarter_chord_sweep
-            # =============================================================================
             segment.append_airfoil(tip_airfoil)
             wing.append_segment(segment)
             
@@ -517,40 +493,9 @@ def vehicle_setup(
         aircraft.append_component(wing)
         
         # Nacelles
-        '''
-        nacelle = SUAVE.Components.Nacelles.Nacelle()
-        nacelle.tag = 'nacelle_1'
-        nacelle.length = df_geom['nacelle_length'][0]
-        # nacelle.inlet_diameter = df_geom['nacelle_inlet_diameter'][0]  # NILS: original line (TASOPT may not model difference between inlet and maximum nacelle diameter)
-        nacelle.inlet_diameter = df_geom['nacelle_diameter'][0] * 1.90 / 2.05  # NILS: based on b737_su2_nils.py (for OpenVSP/Gmsh to mesh nacelles, require non-zero height;
-        # see `height = nacelle.diameter - nacelle.inlet_diameter` in vsp_nacelle.py)
-        nacelle.diameter = df_geom['nacelle_diameter'][0]
-        # nacelle.areas.wetted = df_geom['nacelle_areas_wetted'][0]
-        nacelle.areas.wetted = 1.1*np.pi*nacelle.diameter*nacelle.length  # NILS
-        nacelle.origin = [list(array) for array in np.expand_dims(df_geom['nacelle_origin'].to_numpy(), axis=0)]  # NILS: added np.expand_dims() to avoid "IndexError: invalid index to scalar variable." in trunk\SUAVE\Input_Output\OpenVSP\vsp_nacelle.py
-        print('nacelle.origin =', nacelle.origin)
-        # NILS: could it be that this should be a list() rather than a numpy array?
-        nacelle.flow_through = df_geom['nacelle_flow_through'][0]
-        nacelle_airfoil = SUAVE.Components.Airfoils.Airfoil() 
-        nacelle_airfoil.naca_4_series_airfoil = '2410'
-        nacelle.append_airfoil(nacelle_airfoil)
-        
-        nacelle_2 = deepcopy(nacelle)
-        nacelle_2.tag = 'nacelle_2'
-        nacelle_2_origin = deepcopy(nacelle.origin)
-        nacelle_2_origin[0][1] *= -1  # NILS: added [0] relative to run_suave_avl_wrapper_nils.py
-        nacelle_2.origin = nacelle_2_origin
-        # NILS: could it be that this should be a list() rather than a numpy array?
-        
-        aircraft.append_component(nacelle)  
-        aircraft.append_component(nacelle_2)
-        '''
-        ###
-        import ast
         
         # Number of nacelles (must be even)
         N_half = len(ast.literal_eval(df_geom['nacelle_origin'].iloc[0]))
-        print('N_half =', N_half)
         # assert N_half % 2 == 0, "Number of nacelles must be even"
         
         
@@ -582,7 +527,6 @@ def vehicle_setup(
                 for row in df_geom['nacelle_origin']
             ]])  # NILS: added extra dimension relative to run_suave_jvl_wrapper_nils.py
             nacelles.append(nac)
-            print('Hello world')
         
         # Mirrored negative-Y side
         for i in range(N_half):
@@ -590,126 +534,11 @@ def vehicle_setup(
             nac.tag = f'nacelle_{i + 1 + N_half}'
             nac.origin[0][1] *= -1  # NILS: added [0] relative to run_suave_jvl_wrapper_nils.py
             nacelles.append(nac)
-            print('Hello world 2')
         
         # --- Append to aircraft ---
-        if include_nacelles:  # NILS: added on 21.03.2026 to exclude simple OpenVSP nacelles from geometry in favour of my own 3D CST models
+        if INCLUDE_NACELLES == True:  # NILS: added on 21.03.2026 to exclude simple OpenVSP nacelles from geometry in favour of my own 3D CST models
             for nac in nacelles:
                 aircraft.append_component(nac)
-        ###
-        r'''
-        # NILS: \regression\scripts files containing 'propeller'
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Cessna_172.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Electric_Multicopter.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Solar_UAV.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Stopped_Rotor.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Tiltwing.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\X57_Maxwell_Mod2.py
-        # C:\Users\nmb48\Documents\GitHub\SUAVE\regression\scripts\Vehicles\Propellers\APC_10x7_thin_electric.py
-        
-        ##### NILS: from X57_Maxwell_Mod2.py
-        #---------------------------------------------------------------------------------------------
-        # DEFINE PROPELLER
-        #---------------------------------------------------------------------------------------------
-        # build network
-        net = Battery_Propeller()
-        net.number_of_propeller_engines  = 2. 
-        net.identical_propellers         = True
-        
-        # Component 2 the Propeller 
-        prop = SUAVE.Components.Energy.Converters.Propeller()
-        prop.tag = 'propeller_1'
-        prop.number_of_blades       = 2.0
-        prop.freestream_velocity    = 135.*Units['mph']
-        prop.angular_velocity       = 1300.  * Units.rpm
-        prop.tip_radius             = 76./2. * Units.inches
-        prop.hub_radius             = 8.     * Units.inches
-        prop.design_Cl              = 0.8
-        prop.design_altitude        = 12000. * Units.feet
-        prop.design_altitude        = 12000. * Units.feet
-        prop.design_thrust          = 1200.
-        prop.origin                 = nacelle.origin  # [[2.,2.5,0.784]]
-        prop.rotation               = -1
-        prop.symmetry               = True
-        prop.variable_pitch         = True 
-        prop.airfoil_geometry       =  [r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/NACA_4412.txt']
-        prop.airfoil_polars         = [[r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                        r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                        r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                        r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                        r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
-
-        prop.airfoil_polar_stations = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        prop                        = propeller_design(prop)
-
-        prop_left = deepcopy(prop)
-        prop_left.tag = 'propeller_2' 
-        prop_left.origin   = nacelle_2.origin  # [[2.,-2.5,0.784]]
-        prop_left.rotation = 1
-        
-        net.propellers.append(prop)
-        net.propellers.append(prop_left)
-        """#####
-        
-        ####### NILS: from Cessna_172.py
-        # ------------------------------------------------------------------
-        #   Piston Propeller Network
-        # ------------------------------------------------------------------    
-        
-        # build network
-        net                                         = SUAVE.Components.Energy.Networks.Internal_Combustion_Propeller()
-        net.tag                                     = 'internal_combustion'
-        net.number_of_engines                       = 1.
-        net.identical_propellers                    = True
-                                                    
-        # the engine                    
-        engine                                  = SUAVE.Components.Energy.Converters.Internal_Combustion_Engine()
-        engine.sea_level_power                  = 180. * Units.horsepower
-        engine.flat_rate_altitude               = 0.0
-        engine.rated_speed                      = 2700. * Units.rpm
-        engine.power_specific_fuel_consumption  = 0.52 
-        net.engines.append(engine)
-        
-        # the prop
-        prop = SUAVE.Components.Energy.Converters.Propeller()
-        prop.number_of_blades        = 2.0
-        prop.freestream_velocity     = 119.   * Units.knots
-        prop.angular_velocity        = 2650.  * Units.rpm
-        prop.tip_radius              = 5 * 76./2. * Units.inches
-        prop.hub_radius              = 8.     * Units.inches
-        prop.design_Cl               = 0.8
-        prop.design_altitude         = 12000. * Units.feet
-        prop.design_power            = .64 * 180. * Units.horsepower
-        prop.variable_pitch          = True
-
-        prop.airfoil_geometry        =  [r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/NACA_4412.txt'] 
-        prop.airfoil_polars          = [[r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                         r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                         r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                         r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                         r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt']]
-
-        prop.airfoil_polar_stations  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]      
-        prop                         = propeller_design(prop)   
-        
-        ## NILS
-        #prop.rotation = -1
-        #prop.origin = nacelle.origin
-        ## prop.origin[0][1] *= -1  # NILS: added [0] relative to run_suave_avl_wrapper_nils.py
-        
-        #prop_left = deepcopy(prop)
-        #prop_left.tag = 'propeller_2' 
-        #prop_left.origin[0][1] *= -1  # NILS: added [0] relative to run_suave_avl_wrapper_nils.py
-        #prop_left.rotation = 1
-        
-        net.propellers.append(prop)
-        #net.propellers.append(prop_left)  # NILS
-        """#######
-        
-        # add the network to the vehicle
-        aircraft.append_component(net)
-        '''
-        ###
         
     # ------------------------------------------------------------------
     #   Vehicle Definition Complete
@@ -717,518 +546,6 @@ def vehicle_setup(
 
     return aircraft
 
-r"""
-# NILS: from b737_su2_nils.py
-def vehicle_setup():
-    
-    # NILS: vehicle description mirroring tut_mission_B737_AVL.py,
-    # with modifications allowing CFD analysis
-    
-    # ------------------------------------------------------------------
-    #   Initialize the Vehicle
-    # ------------------------------------------------------------------    
-    vehicle = SUAVE.Vehicle()
-    vehicle.tag = 'Boeing_737-800'    
-
-    # ------------------------------------------------------------------
-    #   Vehicle-level Properties
-    # ------------------------------------------------------------------    
-    # mass properties
-    # vehicle.mass_properties.max_takeoff               = 79015.8 * Units.kilogram 
-    vehicle.mass_properties.max_takeoff               = 0.0  # NILS
-    vehicle.mass_properties.takeoff                   = 79015.8 * Units.kilogram   
-    vehicle.mass_properties.operating_empty           = 62746.4 * Units.kilogram 
-    vehicle.mass_properties.takeoff                   = 79015.8 * Units.kilogram 
-    vehicle.mass_properties.max_zero_fuel             = 62732.0 * Units.kilogram 
-    vehicle.mass_properties.cargo                     = 10000.  * Units.kilogram   
-    # =============================================================================
-    vehicle.mass_properties.mass = 79015.8 * Units.kilogram  # NILS
-    # =============================================================================
-    # NILS: copied from regression\scripts\Vehicles\Boeing_737.py (inertias required for dynamic stability analysis)
-    vehicle.mass_properties.center_of_gravity         = [[ 15.30987849,   0.        ,  -0.48023939]]
-    vehicle.mass_properties.moments_of_inertia.tensor = [[3173074.17, 0 , 28752.77565],[0 , 3019041.443, 0],[0, 0, 5730017.433]] # estimated, not correct
-    
-    # envelope properties
-    vehicle.envelope.ultimate_load = 2.5
-    vehicle.envelope.limit_load    = 1.5
-
-    # basic parameters
-    vehicle.reference_area         = 124.862 * Units['meters**2']  
-    vehicle.passengers             = 170
-    vehicle.systems.control        = "fully powered" 
-    vehicle.systems.accessories    = "medium range"
-
-    # ------------------------------------------------------------------        
-    #   Main Wing
-    # ------------------------------------------------------------------        
-    # NILS: regression\scripts\Vehicles\Boeing_737.py defines a multi-segment wing (as I would get from TASOPT.jl)
-    
-    wing = SUAVE.Components.Wings.Main_Wing()
-    wing.tag = 'main_wing'
-
-    wing.aspect_ratio            = 10.18
-    wing.sweeps.quarter_chord    = 25 * Units.deg
-    wing.thickness_to_chord      = 0.1
-    wing.taper                   = 0.1
-
-    wing.spans.projected         = 34.32
-
-    wing.chords.root             = 7.760 * Units.meter
-    wing.chords.tip              = 0.782 * Units.meter
-    wing.chords.mean_aerodynamic = 4.235 * Units.meter
-
-    wing.areas.reference         = 124.862
-    wing.areas.wetted            = 225.08
-    
-    wing.twists.root             = 4.0 * Units.degrees
-    wing.twists.tip              = 0.0 * Units.degrees
-
-    wing.origin                  = [[13.61,0,-0.93]]
-    wing.aerodynamic_center      = [0,0,0]   
-
-    wing.vertical                = False
-    wing.symmetric               = True
-    wing.high_lift               = True
-
-    wing.dynamic_pressure_ratio  = 1.0
-
-    # Wing Segments
-    root_airfoil                          = SUAVE.Components.Airfoils.Airfoil()
-    root_airfoil.coordinate_file          = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737a.txt'
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'Root'
-    segment.percent_span_location         = 0.0
-    segment.twist                         = 4. * Units.deg
-    segment.root_chord_percent            = 1.
-    segment.thickness_to_chord            = 0.1
-    segment.dihedral_outboard             = 2.5 * Units.degrees
-    segment.sweeps.quarter_chord          = 28.225 * Units.degrees
-    segment.append_airfoil(root_airfoil)
-    wing.append_segment(segment)
-
-    yehudi_airfoil                        = SUAVE.Components.Airfoils.Airfoil()
-    yehudi_airfoil.coordinate_file        = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737b.txt'
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'Yehudi'
-    segment.percent_span_location         = 0.324
-    segment.twist                         = 0.047193 * Units.deg
-    segment.root_chord_percent            = 0.5
-    segment.thickness_to_chord            = 0.1
-    segment.dihedral_outboard             = 5.5 * Units.degrees
-    segment.sweeps.quarter_chord          = 25. * Units.degrees
-    segment.append_airfoil(yehudi_airfoil)
-    wing.append_segment(segment)
-
-    mid_airfoil                           = SUAVE.Components.Airfoils.Airfoil()
-    mid_airfoil.coordinate_file           = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737c.txt'
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'Section_2'
-    segment.percent_span_location         = 0.963
-    segment.twist                         = 0.00258 * Units.deg
-    segment.root_chord_percent            = 0.220
-    segment.thickness_to_chord            = 0.1
-    segment.dihedral_outboard             = 5.5 * Units.degrees
-    segment.sweeps.quarter_chord          = 56.75 * Units.degrees
-    segment.append_airfoil(mid_airfoil)
-    wing.append_segment(segment)
-
-    tip_airfoil                           =  SUAVE.Components.Airfoils.Airfoil()
-    tip_airfoil.coordinate_file           = r'C:/Users/nmb48/Documents/GitHub/SUAVE/regression/scripts/Vehicles/Airfoils/B737d.txt'
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'Tip'
-    segment.percent_span_location         = 1.
-    segment.twist                         = 0. * Units.degrees
-    segment.root_chord_percent            = 0.10077
-    segment.thickness_to_chord            = 0.1
-    segment.dihedral_outboard             = 0.
-    segment.sweeps.quarter_chord          = 0.
-    segment.append_airfoil(tip_airfoil)
-    wing.append_segment(segment)
-    
-    # Fill out more segment properties automatically
-    wing = segment_properties(wing)         
-
-    # add to vehicle
-    vehicle.append_component(wing)
-    
-    # NILS: for the `trim_aircraft = True` in trunk\SUAVE\Analyses\Stability\AVL.py
-    # to work, ALSO THESE MUST BE DEFINED AS MULTI-SEGMENT WINGS, otherwise
-    # 'elevator' won't feature in `wing.control_surfaces` in
-    # trunk\SUAVE\Methods\Flight_Dynamics\Dynamic_Stability\compute_dynamic_flight_modes.py
-    
-    # ------------------------------------------------------------------
-    #  Horizontal Stabilizer
-    # ------------------------------------------------------------------
-
-    wing = SUAVE.Components.Wings.Horizontal_Tail()
-    wing.tag = 'horizontal_stabilizer'
-
-    wing.aspect_ratio            = 4.99
-    wing.sweeps.quarter_chord    = 28.2250 * Units.deg  
-    wing.thickness_to_chord      = 0.08
-    wing.taper                   = 0.3333 
-
-    wing.spans.projected         = 14.4
-
-    wing.chords.root             = 4.2731 
-    wing.chords.tip              = 1.4243 
-    wing.chords.mean_aerodynamic = 8.0
-
-    wing.areas.reference         = 41.49
-    wing.areas.exposed           = 59.354    # Exposed area of the horizontal tail
-    wing.areas.wetted            = 71.81     # Wetted area of the horizontal tail
-    wing.twists.root             = 3.0 * Units.degrees
-    wing.twists.tip              = 3.0 * Units.degrees
-
-    wing.origin                  = [[33.02,0,1.466]]
-    wing.aerodynamic_center      = [0,0,0]
-
-    wing.vertical                = False
-    wing.symmetric               = True
-
-    wing.dynamic_pressure_ratio  = 0.9
-
-
-    # Wing Segments
-    segment                        = SUAVE.Components.Wings.Segment()
-    segment.tag                    = 'root_segment'
-    segment.percent_span_location  = 0.0
-    segment.twist                  = 0. * Units.deg
-    segment.root_chord_percent     = 1.0
-    segment.dihedral_outboard      = 8.63 * Units.degrees
-    segment.sweeps.quarter_chord   = 28.2250  * Units.degrees 
-    segment.thickness_to_chord     = .1
-    wing.append_segment(segment)
-
-    segment                        = SUAVE.Components.Wings.Segment()
-    segment.tag                    = 'tip_segment'
-    segment.percent_span_location  = 1.
-    segment.twist                  = 0. * Units.deg
-    segment.root_chord_percent     = 0.3333               
-    segment.dihedral_outboard      = 0 * Units.degrees
-    segment.sweeps.quarter_chord   = 0 * Units.degrees  
-    segment.thickness_to_chord     = .1
-    wing.append_segment(segment)
-    
-    # Fill out more segment properties automatically
-    wing = segment_properties(wing)        
-    
-    # add to vehicle
-    vehicle.append_component(wing)
-
-
-    # ------------------------------------------------------------------
-    #   Vertical Stabilizer
-    # ------------------------------------------------------------------
-
-    wing = SUAVE.Components.Wings.Vertical_Tail()
-    wing.tag = 'vertical_stabilizer'
-
-    wing.aspect_ratio            = 1.98865
-    wing.sweeps.quarter_chord    = 31.2  * Units.deg   
-    wing.thickness_to_chord      = 0.08
-    wing.taper                   = 0.1183
-
-    wing.spans.projected         = 8.33
-    wing.total_length            = wing.spans.projected 
-    
-    wing.chords.root             = 10.1 
-    wing.chords.tip              = 1.20 
-    wing.chords.mean_aerodynamic = 4.0
-
-    wing.areas.reference         = 34.89
-    wing.areas.wetted            = 57.25 
-    
-    wing.twists.root             = 0.0 * Units.degrees
-    wing.twists.tip              = 0.0 * Units.degrees
-
-    wing.origin                  = [[26.944,0,1.54]]
-    wing.aerodynamic_center      = [0,0,0]
-
-    wing.vertical                = True
-    wing.symmetric               = False
-    wing.t_tail                  = False
-
-    wing.dynamic_pressure_ratio  = 1.0
-
-
-    # Wing Segments
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'root'
-    segment.percent_span_location         = 0.0
-    segment.twist                         = 0. * Units.deg
-    segment.root_chord_percent            = 1.
-    segment.dihedral_outboard             = 0 * Units.degrees
-    segment.sweeps.quarter_chord          = 61.485 * Units.degrees  
-    segment.thickness_to_chord            = .1
-    wing.append_segment(segment)
-
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'segment_1'
-    segment.percent_span_location         = 0.2962
-    segment.twist                         = 0. * Units.deg
-    segment.root_chord_percent            = 0.45
-    segment.dihedral_outboard             = 0. * Units.degrees
-    segment.sweeps.quarter_chord          = 31.2 * Units.degrees   
-    segment.thickness_to_chord            = .1
-    wing.append_segment(segment)
-
-    segment                               = SUAVE.Components.Wings.Segment()
-    segment.tag                           = 'segment_2'
-    segment.percent_span_location         = 1.0
-    segment.twist                         = 0. * Units.deg
-    segment.root_chord_percent            = 0.1183 
-    segment.dihedral_outboard             = 0.0 * Units.degrees
-    segment.sweeps.quarter_chord          = 0.0    
-    segment.thickness_to_chord            = .1  
-    wing.append_segment(segment)
-    
-    # Fill out more segment properties automatically
-    wing = segment_properties(wing)        
-
-    # add to vehicle
-    vehicle.append_component(wing)
-    
-    # ------------------------------------------------------------------
-    #  Fuselage
-    # ------------------------------------------------------------------
-    
-    fuselage = SUAVE.Components.Fuselages.Fuselage()
-    fuselage.tag = 'fuselage'
-    
-    fuselage.number_coach_seats    = vehicle.passengers
-    fuselage.seats_abreast         = 6
-    fuselage.seat_pitch            = 1     * Units.meter
-    fuselage.fineness.nose         = 1.6
-    fuselage.fineness.tail         = 2.
-    fuselage.lengths.nose          = 6.4   * Units.meter
-    fuselage.lengths.tail          = 8.0   * Units.meter
-    fuselage.lengths.cabin         = 28.85 * Units.meter
-    fuselage.lengths.total         = 38.02 * Units.meter
-    fuselage.lengths.fore_space    = 6.    * Units.meter
-    fuselage.lengths.aft_space     = 5.    * Units.meter
-    fuselage.width                 = 3.74  * Units.meter
-    fuselage.heights.maximum       = 3.74  * Units.meter
-    fuselage.effective_diameter    = 3.74     * Units.meter
-    fuselage.areas.side_projected  = 142.1948 * Units['meters**2'] 
-    fuselage.areas.wetted          = 446.718  * Units['meters**2'] 
-    fuselage.areas.front_projected = 12.57    * Units['meters**2'] 
-    fuselage.differential_pressure = 5.0e4 * Units.pascal # Maximum differential pressure
-    
-    fuselage.heights.at_quarter_length          = 3.74 * Units.meter
-    fuselage.heights.at_three_quarters_length   = 3.65 * Units.meter
-    fuselage.heights.at_wing_root_quarter_chord = 3.74 * Units.meter
-    
-    # add to vehicle
-    vehicle.append_component(fuselage)
-    
-    # ------------------------------------------------------------------
-    #   Nacelles
-    # ------------------------------------------------------------------ 
-    nacelle                       = SUAVE.Components.Nacelles.Nacelle()
-    nacelle.tag                   = 'nacelle_1'
-    nacelle.length                = 2.71
-    nacelle.inlet_diameter        = 1.90
-    nacelle.diameter              = 2.05
-    nacelle.areas.wetted          = 1.1*np.pi*nacelle.diameter*nacelle.length
-    nacelle.origin                = [[13.72, -4.86,-1.9]]
-    nacelle.flow_through          = True  
-    nacelle_airfoil               = SUAVE.Components.Airfoils.Airfoil() 
-    nacelle_airfoil.naca_4_series_airfoil = '2410'
-    nacelle.append_airfoil(nacelle_airfoil)
-
-    nacelle_2                     = deepcopy(nacelle)
-    nacelle_2.tag                 = 'nacelle_2'
-    nacelle_2.origin              = [[13.72, 4.86,-1.9]]
-    
-    vehicle.append_component(nacelle)  
-    vehicle.append_component(nacelle_2)     
-
-    # ------------------------------------------------------------------
-    #   Turbofan Network
-    # ------------------------------------------------------------------    
-    
-    #instantiate the gas turbine network
-    turbofan = SUAVE.Components.Energy.Networks.Turbofan()
-    turbofan.tag = 'turbofan'
-    
-    # setup
-    turbofan.number_of_engines = 2
-    turbofan.bypass_ratio      = 5.4
-    turbofan.origin            = [[13.72, 4.86,-1.9],[13.72, -4.86,-1.9]]
-    
-    # working fluid
-    turbofan.working_fluid = SUAVE.Attributes.Gases.Air()
-    
-    # ------------------------------------------------------------------
-    #   Component 1 - Ram
-    
-    # to convert freestream static to stagnation quantities
-    # instantiate
-    ram = SUAVE.Components.Energy.Converters.Ram()
-    ram.tag = 'ram'
-    
-    # add to the network
-    turbofan.append(ram)
-
-    # ------------------------------------------------------------------
-    #  Component 2 - Inlet Nozzle
-    
-    # instantiate
-    inlet_nozzle = SUAVE.Components.Energy.Converters.Compression_Nozzle()
-    inlet_nozzle.tag = 'inlet_nozzle'
-    
-    # setup
-    inlet_nozzle.polytropic_efficiency = 0.98
-    inlet_nozzle.pressure_ratio        = 0.98
-    
-    # add to network
-    turbofan.append(inlet_nozzle)
-    
-    # ------------------------------------------------------------------
-    #  Component 3 - Low Pressure Compressor
-    
-    # instantiate 
-    compressor = SUAVE.Components.Energy.Converters.Compressor()    
-    compressor.tag = 'low_pressure_compressor'
-
-    # setup
-    compressor.polytropic_efficiency = 0.91
-    compressor.pressure_ratio        = 1.14    
-    
-    # add to network
-    turbofan.append(compressor)
-    
-    # ------------------------------------------------------------------
-    #  Component 4 - High Pressure Compressor
-    
-    # instantiate
-    compressor = SUAVE.Components.Energy.Converters.Compressor()    
-    compressor.tag = 'high_pressure_compressor'
-    
-    # setup
-    compressor.polytropic_efficiency = 0.91
-    compressor.pressure_ratio        = 13.415    
-    
-    # add to network
-    turbofan.append(compressor)
-
-    # ------------------------------------------------------------------
-    #  Component 5 - Low Pressure Turbine
-    
-    # instantiate
-    turbine = SUAVE.Components.Energy.Converters.Turbine()   
-    turbine.tag='low_pressure_turbine'
-    
-    # setup
-    turbine.mechanical_efficiency = 0.99
-    turbine.polytropic_efficiency = 0.93     
-    
-    # add to network
-    turbofan.append(turbine)
-      
-    # ------------------------------------------------------------------
-    #  Component 6 - High Pressure Turbine
-    
-    # instantiate
-    turbine = SUAVE.Components.Energy.Converters.Turbine()   
-    turbine.tag='high_pressure_turbine'
-
-    # setup
-    turbine.mechanical_efficiency = 0.99
-    turbine.polytropic_efficiency = 0.93     
-    
-    # add to network
-    turbofan.append(turbine)  
-    
-    # ------------------------------------------------------------------
-    #  Component 7 - Combustor
-    
-    # instantiate    
-    combustor = SUAVE.Components.Energy.Converters.Combustor()   
-    combustor.tag = 'combustor'
-    
-    # setup
-    combustor.efficiency                = 0.99 
-    combustor.alphac                    = 1.0   
-    combustor.turbine_inlet_temperature = 1450 # K
-    combustor.pressure_ratio            = 0.95
-    combustor.fuel_data                 = SUAVE.Attributes.Propellants.Jet_A()    
-    
-    # add to network
-    turbofan.append(combustor)
-
-    # ------------------------------------------------------------------
-    #  Component 8 - Core Nozzle
-    
-    # instantiate
-    nozzle = SUAVE.Components.Energy.Converters.Expansion_Nozzle()   
-    nozzle.tag = 'core_nozzle'
-    
-    # setup
-    nozzle.polytropic_efficiency = 0.95
-    nozzle.pressure_ratio        = 0.99    
-    
-    # add to network
-    turbofan.append(nozzle)
-
-    # ------------------------------------------------------------------
-    #  Component 9 - Fan Nozzle
-    
-    # instantiate
-    nozzle = SUAVE.Components.Energy.Converters.Expansion_Nozzle()   
-    nozzle.tag = 'fan_nozzle'
-
-    # setup
-    nozzle.polytropic_efficiency = 0.95
-    nozzle.pressure_ratio        = 0.99    
-    
-    # add to network
-    turbofan.append(nozzle)
-    
-    # ------------------------------------------------------------------
-    #  Component 10 - Fan
-    
-    # instantiate
-    fan = SUAVE.Components.Energy.Converters.Fan()   
-    fan.tag = 'fan'
-
-    # setup
-    fan.polytropic_efficiency = 0.93
-    fan.pressure_ratio        = 1.7    
-    
-    # add to network
-    turbofan.append(fan)
-    
-    # ------------------------------------------------------------------
-    #Component 10 : thrust (to compute the thrust)
-    thrust = SUAVE.Components.Energy.Processes.Thrust()       
-    thrust.tag ='compute_thrust'
- 
-    #total design thrust (includes all the engines)
-    thrust.total_design             = 2*24000. * Units.N #Newtons
- 
-    #design sizing conditions
-    altitude      = 35000.0*Units.ft
-    mach_number   = 0.78 
-    isa_deviation = 0.
-    
-    #Engine setup for noise module    
-    # add to network
-    turbofan.thrust = thrust
-
-    #size the turbofan
-    turbofan_sizing(turbofan,mach_number,altitude)   
-    
-    # add  gas turbine network turbofan to the vehicle 
-    vehicle.append_component(turbofan)      
-
-    # ------------------------------------------------------------------
-    #   Vehicle Definition Complete
-    # ------------------------------------------------------------------
-
-    return vehicle
-"""
 # ----------------------------------------------------------------------
 #   Define the Configurations
 # ---------------------------------------------------------------------
@@ -1277,8 +594,6 @@ def simple_sizing(configs):
 #%%
 
 if __name__ == '__main__':
-
-    include_nacelles = False  # NILS: added on 21.03.2026 to exclude simple OpenVSP nacelles from geometry in favour of my own 3D CST models
     
     main()
             

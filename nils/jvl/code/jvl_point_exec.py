@@ -30,7 +30,7 @@ from SUAVE.Methods.Propulsion import propeller_design
 from SUAVE.Methods.Aerodynamics.AVL.read_results import read_results
 from SUAVE.Components.Energy.Networks.Battery_Propeller import Battery_Propeller
 from nils.suave_base_ac_object import full_setup
-from nils.jvl.jvl_wrapper import wrap_jvl
+from nils.jvl.code.jvl_wrapper import wrap_jvl
 
 #%% Command-line parsing
 # `python run_suave_avl_wrapper_nils.py study_idx`, where study_idx is an integer 1..7
@@ -83,7 +83,7 @@ t_tail_bool = True
 for counter, row in df_mass.iterrows():
 
     results_list = wrap_jvl(
-        df_geom, counter, row, t_tail_bool,
+        df_geom, counter, row, t_tail_bool, study_idx,  # NILS: added `study_idx` on 29.09.2026 (dummy value so can call `sample_training` method)
     )
     
     

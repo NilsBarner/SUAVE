@@ -79,7 +79,8 @@ def _parse_eigfile_row_per_group(path, row_index=0):
                 toks = s2.split(); nums = []
                 for t in toks:
                     try: nums.append(float(t))
-                    except: pass
+                    # except: pass
+                    except: nums.append(np.nan)  # NILS (04.10.2026): non-numeric tokens (e.g. "eng") must keep their column, otherwise params shift
                 if len(nums) >= 16:
                     numeric_rows.append(nums)
                 j += 1
@@ -120,6 +121,28 @@ def _mode_metrics(lam):
     zeta = -sigma / wn if wn > 0 else float('nan')
     return {'lambda': lam, 'sigma': sigma, 'wd': wd, 'wn': wn, 'zeta': zeta, 'freq': wd / (2*math.pi)}
 
+def _U0_from_A(A):
+    """NILS (03.10.2026, fix A11): trim speed (body x-axis) from the kinematic row
+    z_dot = w - U0*theta of the AVL system matrix (state order u w q the v p r phi x y z psi)."""
+    U0 = abs(A[10, 3])
+    return U0 if U0 > 1.0 else 1.0
+
+def _merge_real_pair(r1, r2, label):
+    """NILS (03.10.2026, fix A11): represent a pair of real (overdamped) roots of one
+    oscillatory mode by its slower root, with damping ratio and natural frequency of the
+    pair, i.e. (s - l1)(s - l2) = s^2 + 2 zeta wn s + wn^2. A pair with l1*l2 < 0
+    (divergence, statically unstable) gets wn = zeta = nan and thus fails all criteria."""
+    l1, l2 = r1['lambda'].real, r2['lambda'].real
+    slow = r1 if abs(l1) < abs(l2) else r2
+    met = _mode_metrics(slow['lambda'])
+    if l1 * l2 > 0:
+        met['wn'] = math.sqrt(l1 * l2)
+        met['zeta'] = -(l1 + l2) / (2.0 * met['wn'])
+    else:
+        met['wn'] = float('nan')
+        met['zeta'] = float('nan')
+    return {'lambda': slow['lambda'], 'vec': slow['vec'], 'part': slow['part'], 'metrics': met, 'label': label}
+
 def _MAC(a, b):
     num = abs(np.vdot(a, b))**2
     den = (np.vdot(a, a).real) * (np.vdot(b, b).real)
@@ -135,6 +158,11 @@ def _classify_group_from_A(A):
     are not physical dynamic modes.
     """
     vals, vecs = _eig_from_A(A)
+    # NILS (03.10.2026, fix A11): non-dimensionalise velocity (u, w, v) and position (x, y, z)
+    # components by the trim speed so that participation factors are not dominated by m/s states
+    U0 = _U0_from_A(A)
+    vecs_s = vecs.copy()
+    vecs_s[[0, 1, 4, 8, 9, 10], :] /= U0
     used = set()
     reps = []
     # threshold for treating eigenvalue as 'zero' and for kinematic-dominance
@@ -153,7 +181,7 @@ def _classify_group_from_A(A):
             continue
 
         if abs(lam.imag) < 1e-8:
-            v = _normalize_vec(vecs[:, i])
+            v = _normalize_vec(vecs_s[:, i])  # NILS (03.10.2026, fix A11): scaled eigenvector
             reps.append((lam, v)); used.add(i)
         else:
             conj = np.conj(lam); j = None
@@ -167,14 +195,14 @@ def _classify_group_from_A(A):
                         continue
                     j = k; break
             if j is None:
-                v = _normalize_vec(vecs[:, i])
+                v = _normalize_vec(vecs_s[:, i])  # NILS (03.10.2026, fix A11): scaled eigenvector
                 reps.append((lam, v)); used.add(i)
             else:
                 # choose positive-imag representative
                 if lam.imag > 0:
-                    reps.append((lam, _normalize_vec(vecs[:, i])))
+                    reps.append((lam, _normalize_vec(vecs_s[:, i])))  # NILS (03.10.2026, fix A11): scaled eigenvector
                 else:
-                    reps.append((vals[j], _normalize_vec(vecs[:, j])))
+                    reps.append((vals[j], _normalize_vec(vecs_s[:, j])))  # NILS (03.10.2026, fix A11): scaled eigenvector
                 used.add(i); used.add(j)
 
     classified = []
@@ -182,7 +210,9 @@ def _classify_group_from_A(A):
         part = _participation(v)
         met = _mode_metrics(lam)
         if abs(lam.imag) < 1e-8:
-            label = 'real'
+            # NILS (03.10.2026, fix A11): real roots with dominant longitudinal participation belong to an
+            # overdamped short period (or phugoid) rather than to roll/spiral
+            label = 'longitudinal-real' if part['lon'] > part['lat'] else 'real'
         else:
             if part['lon'] >= 0.6:
                 label = 'longitudinal'
@@ -195,7 +225,28 @@ def _classify_group_from_A(A):
     # longitudinal split (unchanged)
     longitudinal = [c for c in classified if c['label'] == 'longitudinal']
     longitudinal = sorted(longitudinal, key=lambda x: x['metrics']['wd'], reverse=True)
-    if len(longitudinal) >= 2:
+    # NILS (03.10.2026, fix A11): pair real longitudinal roots into overdamped short-period/phugoid
+    # modes (ordered fastest first, like `longitudinal`); unpaired ones return to the roll/spiral pool
+    lon_real = sorted([c for c in classified if c['label'] == 'longitudinal-real'], key=lambda x: abs(x['lambda'].real), reverse=True)
+    classified = [c for c in classified if c['label'] != 'longitudinal-real']
+    pairs = []
+    if len(longitudinal) <= 1 and len(lon_real) >= 2:
+        pairs.append(_merge_real_pair(lon_real.pop(0), lon_real.pop(0), 'longitudinal'))
+    if len(longitudinal) == 0 and len(lon_real) >= 2:
+        pairs.append(_merge_real_pair(lon_real.pop(-2), lon_real.pop(-1), 'longitudinal'))
+    for c in lon_real:
+        c['label'] = 'real'
+    classified += lon_real + pairs
+    if pairs:  # re-sort all oscillatory and overdamped longitudinal modes by natural frequency (fastest first)
+        longitudinal = sorted(longitudinal + pairs, key=lambda x: x['metrics']['wn'] if np.isfinite(x['metrics']['wn']) else np.inf, reverse=True)
+    if len(longitudinal) >= 2 and pairs:
+        longitudinal[0]['label'] = 'short-period'
+        longitudinal[-1]['label'] = 'phugoid'
+        for mid in longitudinal[1:-1]:
+            mid['label'] = 'short-period'
+    elif len(longitudinal) == 1 and pairs:
+        longitudinal[0]['label'] = 'short-period'  # an overdamped pair without a second longitudinal mode is the short period
+    elif len(longitudinal) >= 2:
         longitudinal[0]['label'] = 'short-period'
         longitudinal[-1]['label'] = 'phugoid'
         for mid in longitudinal[1:-1]:
@@ -205,7 +256,8 @@ def _classify_group_from_A(A):
         longitudinal[0]['label'] = 'short-period' if freq > 0.15 else 'phugoid'
 
     # reals -> roll/spiral with p-vs-phi heuristic but robust fallback
-    reals = [c for c in classified if abs(c['lambda'].imag) < 1e-8]
+    # reals = [c for c in classified if abs(c['lambda'].imag) < 1e-8]
+    reals = [c for c in classified if c['label'] == 'real']  # NILS (03.10.2026, fix A11): excludes merged overdamped longitudinal modes
     if len(reals) >= 2:
         p_vals = np.array([abs(r['vec'][5]) for r in reals])
         phi_vals = np.array([abs(r['vec'][7]) for r in reals])
@@ -274,7 +326,8 @@ def _track_groups(classified_groups):
             for j, cand in enumerate(cur):
                 mac = _MAC(prev['vec'], cand['vec'])
                 lamdist = abs(prev['lambda'] - cand['lambda']) / max(1.0, abs(prev['lambda']), abs(cand['lambda']))
-                penalty = 0.0 if cand['label'] == canonical[i] else 0.2
+                # penalty = 0.0 if cand['label'] == canonical[i] else 0.2
+                penalty = 0.0 if cand['label'] == canonical[i] else 2.0  # NILS (03.10.2026, fix A11): physics-based labels take precedence over continuity between (non-adjacent) grid cases
                 cost[i, j] = (1.0 - mac) + 0.5 * lamdist + penalty
         rows, cols = linear_sum_assignment(cost)
         for r, c in zip(rows, cols):
@@ -294,15 +347,30 @@ def match_evals_to_emodes(matfile, eigfile, plot_matching=True):
     total_groups = len(mat_groups)
     # if total_groups != 210:
     #     raise RuntimeError(f"Expected 210 groups; found {total_groups}")
-    def _category_for_index(g):
-        # =============================================================================
-        # 26.03.2026
-        if g < 100: return 'fuselage'
-        # if g < 100: return 'wing'
-        # =============================================================================
-        if g < 200: return 'wing'
-        return 'nacelle'
-    categories = ['fuselage', 'wing', 'nacelle']
+    # def _category_for_index(g):
+    #     # =============================================================================
+    #     # 26.03.2026
+    #     if g < 100: return 'fuselage'
+    #     # if g < 100: return 'wing'
+    #     # =============================================================================
+    #     if g < 200: return 'wing'
+    #     return 'nacelle'
+    # categories = ['fuselage', 'wing', 'nacelle']
+    def _category_for_params(params):
+        """NILS (04.10.2026, fix B4): the index thresholds above assumed one combined file with 100 fuselage,
+        100 wing and 10 nacelle cases (10 x 10 grids); with 5 x 5 grids and one study per file every case was
+        labelled 'fuselage'. The category now follows from the mass distribution parameters of each case
+        (sigma_fcs, span_loc, fcs_loc, wing_frac, nacelle_frac; "eng" is read as nan)."""
+        p = list(params)[:5] + [np.nan] * max(0, 5 - len(params))
+        span_loc, fcs_loc, wing_frac = p[1], p[2], p[3]
+        if np.isnan(span_loc) or np.isnan(fcs_loc):
+            return 'nacelle'  # studies 1 and 2: nacelle_frac sweeps with the remainder at the engine station
+        if wing_frac <= 0.0:
+            return 'fuselage'  # studies 3 and 7
+        if wing_frac >= 1.0:
+            return 'wing'  # studies 4 and 6
+        return 'mixed'  # study 5: split between fuselage and wing
+    categories = ['fuselage', 'wing', 'nacelle', 'mixed']  # NILS (04.10.2026, fix B4): 'mixed' for study 5
     # modes = ['roll', 'short-period', 'dutch-roll', 'phugoid', 'spiral']
     modes = ['short-period', 'phugoid', 'roll', 'spiral', 'dutch-roll']
     result = {cat: {m: {} for m in modes} for cat in categories}
@@ -330,20 +398,26 @@ def match_evals_to_emodes(matfile, eigfile, plot_matching=True):
                 plot_data[ridx][m]['zeta'].append(t['metrics']['zeta'])
                 plot_data[ridx][m]['gindex'].append(g)
                 plot_data[ridx][m]['params'].append(params_first5)
-        cols = ['sigma_fcs','span_loc','fcs_loc','wing_frac','nacelle_frac','AoA','Mach','Beta','h','n','W','Re','Im']
+        # cols = ['sigma_fcs','span_loc','fcs_loc','wing_frac','nacelle_frac','AoA','Mach','Beta','h','n','W','Re','Im']
+        # cols = ['sigma_fcs','span_loc','fcs_loc','wing_frac','nacelle_frac','AoA','Mach','Beta','h','n','W','Re','Im','zeta','wn','n_alpha']  # NILS (03.10.2026, fixes A9 and A11)
+        cols = ['sigma_fcs','span_loc','fcs_loc','wing_frac','nacelle_frac','AoA','Mach','Beta','h','n','W','Re','Im','zeta','wn','n_alpha','group']  # NILS (04.10.2026): group = case index in the combined files
         result_data = {cat: {m: [] for m in modes} for cat in categories}
         for g in range(n_groups):
             params = eig_rows[g]['params']
             params_padded = list(params)[:11] + [np.nan] * max(0, 11 - len(params))
-            cat = _category_for_index(g)
+            # cat = _category_for_index(g)
+            cat = _category_for_params(params)  # NILS (04.10.2026, fix B4)
+            # NILS (03.10.2026, fix A9): n_alpha = |Z_w| U0 / g (load factor per radian of AoA) from the A matrix
+            A_g = mat_groups[g][ridx]['A']
+            n_alpha = abs(A_g[1, 1]) * _U0_from_A(A_g) / 9.81
             for m in modes:
                 entry = params_padded.copy()
                 assigned = tracks[m][g]
                 if assigned is None:
-                    entry += [np.nan, np.nan]
+                    entry += [np.nan, np.nan, np.nan, np.nan, n_alpha, g]  # NILS (04.10.2026): g = group (case) index
                 else:
                     lam = assigned['lambda']
-                    entry += [float(lam.real), float(lam.imag)]
+                    entry += [float(lam.real), float(lam.imag), float(assigned['metrics']['zeta']), float(assigned['metrics']['wn']), n_alpha, g]  # NILS (03.10.2026, fix A11): zeta and wn of overdamped pairs  # NILS (04.10.2026): g = group (case) index
                 result_data[cat][m].append(entry)
         for cat in categories:
             for m in modes:
@@ -384,8 +458,13 @@ def match_evals_to_emodes(matfile, eigfile, plot_matching=True):
         for ridx, ax in enumerate(axes[:6]):
             for mode_counter, m in enumerate(modes):
                 ax.scatter(
-                    plot_data[ridx][m]['lon'],
-                    plot_data[ridx][m]['lat'],
+                    # plot_data[ridx][m]['lon'],
+                    # plot_data[ridx][m]['lat'],
+                    # NILS (04.10.2026): with Ixy = Iyz = 0 the longitudinal and lateral equations decouple exactly, so one of
+                    # the two weightings is exactly zero for every mode and nothing was drawn on log axes; zeros are now
+                    # placed on the lower axis limits (1e-9 longitudinal, 1e-7 lateral)
+                    np.maximum(plot_data[ridx][m]['lon'], 1e-9),
+                    np.maximum(plot_data[ridx][m]['lat'], 1e-7),
                     marker=markers[mode_counter],
                     alpha=0.8,
                     label=m,
@@ -488,6 +567,9 @@ def match_evals_to_emodes(matfile, eigfile, plot_matching=True):
         
         # plt.savefig('long_lat_weightings_log.png', format='png', dpi=600)
         plt.show()
+        # NILS (04.10.2026, fix B4): the disabled diagnostic below assumes the old 10 x 10 fuselage / 10 x 10 wing /
+        # 10 nacelle case layout (reshape(10, 10), [:100], [100:200], [200:]) and must not be re-enabled as is for
+        # 5 x 5 grids; the equivalent per-study information is now shown by stability_zones.py
         '''
         # NILS: damped frequency or damping ratio for
         # different FCS integration options (nacelle,

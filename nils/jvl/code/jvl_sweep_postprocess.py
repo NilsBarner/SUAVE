@@ -6,7 +6,7 @@ import sys
 import glob
 import numpy as np
 
-from nils.jvl.shared_methods import build_jvl_grids
+from nils.jvl.code.shared_methods import build_jvl_grids
 
 ###
 
@@ -26,10 +26,10 @@ N_eng_grid, Prop_PR_des_grid = np.meshgrid(N_eng_range, Prop_PR_des_range, index
 
 ###
 
-CLtot_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl\CLtot_grid.csv')
-CTtot_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl\CTtot_grid.csv')
-dy_lower_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl\dy_lower_grid.csv')
-dY_upper_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl\dY_upper_grid.csv')
+CLtot_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\nils\jvl\data\CLtot_grid.csv')
+CTtot_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\nils\jvl\data\CTtot_grid.csv')
+dy_lower_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\nils\jvl\data\dy_lower_grid.csv')
+dY_upper_grid_df = pd.read_csv(r'C:\Users\nmb48\Documents\GitHub\SUAVE\nils\jvl\data\dY_upper_grid.csv')
 
 CLtot_grid_array = CLtot_grid_df.to_numpy().T
 CTtot_grid_array = CTtot_grid_df.to_numpy().T

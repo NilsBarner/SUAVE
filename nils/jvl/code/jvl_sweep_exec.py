@@ -23,11 +23,11 @@ from SUAVE.Components.Energy.Networks.Battery_Propeller import Battery_Propeller
 import os, re, glob
 import pandas as pd
 import sys
-os.chdir(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl')
+# os.chdir(r'C:\Users\nmb48\Documents\GitHub\SUAVE\Tutorials-2.5.0.2\B737_AVL_Tutorial\jvl')
 
 from nils.suave_base_ac_object import full_setup
-from nils.jvl.jvl_wrapper import wrap_jvl
-from nils.jvl.shared_methods import build_jvl_grids
+from nils.jvl.code.jvl_wrapper import wrap_jvl
+from nils.jvl.code.shared_methods import build_jvl_grids
 
 configs, analyses = full_setup()
 jvl_object = analyses.configs.base.stability
@@ -115,7 +115,7 @@ for _i, N_eng in enumerate(N_eng_range):
             
             try:
                 results_list = wrap_jvl(
-                    df_geom, counter, row, t_tail_bool,
+                    df_geom, counter, row, t_tail_bool, study_idx,  # NILS: added `study_idx` on 29.09.2026 (dummy value so can call `sample_training` method)
                 )
             except FileNotFoundError:
                 print("This input pair crashed JVL. Proceed to next input pair.")

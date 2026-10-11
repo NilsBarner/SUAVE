@@ -1002,6 +1002,13 @@ def populate_body_sections_nils(avl_body,suave_body):
         method="makima",
     )#(z_makima_tail)
     
+    # NILS (04.10.2026): evaluate the contour interpolants within their data range only. Akima1DInterpolator
+    # returns nan outside it, and the outermost contour point can fall short of +/- r_fuse by one ulp
+    # depending on the fuselage lengths (e.g. 1.3849999999999998 < 1.385 for the 04.10.2026 ATR 72-600),
+    # which gave a nan chord in the top fuselage_vertical section, an invalid AVL geometry and a hung AVL run
+    def _clip_eval(interp, s):
+        return interp(np.clip(s, interp.x[0], interp.x[-1]))
+    
     # =============================================================================
 
     # Horizontal Sections of Fuselage
@@ -1011,13 +1018,15 @@ def populate_body_sections_nils(avl_body,suave_body):
             fuselage_h_section               = Section()
             
             fuselage_h_section_cabin_length  = avl_body.lengths.total - (avl_body.lengths.nose + avl_body.lengths.tail)
-            fuselage_h_section_nose_length   = avl_body.lengths.nose - x_makima_horz_nose_interp(section_width)
-            fuselage_h_section_tail_length   = x_makima_horz_tail_interp(section_width) - (avl_body.lengths.total - avl_body.lengths.tail)
+            fuselage_h_section_nose_length   = avl_body.lengths.nose - _clip_eval(x_makima_horz_nose_interp, section_width)  # NILS (04.10.2026): was x_makima_horz_nose_interp(section_width)
+            fuselage_h_section_tail_length   = _clip_eval(x_makima_horz_tail_interp, section_width) - (avl_body.lengths.total - avl_body.lengths.tail)  # NILS (04.10.2026): was x_makima_horz_tail_interp(section_width)
             fuselage_h_section_nose_origin   = avl_body.lengths.nose - fuselage_h_section_nose_length
             
             fuselage_h_section.tag           =  'fuselage_horizontal_section_at_' +  str(section_width) + '_m'
             fuselage_h_section.origin        = [ origin[0] + fuselage_h_section_nose_origin , origin[1] + section_width, origin[2]]
             fuselage_h_section.chord         = fuselage_h_section_cabin_length + fuselage_h_section_nose_length + fuselage_h_section_tail_length
+            if not np.isfinite(fuselage_h_section.chord):  # NILS (04.10.2026): fail loudly instead of writing nan to the .avl file
+                raise ValueError(f"Non-finite fuselage_horizontal chord at y = {section_width} m")
             
             avl_body.append_section(fuselage_h_section,'horizontal')
 
@@ -1028,18 +1037,19 @@ def populate_body_sections_nils(avl_body,suave_body):
             fuselage_v_section               = Section()
             
             fuselage_v_section_cabin_length  = avl_body.lengths.total - (avl_body.lengths.nose + avl_body.lengths.tail)
-            fuselage_v_section_nose_length   = avl_body.lengths.nose - x_makima_vert_nose_interp(section_height)
+            fuselage_v_section_nose_length   = avl_body.lengths.nose - _clip_eval(x_makima_vert_nose_interp, section_height)  # NILS (04.10.2026): was x_makima_vert_nose_interp(section_height)
             # print('fuselage_v_section_nose_length =', fuselage_v_section_nose_length)
-            fuselage_v_section_tail_length   = x_makima_vert_tail_interp(section_height) - (avl_body.lengths.total - avl_body.lengths.tail)
+            fuselage_v_section_tail_length   = _clip_eval(x_makima_vert_tail_interp, section_height) - (avl_body.lengths.total - avl_body.lengths.tail)  # NILS (04.10.2026): was x_makima_vert_tail_interp(section_height)
             # print('fuselage_v_section_tail_length =', fuselage_v_section_tail_length)
             fuselage_v_section_nose_origin   = avl_body.lengths.nose - fuselage_v_section_nose_length
             
             fuselage_v_section.tag           = 'fuselage_vertical_top_section_at_' +  str(section_height) + '_m'        
             fuselage_v_section.origin        = [ origin[0] + fuselage_v_section_nose_origin,  origin[1],  origin[2] + section_height ]
             fuselage_v_section.chord         = fuselage_v_section_cabin_length + fuselage_v_section_nose_length + fuselage_v_section_tail_length
+            if not np.isfinite(fuselage_v_section.chord):  # NILS (04.10.2026): fail loudly instead of writing nan to the .avl file
+                raise ValueError(f"Non-finite fuselage_vertical chord at z = {section_height} m")
             
             avl_body.append_section(fuselage_v_section,'vertical')
             
     return avl_body
 # ====================================== NILS =======================================
-

@@ -59,6 +59,28 @@ def wrap_avl(
     moments_of_inertia[0][1] = row['Ixy']
     moments_of_inertia[1][2] = row['Iyz']
     moments_of_inertia[2][0] = row['Izx']
+    moments_of_inertia[1][0] = row['Ixy']  # NILS (03.10.2026, fix A2): keep tensor symmetric
+    moments_of_inertia[2][1] = row['Iyz']  # NILS (03.10.2026, fix A2): keep tensor symmetric
+    moments_of_inertia[0][2] = row['Izx']  # NILS (03.10.2026, fix A2): keep tensor symmetric
+
+    # NILS (03.10.2026, fixes A4-A6): per-mission-point flight conditions and mass properties from mass_distr_exec.jl
+    mp_cols = [
+        'Mach_mp', 'alt_mp', 'n_mp', 'flap_mp', 'mass_mp', 'x_cg_mp', 'y_cg_mp', 'z_cg_mp',
+        'Ixx_mp', 'Iyy_mp', 'Izz_mp', 'Ixy_mp', 'Iyz_mp', 'Izx_mp',
+    ]
+    for _col in mp_cols:
+        if _col not in row.index:
+            raise KeyError(f"Column '{_col}' missing from mass .csv file - regenerate it with the updated mass_distr_exec.jl")
+    mp = {_col: np.array(ast.literal_eval(row[_col]), dtype=float) for _col in mp_cols}
+    training_cg = [[mp['x_cg_mp'][i], mp['y_cg_mp'][i], mp['z_cg_mp'][i]] for i in range(len(mp['mass_mp']))]
+    training_inertia = [
+        np.array([
+            [mp['Ixx_mp'][i], mp['Ixy_mp'][i], mp['Izx_mp'][i]],
+            [mp['Ixy_mp'][i], mp['Iyy_mp'][i], mp['Iyz_mp'][i]],
+            [mp['Izx_mp'][i], mp['Iyz_mp'][i], mp['Izz_mp'][i]],
+        ])
+        for i in range(len(mp['mass_mp']))
+    ]
 
     # Fuselage
     fuselage = SUAVE.Components.Fuselages.Fuselage()
@@ -357,7 +379,10 @@ def wrap_avl(
     # 6 mission points
     # training_load_factor = np.array([1.0, 2.5, 1.0, 1.0, 2.5, 1.0])
     # 1 mission point (ToC)
-    training_load_factor = np.array([1.0])
+    # training_load_factor = np.array([1.0])
+    # NILS (03.10.2026, fixes A4-A6): the hard-coded 1- and 6-point conditions below (scaled from Table 6.2 in
+    # Morris (2013), clean wing, 2.5 g "climb" and "descent") are superseded by the 6 TASOPT mission points
+    # written by mass_distr_exec.jl, which are assigned after this if-block
     if ac_segment == 'regional':
         # 6 mission points
         # training_altitude = np.array([0.0, 10e3 * 20/35, 20e3, 20e3, 10e3 * 20/35, 0.0]) * 0.3048  # NILS: correction factors to account for different cruise altitude of ATR 72-600 than B737 in medium_PhDthesis_2013_flightdynconstrconcacmdiscanalsopt_morris
@@ -372,6 +397,13 @@ def wrap_avl(
         # 1 mission point (ToC)
         training_altitude = np.array([39e3]) * 0.3048
         training_Mach = np.array([0.78])
+    # NILS (03.10.2026, fixes A4-A6): 6 TASOPT mission points (take-off, climb, start of cruise, end of cruise, descent, landing)
+    training_load_factor = mp['n_mp']  # all 1.0 (level flight, consistent with AVL C1 trim)
+    training_altitude = mp['alt_mp']
+    training_Mach = mp['Mach_mp']
+    training_flap_deflection = mp['flap_mp'] * Units.degrees
+    # NILS (04.10.2026): profile drag coefficient written to AVL's CDo (zeros for older .csv files without CD0_mp)
+    training_CD0 = np.array(ast.literal_eval(row['CD0_mp']), dtype=float) if 'CD0_mp' in row.index else np.zeros_like(mp['Mach_mp'])
     training_side_slip_angle = np.zeros_like(training_Mach) * Units.degrees
     training_angle_of_attack = np.array([0])  # to be trimmed  # NOTE: 6x faster if use `np.array([0])` instead of `np.zeros_like(self.training.Mach)` (6x duplication)
     # 6 mission points
@@ -384,7 +416,8 @@ def wrap_avl(
     #     aircraft.mass_properties.max_zero_fuel,
     # ])
     # 1 mission point (ToC)
-    training_mass = np.array([aircraft.mass_properties.max_zero_fuel])
+    # training_mass = np.array([aircraft.mass_properties.max_zero_fuel])
+    training_mass = mp['mass_mp']  # NILS (03.10.2026, fix A6): mass consistent with per-point CG and inertia
     
     # Run sample_training() only
     avl_object.sample_training(
@@ -403,6 +436,10 @@ def wrap_avl(
         training_altitude=training_altitude,
         training_load_factor=training_load_factor,
         training_mass=training_mass,
+        training_cg=training_cg,  # NILS (03.10.2026, fix A6)
+        training_inertia=training_inertia,  # NILS (03.10.2026, fix A6)
+        training_flap_deflection=training_flap_deflection,  # NILS (03.10.2026, fix A4)
+        training_CD0=training_CD0,  # NILS (04.10.2026)
         backend=backend,
         run_modal=run_modal,
         settings_number_spanwise_vortices=settings_number_spanwise_vortices,
@@ -410,6 +447,3 @@ def wrap_avl(
     )
     
     return
-    
-    
-    

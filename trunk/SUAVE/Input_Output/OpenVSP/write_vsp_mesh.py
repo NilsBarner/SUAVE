@@ -73,11 +73,8 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     STL_multi    = vsp.FindParm(vehicle_cont, 'MultiSolid', 'STLSettings')
     vsp.SetParmVal(STL_multi, 1.0)
     
-    # vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,1)
-    ###
-    # vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,0)
-    vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,cfd_far_field_flag)
-    ###
+    vsp.SetCFDMeshVal(vsp.CFD_FAR_FIELD_FLAG,cfd_far_field_flag)  # NILS: made `cfd_far_field_flag` a varible
+
     if half_mesh_flag == True:
         vsp.SetCFDMeshVal(vsp.CFD_HALF_MESH_FLAG,1)
         
@@ -119,8 +116,9 @@ def write_vsp_mesh(geometry,tag,half_mesh_flag,growth_ratio,growth_limiting_flag
     dt = tf-ti
     print('VSP meshing for ' + tag + ' completed in ' + str(dt) + ' s')
 
-    import sys
-    # sys.exit("NILS: stop here.")  # NILS: 26.03.2026 - this is to allow testing of the mesh generation without running the CFD analysis, which can be time-consuming. Remove or comment out this line to run the full analysis.
+    if cfd_far_field_flag == 0:
+        import sys
+        sys.exit("NILS: abort process after surface meshing to use .stl file for packaging/visualisation.")
     
 ## @ingroup Input_Output-OpenVSP
 def set_sources(geometry):

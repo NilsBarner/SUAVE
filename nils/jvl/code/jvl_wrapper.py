@@ -13,7 +13,7 @@ from nils.suave_base_ac_object import full_setup
 
 
 def wrap_jvl(
-    df_geom, counter, row, t_tail_bool,
+    df_geom, counter, row, t_tail_bool, study_idx,  # NILS: added `study_idx` on 29.09.2026 (dummy value so can call `sample_training` method)
 ) -> list:
     
     # Define clean-slate aircraft
@@ -274,34 +274,34 @@ def wrap_jvl(
     settings_number_spanwise_vortices = 30
     
     # Run analysis
-    # results_list = avl_object.sample_training(
-    #     study_idx=study_idx, counter=counter,
-    #     sigma_fcs = sigma_fcs,
-    #     span_loc = span_loc,
-    #     fcs_loc = fcs_loc,
-    #     wing_frac = wing_frac,
-    #     nacelle_frac = nacelle_frac,
-    #     # NILS: inputs added on 17.03.2026 to distinguish AVL from JVL calls
-    #     N_eng=N_nacelles,
-    #     Prop_PR_des=1.005,
-    #     tag=tag,
-    #     settings_trim_aircraft=settings_trim_aircraft,
-    #     training_angle_of_attack=training_angle_of_attack,
-    #     training_Mach=training_Mach,
-    #     training_side_slip_angle=training_side_slip_angle,
-    #     training_altitude=training_altitude,
-    #     training_load_factor=training_load_factor,
-    #     training_mass=training_mass,
-    #     backend=backend,
-    #     run_modal=run_modal,
-    #     settings_number_spanwise_vortices=settings_number_spanwise_vortices,
-    # )
+    results_list = avl_object.sample_training(
+        study_idx=study_idx, counter=counter,
+        sigma_fcs = sigma_fcs,
+        span_loc = span_loc,
+        fcs_loc = fcs_loc,
+        wing_frac = wing_frac,
+        nacelle_frac = nacelle_frac,
+        # NILS: inputs added on 17.03.2026 to distinguish AVL from JVL calls
+        N_eng=N_nacelles,
+        Prop_PR_des=1.005,
+        tag=tag,
+        settings_trim_aircraft=settings_trim_aircraft,
+        training_angle_of_attack=training_angle_of_attack,
+        training_Mach=training_Mach,
+        training_side_slip_angle=training_side_slip_angle,
+        training_altitude=training_altitude,
+        training_load_factor=training_load_factor,
+        training_mass=training_mass,
+        backend=backend,
+        run_modal=run_modal,
+        settings_number_spanwise_vortices=settings_number_spanwise_vortices,
+    )
     
     # OR
     
-    # Merely read results for plotting in trefftz_plot.py
-    # 26.03.2026
-    results_list = read_results(avl_object, backend='JVL')
+    # # Merely read results for plotting in trefftz_plot.py
+    # # 26.03.2026
+    # results_list = read_results(avl_object, backend='JVL')
     
     return results_list
 

@@ -1,0 +1,334 @@
+
+C:\Users\nmb48>mamba activate C:\Users\nmb48\AppData\Local\miniconda3
+
+(base) C:\Users\nmb48>conda env list
+
+# conda environments:
+#
+# *  -> active
+# + -> frozen
+                         C:\Users\nmb48\.julia\conda\3\x86_64
+base                 *   C:\Users\nmb48\AppData\Local\miniconda3
+alphapem                 C:\Users\nmb48\AppData\Local\miniconda3\envs\alphapem
+fulmar                   C:\Users\nmb48\AppData\Local\miniconda3\envs\fulmar
+openconcept              C:\Users\nmb48\AppData\Local\miniconda3\envs\openconcept
+py311b                   C:\Users\nmb48\AppData\Local\miniconda3\envs\py311b
+py311d                   C:\Users\nmb48\AppData\Local\miniconda3\envs\py311d
+py36test                 C:\Users\nmb48\AppData\Local\miniconda3\envs\py36test
+py39a                    C:\Users\nmb48\AppData\Local\miniconda3\envs\py39a
+py39a_wlrm004            C:\Users\nmb48\AppData\Local\miniconda3\envs\py39a_wlrm004
+pybada                   C:\Users\nmb48\AppData\Local\miniconda3\envs\pybada
+pyembree                 C:\Users\nmb48\AppData\Local\miniconda3\envs\pyembree
+rcaide_leads             C:\Users\nmb48\AppData\Local\miniconda3\envs\rcaide_leads
+rcaide_leads_wlrm004     C:\Users\nmb48\AppData\Local\miniconda3\envs\rcaide_leads_wlrm004
+suave                    C:\Users\nmb48\AppData\Local\miniconda3\envs\suave
+suave-vsp3190            C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190
+
+
+(base) C:\Users\nmb48>conda activate suave-vsp3190
+
+(suave-vsp3190) C:\Users\nmb48>cd "C:\Users\nmb48\Documents\GitHub\SUAVE"
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+Traceback (most recent call last):
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 1283, in <module>
+    main()
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 52, in main
+    analyses.finalize()
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_Euler.py", line 144, in initialize
+    write_vsp_mesh(self.geometry,tag,self.settings.half_mesh_flag,self.settings.vsp_mesh_growth_ratio,self.settings.vsp_mesh_growth_limiting_flag,self.settings.cfd_far_field_flag)  # NILS: added last argument on 21.03.2026 to create base.stl mesh without CFD far field bounding box
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Input_Output\OpenVSP\write_vsp_mesh.py", line 117, in write_vsp_mesh
+    vsp.ComputeCFDMesh(set_int,file_type)
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\OpenVSP-3.19.0-win64\python\openvsp\openvsp\vsp.py", line 1307, in ComputeCFDMesh
+    return _vsp.ComputeCFDMesh(set, file_export_types)
+KeyboardInterrupt
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Stop after simple_sizing.
+                                                      python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"90) C:\Users\nmb48\Documents\GitHub\SUAVE>
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 51.42237830162048 s
+NILS: stop here.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+Edge: More Than 2 Tris     0.0003244374     0.0004892157     0.0003244374
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.993540 0.000000 1.385000
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.963002 0.033082 1.382845
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.993540 0.000000 1.385000
+   Tri = 13.993540 0.028855 1.385000
+        13.971108 0.000000 1.383416
+        13.993540 0.000000 1.385000
+   Border 0 0 0
+Edge: More Than 2 Tris     0.0003244374     0.0004892157     0.0004677889
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.957049 0.022513 1.389576
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.963002 0.033082 1.382845
+     vertex 13.971108 0.000000 1.383416
+     vertex 13.993540 0.028855 1.385000
+     vertex 13.957049 0.022513 1.389576
+   Tri = 13.971108 0.000000 1.383416
+        13.993540 0.028855 1.385000
+        13.957049 0.022513 1.389576
+   Border 0 0 0
+VSP meshing for base completed in 91.40430021286011 s
+NILS: stop here.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+wing.sweeps.quarter_chord = 0.0
+quarter_chord_sweep = 1.9091524329963758
+N_half = 1
+Hello world
+Hello world 2
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 76.39147543907166 s
+NILS: stop here.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Traceback (most recent call last):
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 583, in <module>
+    main()
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 49, in main
+    configs, analyses = full_setup(vehicle)  # NILS: added argument
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 65, in full_setup
+    vehicle  = vehicle_setup()
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 484, in vehicle_setup
+    assert N_half % 2 == 0, "Number of nacelles must be even"
+AssertionError: Number of nacelles must be even
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 52.786099433898926 s
+tag = base
+os.path.isfile(tag+'.su2') = True
+os.path.isfile(tag+'.geo') = True
+os.path.isfile(tag+'.su2') = False
+Info    : Running 'gmsh base.geo -3 -o base.su2 -format su2 -saveall' [Gmsh 3.0.6, 1 node, max. 1 thread]
+Info    : Started on Mon Sep 28 17:10:09 2026
+Info    : Reading 'base.geo'...
+Info    : Reading 'base.stl'...
+Info    : 132031 facets in solid 0
+Info    : 47949 facets in solid 1
+Info    : 22834 facets in solid 2
+Info    : 101689 facets in solid 3
+Info    : 11753 facets in solid 4
+Info    : 762 facets in solid 5
+Info    : Done reading 'base.stl'
+Info    : Done reading 'base.geo'
+Info    : Finalized high order topology of periodic connections
+Info    : Meshing 1D...
+Info    : Done meshing 1D (0 s)
+Info    : Meshing 2D...
+Info    : Done meshing 2D (0 s)
+Info    : Meshing 3D...
+Info    : Delaunay Meshing 1 volumes with 1 connected components
+Info    : Meshing volume 12 (Delaunay)
+Delaunizing vertices...
+Delaunay seconds:  0.782
+Creating surface mesh ...
+Surface mesh seconds:  0.219
+Recovering boundaries...
+Boundary recovery seconds:  1.179
+Removing exterior tetrahedra ...
+Exterior tets removal seconds:  0.297
+Recovering Delaunayness...
+Delaunay recovery seconds:  0.284
+Optimizing mesh...
+Optimization seconds:  0.153
+
+Writing nodes.
+Writing elements.
+Writing faces.
+Writing edges.
+
+Output seconds:  0.293
+Total running seconds:  3.218
+
+Statistics:
+
+  Input points: 158511
+  Input facets: 317018
+  Input segments: 475527
+  Input holes: 0
+  Input regions: 0
+
+  Mesh points: 158511
+  Mesh tetrahedra: 524426
+  Mesh faces: 1207361
+  Mesh edges: 841445
+  Mesh faces on exterior boundary: 317018
+  Mesh edges on exterior boundary: 475527
+  Mesh faces on input facets: 317018
+  Mesh edges on input segments: 475527
+
+Info    : 158511 points 841445 edges and 317018 faces in the initial mesh
+Traceback (most recent call last):
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 583, in <module>
+    main()
+  File "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py", line 54, in main
+    analyses.finalize()
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Analysis.py", line 271, in finalize
+    analysis.finalize(*args,**kwarg)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Analyses\Aerodynamics\SU2_Euler.py", line 146, in initialize
+    mesh_geo_file(tag)
+  File "c:\users\nmb48\documents\github\suave\trunk\SUAVE\Input_Output\GMSH\mesh_geo_file.py", line 39, in mesh_geo_file
+    subprocess.call(['gmsh',tag+'.geo','-3','-o',tag+'.su2','-format','su2','-saveall'])
+  File "C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\lib\subprocess.py", line 289, in call
+    return p.wait(timeout=timeout)
+  File "C:\Users\nmb48\AppData\Local\miniconda3\envs\suave-vsp3190\lib\subprocess.py", line 1075, in wait
+    timeout_millis)
+KeyboardInterrupt
+^C
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 75.83869194984436 s
+NILS: abort process after surface meshing to use .stl file for packaging/visualisation.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 72.03922629356384 s
+NILS: abort process after surface meshing to use .stl file for packaging/visualisation.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 75.74681091308594 s
+NILS: abort process after surface meshing to use .stl file for packaging/visualisation.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>python "C:\Users\nmb48\Documents\GitHub\SUAVE\nils\openvsp_gmsh_su2\code\su2_point_exec.py"
+Reseting OpenVSP Model in Memory
+VSPAERO solver not found.
+VSPAERO viewer not found.
+VSPAERO slicer not found.
+Writing main_wing to OpenVSP Model
+Writing horizontal_stabilizer to OpenVSP Model
+Writing vertical_stabilizer to OpenVSP Model
+Writing fuselage to OpenVSP Model
+Saving OpenVSP File at C:\Users\nmb48\Documents\GitHub\SUAVE/base.vsp3
+Starting mesh for base (This may take several minutes)
+VSP meshing for base completed in 67.97618699073792 s
+NILS: abort process after surface meshing to use .stl file for packaging/visualisation.
+
+(suave-vsp3190) C:\Users\nmb48\Documents\GitHub\SUAVE>

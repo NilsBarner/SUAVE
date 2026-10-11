@@ -11,13 +11,14 @@ import matplotlib.pyplot  as plt
 import matplotlib.colors as mcolors
 from cycler import cycler
 from collections import OrderedDict
+from matplotlib import cm
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 fontsize = 17
 hwidth = 1.25
 length = 5
-plt.rc('text', usetex=True)
+plt.rc('text', usetex=True)  # must set to `False` whenver Fluprodia is used whose internal tick label generator is incompatible with latex
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 
 linestyles_dict = {
@@ -91,7 +92,8 @@ rob_blue_rgb = '#0072BD' # (0, 114, 189) # shade of blue of Rob's PowerPoint tem
 whittle_blue_rgb = '#0BACD7' # (11, 172, 215) # shade of blue of Whittle logo
 
 # Colour palette from https://ons-design.notion.site/Colour-335407345de94442b2adccbaa0b0b6e6
-plt.rcParams['axes.prop_cycle'] = cycler('color', ['#206095', '#a8bd3a', '#871a5b', '#f66068', '#05341A', '#27a0cc', '#003c57', '#22d0b6', '#746cb1', '#A09FA0', '#F39431'])
+# plt.rcParams['axes.prop_cycle'] = cycler('color', ['#206095', '#a8bd3a', '#871a5b', '#f66068', '#05341A', '#27a0cc', '#003c57', '#22d0b6', '#746cb1', '#A09FA0'])
+plt.rcParams['axes.prop_cycle'] = cycler('color', ['#12436D','#28A197','#801650','#F46A25','#3D3D3D','#A285D1'])
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 # Add margins around plot
@@ -109,21 +111,26 @@ def opaque_color_from_hex(hex_color, alpha=0.5, background='white'):
     blended_rgb = rgba_fg[:3] * alpha + rgba_bg[:3] * (1 - alpha)
     return mcolors.to_hex(blended_rgb, keep_alpha=False)
 
+
 import numpy as np
 import matplotlib.colors as mcolors
 from matplotlib.colors import LinearSegmentedColormap
 
-def make_cmap(hex_color, p=0.5):
-    # alphas = np.linspace(0.1, 1, 256)
-    # alphas = np.linspace(1, 0.1, 256)
+def make_cmap(hex_color, p=0.5, flip=False):
     t = np.linspace(0, 1, 256)
     alphas = 0.1 + (1 - 0.1) * (1 - t**p)   # p>1 pushes colours lower, p<1 pushes higher
     colors = [opaque_color_from_hex(hex_color, a) for a in alphas]
+    if flip == True:
+        colors = colors[::-1]
     return LinearSegmentedColormap.from_list("", colors)
 
 cmap_blue  = make_cmap("#206095")
 cmap_green = make_cmap("#a8bd3a")
 cmap_pink  = make_cmap("#871a5b")
 
+cmap_blue_flipped  = make_cmap("#206095", p=1.0, flip=True)
+cmap_mint = make_cmap("#28A197", p=1.0)
+cmap_min_flipped = make_cmap("#28A197", p=1.0, flip=True)
+cmap_orange = make_cmap("#F46A25", p=1.0, flip=True)
 
  
